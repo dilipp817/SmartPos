@@ -3,7 +3,7 @@ package com.autobill.smartpos.presentation.food
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.autobill.smartpos.core.common.Resource
+import com.autobill.smartpos.core.common.FoodResponse
 import com.autobill.smartpos.domain.usecase.GetFoodsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,10 +27,10 @@ class FoodViewModel(
         viewModelScope.launch {
             getFoodsUseCase(restaurantId).collectLatest { result ->
                 when (result) {
-                    Resource.Loading -> {
+                    FoodResponse.Loading -> {
                         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
                     }
-                    is Resource.Success -> {
+                    is FoodResponse.Success -> {
                         _uiState.update {
                             it.copy(
                                 foods = result.data,
@@ -39,7 +39,7 @@ class FoodViewModel(
                             )
                         }
                     }
-                    is Resource.Error -> {
+                    is FoodResponse.Error -> {
                         _uiState.update {
                             it.copy(
                                 isLoading = false,

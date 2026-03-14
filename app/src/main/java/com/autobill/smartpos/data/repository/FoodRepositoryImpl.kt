@@ -1,6 +1,6 @@
 package com.autobill.smartpos.data.repository
 
-import com.autobill.smartpos.core.common.Resource
+import com.autobill.smartpos.core.common.FoodResponse
 import com.autobill.smartpos.data.local.dao.FoodDao
 import com.autobill.smartpos.data.mapper.toDomain
 import com.autobill.smartpos.data.mapper.toEntity
@@ -22,7 +22,7 @@ class FoodRepositoryImpl(
     private val ioDispatcher: CoroutineDispatcher,
 ) : FoodRepository {
 
-    override fun getFoods(restaurantId: Int): Flow<Resource<List<Food>>> = flow {
+    override fun getFoods(restaurantId: Int): Flow<FoodResponse<List<Food>>> = flow {
         withContext(ioDispatcher) {
             val remoteFoods = apiService.getFoods(restaurantId)
             foodDao.deleteByRestaurant(restaurantId)
@@ -31,19 +31,19 @@ class FoodRepositoryImpl(
 
         emitAll(
             foodDao.observeFoodsByRestaurant(restaurantId)
-                .map { entities -> Resource.Success(entities.map { it.toDomain() }) as Resource<List<Food>> },
+                .map { entities -> FoodResponse.Success(entities.map { it.toDomain() }) as FoodResponse<List<Food>> },
         )
     }.onStart {
-        emit(Resource.Loading)
+        emit(FoodResponse.Loading)
     }.catch { throwable ->
         val fallbackFoods = withContext(ioDispatcher) {
             foodDao.getFoodsByRestaurant(restaurantId)
         }.map { it.toDomain() }
 
         if (fallbackFoods.isNotEmpty()) {
-            emit(Resource.Success(fallbackFoods))
+            emit(FoodResponse.Success(fallbackFoods))
         } else {
-            emit(Resource.Error(throwable.message ?: "Unable to load foods", throwable))
+            emit(FoodResponse.Error(throwable.message ?: "Unable to load foods", throwable))
         }
     }
 }
