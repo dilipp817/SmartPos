@@ -34,6 +34,11 @@ object NetworkModule {
             .addInterceptor(logger)
 
         // For development only: Trust self-signed certificates
+        /**
+         * certificates are only for localhost. Don't use in production
+         * Don't use it once backend is deployed on server
+          */
+
         if (BuildConfig.DEBUG) {
             try {
                 val trustAllCerts = arrayOf<TrustManager>(
