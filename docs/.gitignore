@@ -1,0 +1,8 @@
+# Archive folder - for historical reference only
+# Uncomment to exclude from commits:
+# archive/
+# Temporary/working files
+*.tmp
+*.bak
+*~
+.DS_Store
