@@ -45,9 +45,16 @@ class FoodRepositoryImpl @Inject constructor(
     override suspend fun getFoodsPaginated(
         offset: Int,
         limit: Int,
+        category: String?,
+        sort: String?,
     ): PaginationResult<Food> = withContext(ioDispatcher) {
         try {
-            val response = apiService.getFoods(offset = offset, limit = limit)
+            val response = apiService.getFoods(
+                offset = offset,
+                limit = limit,
+                category = category,
+                sort = sort,
+            )
             
             // Cache the data (upsert to not lose items from previous pages)
             foodDao.upsertAll(response.data.map { it.toEntity() })

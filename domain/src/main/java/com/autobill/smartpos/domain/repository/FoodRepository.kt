@@ -21,11 +21,15 @@ interface FoodRepository {
      *
      * @param offset Starting position in results
      * @param limit Number of items per page
+     * @param category Optional category filter
+     * @param sort Optional sort parameter (e.g., "price:asc", "name:desc")
      * @return PaginationResult with food items and pagination metadata
      */
     suspend fun getFoodsPaginated(
         offset: Int = 0,
         limit: Int = 20,
+        category: String? = null,
+        sort: String? = null,
     ): PaginationResult<Food>
 
     /**

@@ -1,0 +1,143 @@
+package com.autobill.smartpos.feature.food
+
+import androidx.compose.runtime.Immutable
+
+/**
+ * Home Screen Data Models - ODRfast Design
+ * Immutable data classes for type-safe component communication
+ * Only contains required data to minimize recomposition
+ */
+
+/**
+ * Header data - with tabs and business profile
+ */
+@Immutable
+data class HeaderData(
+    val appTitle: String = "ODRfast",
+    val businessName: String = "Best business Pvt Ltd",
+    val businessAvatar: String? = null,
+    val selectedTab: OrderTab = OrderTab.OFFLINE,
+    val onTabChange: (OrderTab) -> Unit = {},
+    val onProfileClick: () -> Unit = {},
+)
+
+/**
+ * Order tab enum
+ */
+enum class OrderTab {
+    OFFLINE,
+    ONLINE
+}
+
+/**
+ * Category for filter - minimal required fields
+ */
+@Immutable
+data class CategoryUI(
+    val id: String,
+    val name: String,
+    val itemCount: Int = 0,
+)
+
+/**
+ * Search and filter data with sort functionality
+ */
+@Immutable
+data class SearchFilterData(
+    val searchQuery: String = "",
+    val selectedCategoryId: String? = null,
+    val categories: List<CategoryUI> = emptyList(),
+    val sortOption: String = "Sort by",
+    val onSearchChange: (String) -> Unit = {},
+    val onCategorySelect: (String) -> Unit = {},
+    val onSortClick: () -> Unit = {},
+)
+
+/**
+ * Single food item for grid - horizontal card with checkbox
+ */
+@Immutable
+data class FoodItemUI(
+    val id: String,
+    val name: String,
+    val price: String,  // Pre-formatted (₹XXX.XX)
+    val restaurantId: String,
+    val categoryName: String? = null,  // For sticky headers
+    val description: String? = null,
+    val imageUrl: String? = null,
+    val isAvailable: Boolean = true,
+    val isSelected: Boolean = false,  // Selected state for checkbox
+    val rating: Float? = null,
+)
+
+/**
+ * Food grid data - pagination support with category headers
+ */
+@Immutable
+data class FoodGridData(
+    val items: List<FoodItemUI> = emptyList(),
+    val isLoading: Boolean = false,
+    val isLoadingMore: Boolean = false,
+    val hasError: Boolean = false,
+    val errorMessage: String? = null,
+    val canLoadMore: Boolean = false,
+    val onLoadMore: () -> Unit = {},
+    val onFoodClick: (String) -> Unit = {},
+    val onFoodToggle: (String) -> Unit = {},  // Toggle selection (checkbox)
+)
+
+/**
+ * Cart item with quantity controls
+ */
+@Immutable
+data class CartItemUI(
+    val id: String,
+    val name: String,
+    val price: String,  // Pre-formatted
+    val quantity: Int,
+    val subtotal: String,  // Pre-formatted
+    val imageUrl: String? = null,
+)
+
+/**
+ * Invoice details
+ */
+@Immutable
+data class InvoiceData(
+    val invoiceNumber: String = "KKB6266629",
+    val tableNumber: String = "23",
+    val dateTime: String = "Wed Jun 22, 2020 | 05:30 PM",
+    val onChangeInvoice: () -> Unit = {},
+)
+
+/**
+ * Cart summary with invoice and detailed items
+ */
+@Immutable
+data class CartSummaryData(
+    val invoice: InvoiceData = InvoiceData(),
+    val items: List<CartItemUI> = emptyList(),
+    val itemCount: Int = 0,
+    val subtotal: String = "₹0.00",  // Pre-formatted
+    val tax: String = "₹0.00",       // Pre-formatted
+    val discount: String = "₹0.00",  // Pre-formatted
+    val total: String = "₹0.00",     // Pre-formatted
+    val onQuantityIncrease: (String) -> Unit = {},
+    val onQuantityDecrease: (String) -> Unit = {},
+    val onAcceptPayment: () -> Unit = {},
+    val onClear: () -> Unit = {},
+    val onReset: () -> Unit = {},
+    val onPrint: () -> Unit = {},
+)
+
+/**
+ * Complete home screen state
+ */
+@Immutable
+data class HomeScreenData(
+    val header: HeaderData = HeaderData(),
+    val searchFilter: SearchFilterData = SearchFilterData(),
+    val foodGrid: FoodGridData = FoodGridData(),
+    val cartSummary: CartSummaryData = CartSummaryData(),
+)
+

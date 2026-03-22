@@ -1,20 +1,45 @@
-# SmartPos API - FINAL LOCKED SPECIFICATION v1.0
+# SmartPos API - SPECIFICATION v1.1 (Updated)
 
-**Status:** 🔒 **LOCKED FOR IMPLEMENTATION**  
-**Date:** March 16, 2026  
-**Version:** 1.0  
+**Status:** ✅ **UPDATED WITH ENHANCEMENTS**  
+**Last Updated:** March 22, 2026  
+**Version:** 1.1  
 **Total Endpoints:** 28 (Core POS APIs)
+
+---
+
+## 🆕 What's New in v1.1 (March 22, 2026)
+
+### **Foods Endpoint Enhancements:**
+
+✅ **Added Query Parameters:**
+- `category` - Filter foods by category name
+- `sort` - Sort results (price:asc, price:desc, name:asc, name:desc)
+
+✅ **Added Response Fields:**
+- `image_url` - URL to food item image
+- `category` - Category name
+- `description` - Item description
+- `is_available` - Availability status
+
+✅ **Benefits:**
+- Better filtering for POS UI
+- Server-side sorting for performance
+- Richer item display
+- Availability tracking
+
+**All changes are backward compatible** - new fields are optional.
 
 ---
 
 ## 🎯 Executive Summary
 
-This is the **FINAL, LOCKED** API specification for SmartPos Restaurant Billing System.
+This is the **PRODUCTION-READY** API specification for SmartPos Restaurant Billing System.
 
 **What's Included:**
 - ✅ 28 production-ready REST API endpoints
 - ✅ All core POS functionality (menu, orders, billing, payments)
 - ✅ Batch operations for performance
+- ✅ Enhanced filtering and sorting
 - ✅ Industry best practices
 
 **Benefits:**
@@ -22,6 +47,7 @@ This is the **FINAL, LOCKED** API specification for SmartPos Restaurant Billing 
 - ✅ Better performance (4.7× faster for batch operations)
 - ✅ Lower server costs (27% savings)
 - ✅ Production-ready and scalable
+- ✅ ODRfast UI compatible
 
 ---
 
@@ -40,13 +66,14 @@ This is the **FINAL, LOCKED** API specification for SmartPos Restaurant Billing 
 5.  PATCH  /api/v1/restaurants/{id}    # Update restaurant settings
 ```
 
-### 🍽️ Menu Management (5 endpoints)
+### 🍽️ Menu Management (6 endpoints - ENHANCED)
 ```
 6.  GET    /api/v1/menu/categories     # List menu categories
-7.  GET    /api/v1/menu/items          # List/search menu items
-8.  GET    /api/v1/menu/items/{id}     # Get single menu item
-9.  POST   /api/v1/menu/items          # Create menu item
-10. PATCH  /api/v1/menu/items/{id}     # Update menu item (single/bulk/availability)
+7.  GET    /api/v1/foods               # 🆕 Simplified foods list (with category filter & sort)
+8.  GET    /api/v1/menu/items          # Full menu items (detailed)
+9.  GET    /api/v1/menu/items/{id}     # Get single menu item
+10. POST   /api/v1/menu/items          # Create menu item
+11. PATCH  /api/v1/menu/items/{id}     # Update menu item
 ```
 
 ### 🪑 Table Management (3 endpoints)
@@ -296,7 +323,67 @@ Response (200):
 }
 ```
 
-### 7. List/Search Menu Items
+### 7. List/Search Menu Items (Simplified - Foods Endpoint)
+```http
+GET /api/v1/foods
+
+Query Parameters:
+?offset=0                    # Starting position (default: 0)
+?limit=20                    # Items per page (default: 20)
+?category=Main Course        # ✅ NEW: Filter by category name
+?sort=price:asc             # ✅ NEW: Sort (price:asc, price:desc, name:asc, name:desc)
+?search=chicken             # Search by name
+
+Response (200):
+{
+  "data": [
+    {
+      "id": 101,
+      "name": "Butter Chicken",
+      "price": 350.00,
+      "restroId": 1,
+      "image_url": "https://cdn.smartpos.com/items/butter-chicken.png",  // ✅ NEW
+      "category": "Main Course",                                          // ✅ NEW
+      "description": "Creamy tomato-based chicken curry",                // ✅ NEW
+      "is_available": true                                                // ✅ NEW
+    },
+    {
+      "id": 102,
+      "name": "Paneer Tikka",
+      "price": 250.00,
+      "restroId": 1,
+      "image_url": "https://cdn.smartpos.com/items/paneer-tikka.png",
+      "category": "Appetizers",
+      "description": "Grilled cottage cheese with spices",
+      "is_available": true
+    }
+  ],
+  "current_page": 0,
+  "limit": 20,
+  "total": 156,
+  "has_more": true
+}
+```
+
+**Important Notes for Backend:**
+- ✅ **New Fields Added:** `image_url`, `category`, `description`, `is_available`
+- ✅ **New Query Params:** `category` (string), `sort` (string)
+- ✅ **Pagination:** Uses offset-based (not page-based)
+- ✅ **All new fields are optional** (null/default values OK for backward compatibility)
+
+**Sort Values:**
+- `price:asc` - Price low to high
+- `price:desc` - Price high to low
+- `name:asc` - Name A to Z
+- `name:desc` - Name Z to A
+
+**Category Filter:**
+- Exact match on category name (e.g., "Main Course", "Appetizers", "Beverages")
+- Case-sensitive or case-insensitive (recommend case-insensitive)
+
+---
+
+### 7b. Full Menu Items (Detailed - For Admin Panel)
 ```http
 GET /api/v1/menu/items
 

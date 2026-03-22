@@ -21,12 +21,16 @@ interface FoodApiService {
      *
      * @param offset Starting position (default: 0)
      * @param limit Items per page (default: 20)
+     * @param category Optional category filter (e.g., "Main Course", "Beverages")
+     * @param sort Optional sort parameter (e.g., "price:asc", "price:desc", "name:asc")
      * @return Paginated response with food items and metadata
      */
     @GET("foods")
     suspend fun getFoods(
         @Query("offset") offset: Int = 0,
         @Query("limit") limit: Int = 20,
+        @Query("category") category: String? = null,
+        @Query("sort") sort: String? = null,
     ): PaginatedResponseDto<FoodDto>
 
     /**

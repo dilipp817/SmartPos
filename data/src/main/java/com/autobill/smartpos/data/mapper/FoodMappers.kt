@@ -9,6 +9,10 @@ fun FoodDto.toEntity(): FoodEntity = FoodEntity(
     name = name,
     price = price,
     restaurantId = restaurantId,
+    imageUrl = imageUrl,
+    category = category,
+    description = description,
+    isAvailable = isAvailable,
 )
 
 fun FoodEntity.toDomain(): Food = Food(
@@ -16,4 +20,8 @@ fun FoodEntity.toDomain(): Food = Food(
     name = name,
     price = price,
     restaurantId = restaurantId,
+    imageUrl = imageUrl,
+    category = category,
+    description = description,
+    isAvailable = isAvailable,
 )
