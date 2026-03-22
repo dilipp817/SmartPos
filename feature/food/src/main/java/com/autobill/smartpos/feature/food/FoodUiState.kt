@@ -2,9 +2,12 @@ package com.autobill.smartpos.feature.food
 
 import com.autobill.smartpos.domain.model.Food
 
-// UI State: Food Screen
-// Represents the complete state of the Food screen UI
-// All properties are immutable and copied when updated
+/**
+ * UI State: Food Screen
+ * Legacy state class - kept for reference
+ * New implementation uses UiState<List<Food>> from domain layer
+ * This demonstrates the transition to production-ready patterns
+ */
 data class FoodUiState(
     // List of foods to display
     val foods: List<Food> = emptyList(),

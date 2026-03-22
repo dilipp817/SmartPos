@@ -35,14 +35,14 @@ SmartPos is a production-ready restaurant billing and POS system built with mode
 
 ## 📚 Documentation
 
-**Complete documentation is in the [`docs/`](docs/) folder.**
+Quick reference for essential documentation:
 
 ### 🚀 Quick Links
 
-- **[📖 Documentation Index](docs/README.md)** - Start here!
-- **[🎯 Getting Started Guide](docs/setup/GETTING_STARTED.md)** - Setup & onboarding
-- **[📋 Decision Summary](docs/decisions/DECISION_SUMMARY.md)** - Key technical decisions
-- **[🔧 API Specification v1.0](docs/api/API_SPECIFICATION_v1.0.md)** - Complete API docs
+- **[🛠️ Setup & Architecture](ARCHITECTURE_SETUP.md)** - Project architecture, patterns, and setup guide
+- **[🗓️ Development Roadmap](DEVELOPMENT_ROADMAP.md)** - Upcoming phases and features  
+- **[🧪 API Decisions](docs/decisions/FINAL_28_API_DECISION.md)** - Key technical decisions
+- **[🔧 API Specification v1.0](docs/api/API_SPECIFICATION_v1.0.md)** - Complete API documentation
 
 ### 📁 Documentation Structure
 

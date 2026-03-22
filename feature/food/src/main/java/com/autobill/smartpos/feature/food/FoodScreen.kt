@@ -15,16 +15,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.autobill.smartpos.domain.model.Food
+import com.autobill.smartpos.domain.common.UiState
 import java.util.Locale
 
-// Composable: FoodRoute
-// Container composable for the Food feature
-// Creates ViewModel and observes state changes
+/**
+ * Composable: FoodRoute
+ * Container composable for the Food feature.
+ * Creates ViewModel and observes state changes.
+ */
 @Composable
 fun FoodRoute(
     modifier: Modifier = Modifier,
@@ -33,21 +37,24 @@ fun FoodRoute(
     val viewModel: FoodViewModel = viewModel()
 
     // Observe UI state and recompose on changes
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.foodsState.collectAsStateWithLifecycle()
 
     // Render the actual screen with current state
     FoodScreen(
         state = state,
-        onRetry = { viewModel.loadFoods(restaurantId = 1) },
+        onRetry = { viewModel.retryLoadFoods() },
         modifier = modifier,
     )
 }
 
-// Composable: FoodScreen
-// Main UI for displaying list of foods
+/**
+ * Composable: FoodScreen
+ * Main UI for displaying list of foods.
+ * Handles Loading, Success, Error, and Idle states.
+ */
 @Composable
 fun FoodScreen(
-    state: FoodUiState,
+    state: UiState<List<Food>>,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -63,32 +70,63 @@ fun FoodScreen(
             modifier = Modifier.padding(bottom = 12.dp),
         )
 
-        // Show loading indicator only when loading and no items exist
-        if (state.isLoading && state.foods.isEmpty()) {
-            CircularProgressIndicator()
-        }
-
-        // Show error message with retry button if error occurs
-        state.errorMessage?.let { message ->
-            Text(
-                text = message,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(bottom = 12.dp),
-            )
-            Button(onClick = onRetry) {
-                Text(text = "Retry")
+        // Handle different UI states
+        when (state) {
+            UiState.Idle -> {
+                Text("Ready to load foods")
             }
-        }
 
-        // Scrollable list of food items
-        // Uses LazyColumn for efficient rendering of large lists
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(vertical = 8.dp),
-        ) {
-            // Use food.id as key for optimized recomposition
-            items(items = state.foods, key = { food -> food.id }) { food ->
-                FoodCard(food = food)
+            UiState.Loading -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    CircularProgressIndicator()
+                    Text(
+                        text = "Loading foods...",
+                        modifier = Modifier.padding(top = 16.dp),
+                    )
+                }
+            }
+
+            is UiState.Success -> {
+                if (state.data.isEmpty()) {
+                    Text(
+                        text = "No foods available",
+                        modifier = Modifier.padding(top = 16.dp),
+                    )
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(vertical = 8.dp),
+                    ) {
+                        items(items = state.data, key = { food -> food.id }) { food ->
+                            FoodCard(food = food)
+                        }
+                    }
+                }
+            }
+
+            is UiState.Error -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(
+                        text = state.message,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(bottom = 16.dp),
+                    )
+                    Button(onClick = onRetry) {
+                        Text(text = "Retry")
+                    }
+                }
             }
         }
     }
