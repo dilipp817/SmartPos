@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -19,43 +20,56 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.autobill.smartpos.domain.model.Food
+import com.autobill.smartpos.domain.common.Pagination
 import com.autobill.smartpos.domain.common.UiState
+import com.autobill.smartpos.ui.components.InfiniteScrollHandler
 import java.util.Locale
 
 /**
  * Composable: FoodRoute
  * Container composable for the Food feature.
- * Creates ViewModel and observes state changes.
+ * Creates ViewModel and observes paginated state for infinite scroll.
  */
 @Composable
 fun FoodRoute(
     modifier: Modifier = Modifier,
 ) {
     // Create ViewModel instance using Hilt
-    val viewModel: FoodViewModel = viewModel()
+    val viewModel: FoodViewModel = hiltViewModel()
 
-    // Observe UI state and recompose on changes
-    val state by viewModel.foodsState.collectAsStateWithLifecycle()
+    // Observe paginated UI state with infinite scroll support
+    val paginatedState by viewModel.paginatedFoodsState.collectAsStateWithLifecycle()
+    val isLoadingMore by viewModel.isLoadingMore.collectAsStateWithLifecycle()
+
+    // Remember LazyListState for infinite scroll detection
+    val lazyListState = rememberLazyListState()
 
     // Render the actual screen with current state
     FoodScreen(
-        state = state,
-        onRetry = { viewModel.retryLoadFoods() },
+        state = paginatedState,
+        isLoadingMore = isLoadingMore,
+        lazyListState = lazyListState,
+        onRetry = { viewModel.retryLoadPaginatedFoods() },
+        onLoadMore = { viewModel.loadNextPage() },
         modifier = modifier,
     )
 }
 
 /**
  * Composable: FoodScreen
- * Main UI for displaying list of foods.
+ * Main UI for displaying paginated list of foods with infinite scroll.
  * Handles Loading, Success, Error, and Idle states.
+ * Auto-loads next page when user scrolls near bottom.
  */
 @Composable
 fun FoodScreen(
-    state: UiState<List<Food>>,
+    state: UiState<Pagination<Food>>,
+    isLoadingMore: Boolean,
+    lazyListState: androidx.compose.foundation.lazy.LazyListState,
     onRetry: () -> Unit,
+    onLoadMore: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -73,7 +87,7 @@ fun FoodScreen(
         // Handle different UI states
         when (state) {
             UiState.Idle -> {
-                Text("Ready to load foods")
+                Text("Loading foods...")
             }
 
             UiState.Loading -> {
@@ -93,21 +107,67 @@ fun FoodScreen(
             }
 
             is UiState.Success -> {
-                if (state.data.isEmpty()) {
+                val pagination = state.data
+                
+                if (pagination.data.isEmpty()) {
                     Text(
                         text = "No foods available",
                         modifier = Modifier.padding(top = 16.dp),
                     )
                 } else {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(vertical = 8.dp),
-                    ) {
-                        items(items = state.data, key = { food -> food.id }) { food ->
-                            FoodCard(food = food)
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        // Paginated food list with infinite scroll
+                        LazyColumn(
+                            modifier = Modifier.weight(1f),
+                            state = lazyListState,
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            contentPadding = PaddingValues(vertical = 8.dp),
+                        ) {
+                            items(
+                                items = pagination.data,
+                                key = { food -> food.id },
+                            ) { food ->
+                                FoodCard(food = food)
+                            }
                         }
+
+                        // Loading indicator for "load more"
+                        if (isLoadingMore) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier
+                                        .padding(8.dp),
+                                )
+                                Text(
+                                    text = "Loading more...",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    modifier = Modifier.padding(top = 8.dp),
+                                )
+                            }
+                        }
+
+                        // Pagination info
+                        Text(
+                            text = "Loaded ${pagination.data.size} of ${pagination.total}",
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                        )
                     }
                 }
+
+                // Detect scroll to bottom and load more
+                InfiniteScrollHandler(
+                    listState = lazyListState,
+                    threshold = 3,
+                    onLoadMore = onLoadMore,
+                )
             }
 
             is UiState.Error -> {
