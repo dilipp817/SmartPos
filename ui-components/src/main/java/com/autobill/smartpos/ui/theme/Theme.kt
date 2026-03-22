@@ -1,53 +1,68 @@
 package com.autobill.smartpos.ui.theme
 
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color as ComposeColor
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+/**
+ * SmartPos Light Color Scheme
+ * Restaurant-optimized colors for tablet devices
+ * Colors: Primary - FC8019 (Orange), Secondary - FFEBDB (Cream), Neutral - Black/Gray/White
+ */
+private val SmartPosLightColorScheme = lightColorScheme(
+    // Primary Brand Colors
+    primary = PrimaryBrand,                    // FC8019 - Main action color
+    onPrimary = White,                         // Text on primary
+    primaryContainer = PrimaryLight,           // Light orange backgrounds
+    onPrimaryContainer = Black,                // Text on primary container
+
+    // Secondary Colors
+    secondary = SecondaryBrand,                // FFEBDB - Cream
+    onSecondary = Black,                       // Text on secondary
+    secondaryContainer = SecondaryLight,       // Very light cream
+    onSecondaryContainer = Black,              // Text on secondary container
+
+    // Tertiary Colors
+    tertiary = PrimaryBrand,                   // Same as primary for consistency
+    onTertiary = White,
+    tertiaryContainer = PrimaryLight,
+    onTertiaryContainer = Black,
+
+    // Surface & Background
+    surface = SurfacePrimary,                  // Pure white - main surfaces
+    onSurface = Black,                         // Black text on surfaces
+    surfaceVariant = SurfaceSecondary,         // Light gray - alternate surfaces
+    onSurfaceVariant = Gray600,                // Dark gray text
+
+    // Background
+    background = SurfacePrimary,               // White background
+    onBackground = Black,                      // Black text on background
+
+    // Error States
+    error = Error,                             // Red for errors
+    onError = White,                           // White text on error
+    errorContainer = ComposeColor(0xFFFFDAD6),        // Light red background
+    onErrorContainer = Error,                  // Red text on error container
+
+    // Outline & Borders
+    outline = ComposeColor(0xFFDDDDDD),                         // Light gray - borders
+    outlineVariant = ComposeColor(0xFFEAEAEA),                  // Very light gray - subtle dividers
+    
+    // Scrim & Overlay
+    scrim = ComposeColor(0xFF000000).copy(alpha = 0.54f)          // Dark overlay
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
-)
-
+/**
+ * SmartPos Theme
+ * Tablet-first restaurant POS system
+ * Light theme optimized for daytime restaurant environment
+ */
 @Composable
 fun SmartPosTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    val colorScheme = SmartPosLightColorScheme
 
     MaterialTheme(
         colorScheme = colorScheme,
