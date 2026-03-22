@@ -1,13 +1,12 @@
 // Core module - shared utilities and common classes
 plugins {
     alias(libs.plugins.android.library)
+    kotlin("android")
 }
 
 android {
     namespace = "com.autobill.smartpos.core"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 24
@@ -16,6 +15,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+    kotlinOptions {
+        jvmTarget = "11"
     }
 }
 

@@ -1,14 +1,11 @@
 package com.autobill.smartpos
 
 import android.app.Application
-import com.autobill.smartpos.di.AppContainer
+import dagger.hilt.android.HiltAndroidApp
 
-// Application class - Entry point for the application
-// Initializes the DI container lazily on first access
-class SmartPosApp : Application() {
-    // Lazy initialization of AppContainer
-    // Container is created only when first accessed
-    val appContainer: AppContainer by lazy {
-        AppContainer(applicationContext)
-    }
-}
+/**
+ * Application class for SmartPos
+ * Initializes Hilt dependency injection framework
+ */
+@HiltAndroidApp
+class SmartPosApp : Application()

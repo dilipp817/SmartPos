@@ -17,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.autobill.smartpos.domain.model.Food
@@ -28,11 +27,10 @@ import java.util.Locale
 // Creates ViewModel and observes state changes
 @Composable
 fun FoodRoute(
-    viewModelFactory: ViewModelProvider.Factory,
     modifier: Modifier = Modifier,
 ) {
-    // Create ViewModel instance using the provided factory
-    val viewModel: FoodViewModel = viewModel(factory = viewModelFactory)
+    // Create ViewModel instance using Hilt
+    val viewModel: FoodViewModel = viewModel()
 
     // Observe UI state and recompose on changes
     val state by viewModel.uiState.collectAsStateWithLifecycle()

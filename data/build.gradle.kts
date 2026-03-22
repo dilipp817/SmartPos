@@ -1,14 +1,14 @@
 // Data module - data sources, repositories, and DI
 plugins {
     alias(libs.plugins.android.library)
+    kotlin("android")
     alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt.android)
 }
 
 android {
     namespace = "com.autobill.smartpos.data"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 24
@@ -16,7 +16,7 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "BASE_URL", "\"https://192.168.1.8:8443/\"")
+            buildConfigField("String", "BASE_URL", "\"https://192.168.1.7:8443/\"")
         }
         release {
             buildConfigField("String", "BASE_URL", "\"https://your-production-server.com/\"")
@@ -30,6 +30,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+    kotlinOptions {
+        jvmTarget = "11"
     }
 }
 
@@ -48,6 +51,10 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.datastore.preferences)
+
+    // Hilt dependency injection
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
 
     ksp(libs.androidx.room.compiler)
     ksp(libs.moshi.kotlin.codegen)

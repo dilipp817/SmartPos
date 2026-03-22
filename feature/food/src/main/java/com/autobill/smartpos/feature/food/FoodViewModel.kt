@@ -1,23 +1,27 @@
 package com.autobill.smartpos.feature.food
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.autobill.smartpos.domain.common.FoodResponse
 import com.autobill.smartpos.domain.usecase.GetFoodsUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 // ViewModel: Food Feature
 // Manages UI state for the Food screen
 // Handles data loading and state updates
-class FoodViewModel(
+// Uses Hilt for dependency injection
+@HiltViewModel
+class FoodViewModel @Inject constructor(
     private val getFoodsUseCase: GetFoodsUseCase,
 ) : ViewModel() {
+
 
     // Mutable state - internal use only
     private val _uiState = MutableStateFlow(FoodUiState())
@@ -64,16 +68,6 @@ class FoodViewModel(
             }
         }
     }
-
-    companion object {
-        // Factory for creating ViewModel with injected dependencies
-        fun provideFactory(getFoodsUseCase: GetFoodsUseCase): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return FoodViewModel(getFoodsUseCase) as T
-                }
-            }
-    }
 }
+
 

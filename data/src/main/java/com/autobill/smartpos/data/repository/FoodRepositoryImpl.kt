@@ -1,6 +1,7 @@
 package com.autobill.smartpos.data.repository
 
 import com.autobill.smartpos.domain.common.FoodResponse
+import com.autobill.smartpos.data.di.IoDispatcher
 import com.autobill.smartpos.data.local.dao.FoodDao
 import com.autobill.smartpos.data.mapper.toDomain
 import com.autobill.smartpos.data.mapper.toEntity
@@ -15,11 +16,12 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
-class FoodRepositoryImpl(
+class FoodRepositoryImpl @Inject constructor(
     private val apiService: FoodApiService,
     private val foodDao: FoodDao,
-    private val ioDispatcher: CoroutineDispatcher,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : FoodRepository {
 
     override fun getFoods(restaurantId: Int): Flow<FoodResponse<List<Food>>> = flow {
