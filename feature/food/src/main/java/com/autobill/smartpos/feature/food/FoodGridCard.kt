@@ -17,8 +17,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,18 +27,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+private val BrandOrange = Color(0xFFFC8019)
 
 /**
- * Food Grid Card Component - ODRfast Design
- * Horizontal layout with image left, text center, checkbox right
+ * Food Grid Card — ODRfast Design
+ * Horizontal layout: image | name+price | quantity controls
+ *
+ * Quantity = 0 → shows orange "+" button
+ * Quantity > 0 → shows "−  count  +" inline row
  */
 @Composable
 fun FoodGridCard(
     food: FoodItemUI,
-    onCardClick: () -> Unit,
-    onToggle: () -> Unit,
+    onAdd: () -> Unit,
+    onIncrease: () -> Unit,
+    onDecrease: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -46,36 +55,38 @@ fun FoodGridCard(
             .height(96.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(Color.White)
-            .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(12.dp))
-            .clickable(onClick = onCardClick)
+            .border(
+                width = if (food.quantity > 0) 1.5.dp else 1.dp,
+                color = if (food.quantity > 0) BrandOrange else Color(0xFFE0E0E0),
+                shape = RoundedCornerShape(12.dp),
+            )
+            .clickable(onClick = onAdd)
             .padding(12.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Left: Image (Square)
+        // Left: Image placeholder
         Box(
             modifier = Modifier
                 .size(72.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .background(Color(0xFFF5F5F5)),
+                .background(if (food.quantity > 0) Color(0xFFFFF3E0) else Color(0xFFF5F5F5)),
             contentAlignment = Alignment.Center,
         ) {
-            // Placeholder for image
             Text(
                 text = food.name.take(2).uppercase(),
                 style = MaterialTheme.typography.titleLarge,
-                color = Color(0xFFBDBDBD),
+                color = if (food.quantity > 0) BrandOrange else Color(0xFFBDBDBD),
             )
         }
 
-        // Center: Product Info
+        // Center: Name + price
         Column(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxHeight(),
             verticalArrangement = Arrangement.Center,
         ) {
-            // Product Name
             Text(
                 text = food.name,
                 style = MaterialTheme.typography.titleMedium,
@@ -83,42 +94,75 @@ fun FoodGridCard(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-
             Spacer(modifier = Modifier.height(4.dp))
-
-            // Price
             Text(
                 text = food.price,
                 style = MaterialTheme.typography.labelLarge,
-                color = Color(0xFF757575),
+                color = BrandOrange,
+                fontWeight = FontWeight.SemiBold,
             )
         }
 
-        // Right: Circular Checkbox
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .border(
-                    width = 2.dp,
-                    color = if (food.isSelected) Color(0xFF4CAF50) else Color(0xFFE0E0E0),
-                    shape = CircleShape,
+        // Right: Quantity controls
+        if (food.quantity > 0) {
+            // Inline counter: −  2  +
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                IconButton(
+                    onClick = onDecrease,
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFF5F5F5)),
+                ) {
+                    Text(
+                        text = "−",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF616161),
+                    )
+                }
+                Text(
+                    text = "${food.quantity}",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF212121),
+                    modifier = Modifier.width(20.dp),
                 )
-                .background(
-                    color = if (food.isSelected) Color(0xFF4CAF50) else Color.White,
-                )
-                .clickable(onClick = onToggle),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (food.isSelected) {
+                IconButton(
+                    onClick = onIncrease,
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .background(BrandOrange),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Increase",
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
+            }
+        } else {
+            // Add to cart button
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(BrandOrange)
+                    .clickable(onClick = onAdd),
+                contentAlignment = Alignment.Center,
+            ) {
                 Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = "Selected",
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add to cart",
                     tint = Color.White,
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(18.dp),
                 )
             }
         }
     }
 }
-

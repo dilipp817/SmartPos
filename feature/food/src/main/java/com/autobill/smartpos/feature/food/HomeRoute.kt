@@ -51,68 +51,76 @@ fun HomeRoute(
         return dateFormat.format(Date())
     }
 
-    // Helper function to find food by ID
-    fun findFoodById(foodId: String, foodList: List<com.autobill.smartpos.domain.model.Food>): com.autobill.smartpos.domain.model.Food? {
-        return foodList.find { it.id.toString() == foodId }
+    // Build CartSummaryData directly from CartItem list (no food-list lookup needed)
+    fun buildCartSummary(): CartSummaryData {
+        val cartItemsUI = cartItems.map { item ->
+            CartItemUI(
+                id = item.foodId.toString(),
+                name = item.foodName,
+                price = "₹${String.format(Locale.US, "%.2f", item.foodPrice)}",
+                quantity = item.quantity,
+                subtotal = "₹${String.format(Locale.US, "%.2f", item.subtotal)}",
+                imageUrl = item.imageUrl,
+            )
+        }
+        val subtotal = cartItems.sumOf { it.subtotal }
+        val tax = subtotal * 0.18
+        val total = subtotal + tax
+        return CartSummaryData(
+            invoice = InvoiceData(
+                invoiceNumber = "INV-${System.currentTimeMillis() % 100000}",
+                tableNumber = "T-01",
+                dateTime = getCurrentDateTime(),
+                onChangeInvoice = {},
+            ),
+            items = cartItemsUI,
+            itemCount = cartItems.sumOf { it.quantity },
+            subtotal = "₹${String.format(Locale.US, "%.2f", subtotal)}",
+            tax = "₹${String.format(Locale.US, "%.2f", tax)}",
+            discount = "₹0.00",
+            total = "₹${String.format(Locale.US, "%.2f", total)}",
+            onQuantityIncrease = { foodId -> viewModel.increaseQuantity(foodId) },
+            onQuantityDecrease = { foodId -> viewModel.decreaseQuantity(foodId) },
+            onAcceptPayment = onCheckoutClick,
+            onClear = { viewModel.clearCart() },
+            onReset = { viewModel.resetFilters() },
+            onPrint = {},
+        )
     }
 
-    // Helper function to calculate subtotal
-    fun calculateSubtotal(cartItemsList: List<CartItemUI>): Double {
-        return cartItemsList.sumOf { item ->
-            // Extract numeric value from price string "₹123.45"
-            item.price.removePrefix("₹").toDoubleOrNull()?.times(item.quantity) ?: 0.0
-        }
-    }
+    fun buildHeader() = HeaderData(
+        appTitle = "SmartPos",
+        businessName = "Best Business Pvt Ltd",
+        selectedTab = selectedTab,
+        onTabChange = { tab -> viewModel.switchTab(tab) },
+        onProfileClick = {},
+    )
+
+    fun buildSearchFilter() = SearchFilterData(
+        searchQuery = searchQuery,
+        categories = listOf(
+            CategoryUI("all", "All", 0),
+            CategoryUI("MAIN COURSE", "Main Course", 5),
+            CategoryUI("PIZZA", "Pizza", 4),
+            CategoryUI("STARTERS", "Starters", 4),
+            CategoryUI("DESSERTS", "Desserts", 4),
+            CategoryUI("BEVERAGES", "Beverages", 4),
+        ),
+        selectedCategoryId = selectedCategory,
+        sortOption = sortOption ?: "Sort by",
+        onSearchChange = { viewModel.updateSearchQuery(it) },
+        onCategorySelect = { viewModel.selectCategory(it) },
+        onSortClick = { showSortDialog = true },
+    )
 
     // Convert ViewModel state to NEW HomeScreenData (ODRfast design)
     val homeScreenData = when (paginatedState) {
         is UiState.Loading -> {
             HomeScreenData(
-                header = HeaderData(
-                    appTitle = "ODRfast",
-                    businessName = "Best business Pvt Ltd",
-                    selectedTab = OrderTab.OFFLINE,
-                    onTabChange = { /* TODO: Implement tab switching */ },
-                    onProfileClick = { /* TODO: Open profile menu */ },
-                ),
-                searchFilter = SearchFilterData(
-                    searchQuery = searchQuery,
-                    categories = emptyList(),
-                    sortOption = "Sort by",
-                    onSearchChange = { query -> viewModel.updateSearchQuery(query) },
-                    onCategorySelect = { categoryId -> viewModel.selectCategory(categoryId) },
-                    onSortClick = { showSortDialog = true },
-                ),
-                foodGrid = FoodGridData(
-                    items = emptyList(),
-                    isLoading = true,
-                    isLoadingMore = false,
-                    hasError = false,
-                    canLoadMore = false,
-                    onLoadMore = { viewModel.loadNextPage() },
-                    onFoodClick = onFoodClick,
-                    onFoodToggle = { foodId -> viewModel.toggleFoodSelection(foodId) },
-                ),
-                cartSummary = CartSummaryData(
-                    invoice = InvoiceData(
-                        invoiceNumber = "KKB6266629",
-                        tableNumber = "23",
-                        dateTime = getCurrentDateTime(),
-                        onChangeInvoice = { /* TODO: Open invoice dialog */ },
-                    ),
-                    items = emptyList(),
-                    itemCount = 0,
-                    subtotal = "₹0.00",
-                    tax = "₹0.00",
-                    discount = "₹0.00",
-                    total = "₹0.00",
-                    onQuantityIncrease = { foodId -> viewModel.increaseQuantity(foodId) },
-                    onQuantityDecrease = { foodId -> viewModel.decreaseQuantity(foodId) },
-                    onAcceptPayment = onCheckoutClick,
-                    onClear = { viewModel.clearCart() },
-                    onReset = { viewModel.resetFilters() },
-                    onPrint = { /* TODO: Print receipt */ },
-                ),
+                header = buildHeader(),
+                searchFilter = buildSearchFilter(),
+                foodGrid = FoodGridData(isLoading = true),
+                cartSummary = buildCartSummary(),
             )
         }
 
@@ -120,111 +128,35 @@ fun HomeRoute(
             val pagination = (paginatedState as UiState.Success).data
             val foodList = pagination.data
 
-            // ✅ Map cart items to CartItemUI with real data
-            val cartItemsList = cartItems.map { (foodId, quantity) ->
-                val food = findFoodById(foodId, foodList)
-                if (food != null) {
-                    CartItemUI(
-                        id = foodId,
-                        name = food.name,
-                        price = "₹${String.format(Locale.US, "%.2f", food.price)}",
-                        quantity = quantity,
-                        subtotal = "₹${String.format(Locale.US, "%.2f", food.price * quantity)}",
-                        imageUrl = food.imageUrl,
-                    )
-                } else {
-                    // Fallback if food not found in current list
-                    CartItemUI(
-                        id = foodId,
-                        name = "Item #$foodId",
-                        price = "₹0.00",
-                        quantity = quantity,
-                        subtotal = "₹0.00",
-                    )
-                }
-            }
-
-            // ✅ Calculate totals from cart
-            val subtotal = calculateSubtotal(cartItemsList)
-            val tax = subtotal * 0.18 // 18% GST
-            val discount = 0.0 // TODO: Implement discount logic
-            val total = subtotal + tax - discount
-
             HomeScreenData(
-                header = HeaderData(
-                    appTitle = "ODRfast",
-                    businessName = "Best business Pvt Ltd",
-                    selectedTab = selectedTab, // ✅ Use real tab state
-                    onTabChange = { tab -> viewModel.switchTab(tab) }, // ✅ Wired
-                    onProfileClick = {
-                        // TODO: Open profile menu
-                        println("Profile clicked")
-                    },
-                ),
-                searchFilter = SearchFilterData(
-                    searchQuery = searchQuery, // ✅ Use real search state
-                    categories = listOf(
-                        CategoryUI("all", "All Category", pagination.total),
-                        CategoryUI("main", "Main Course", 12),
-                        CategoryUI("bev", "Beverages", 8),
-                        CategoryUI("dessert", "Desserts", 6),
-                        // TODO: Get real categories from API
-                    ),
-                    selectedCategoryId = selectedCategory, // ✅ Use real category state
-                    sortOption = "Sort by",
-                    onSearchChange = { query -> viewModel.updateSearchQuery(query) }, // ✅ Wired
-                    onCategorySelect = { categoryId -> viewModel.selectCategory(categoryId) }, // ✅ Wired
-                    onSortClick = { showSortDialog = true }, // ✅ Wired to show dialog
-                ),
+                header = buildHeader(),
+                searchFilter = buildSearchFilter(),
                 foodGrid = FoodGridData(
                     items = pagination.data.map { food ->
+                        val qty = viewModel.getCartQuantity(food.id)
                         FoodItemUI(
                             id = food.id.toString(),
                             name = food.name,
                             price = "₹${String.format(Locale.US, "%.2f", food.price)}",
                             restaurantId = food.restaurantId.toString(),
-                            categoryName = food.category ?: "MAIN COURSE", // ✅ Use real category
+                            categoryName = food.category,
                             description = food.description,
                             imageUrl = food.imageUrl,
                             isAvailable = food.isAvailable,
-                            isSelected = viewModel.isInCart(food.id.toString()), // ✅ Check cart state
-                            rating = null,
+                            isSelected = qty > 0,
+                            quantity = qty,
                         )
                     },
                     isLoading = false,
                     isLoadingMore = isLoadingMore,
-                    hasError = false,
                     canLoadMore = pagination.hasMore,
                     onLoadMore = { viewModel.loadNextPage() },
                     onFoodClick = onFoodClick,
-                    onFoodToggle = { foodId -> viewModel.toggleFoodSelection(foodId) }, // ✅ Wired
+                    onFoodAdd = { foodId -> viewModel.addToCart(foodId) },
+                    onFoodIncrease = { foodId -> viewModel.increaseQuantity(foodId) },
+                    onFoodDecrease = { foodId -> viewModel.decreaseQuantity(foodId) },
                 ),
-                cartSummary = CartSummaryData(
-                    invoice = InvoiceData(
-                        invoiceNumber = "KKB6266629",
-                        tableNumber = "23",
-                        dateTime = getCurrentDateTime(),
-                        onChangeInvoice = {
-                            // TODO: Open change invoice dialog
-                            println("Change invoice clicked")
-                        },
-                    ),
-                    items = cartItemsList, // ✅ Real cart items
-                    itemCount = cartItems.size,
-                    subtotal = "₹${String.format(Locale.US, "%.2f", subtotal)}",
-                    tax = "₹${String.format(Locale.US, "%.2f", tax)}",
-                    discount = "₹${String.format(Locale.US, "%.2f", discount)}",
-                    total = "₹${String.format(Locale.US, "%.2f", total)}",
-                    onQuantityIncrease = { foodId -> viewModel.increaseQuantity(foodId) }, // ✅ Wired
-                    onQuantityDecrease = { foodId -> viewModel.decreaseQuantity(foodId) }, // ✅ Wired
-                    onAcceptPayment = onCheckoutClick,
-                    onClear = { viewModel.clearCart() }, // ✅ Wired
-                    onReset = { viewModel.resetFilters() }, // ✅ Wired
-                    onPrint = {
-                        // TODO: Print receipt
-                        println("Print receipt")
-                    },
-                ),
+                cartSummary = buildCartSummary(),
             )
         }
 
@@ -232,88 +164,30 @@ fun HomeRoute(
             val errorMessage = (paginatedState as UiState.Error).message
 
             HomeScreenData(
-                header = HeaderData(
-                    appTitle = "ODRfast",
-                    businessName = "Best business Pvt Ltd",
-                    selectedTab = OrderTab.OFFLINE,
-                    onTabChange = {},
-                    onProfileClick = {},
-                ),
-                searchFilter = SearchFilterData(
-                    searchQuery = "",
-                    categories = emptyList(),
-                    onSearchChange = {},
-                    onCategorySelect = {},
-                    onSortClick = { showSortDialog = true },
-                ),
+                header = buildHeader(),
+                searchFilter = buildSearchFilter(),
                 foodGrid = FoodGridData(
-                    items = emptyList(),
-                    isLoading = false,
-                    isLoadingMore = false,
                     hasError = true,
                     errorMessage = errorMessage,
-                    canLoadMore = false,
-                    onLoadMore = {},
-                    onFoodClick = onFoodClick,
-                    onFoodToggle = {},
+                    onFoodAdd = {},
+                    onFoodIncrease = {},
+                    onFoodDecrease = {},
                 ),
-                cartSummary = CartSummaryData(
-                    invoice = InvoiceData(
-                        invoiceNumber = "KKB6266629",
-                        tableNumber = "23",
-                        dateTime = getCurrentDateTime(),
-                    ),
-                    items = emptyList(),
-                    itemCount = 0,
-                    subtotal = "₹0.00",
-                    tax = "₹0.00",
-                    discount = "₹0.00",
-                    total = "₹0.00",
-                    onAcceptPayment = onCheckoutClick,
-                ),
+                cartSummary = buildCartSummary(),
             )
         }
 
         UiState.Idle -> {
             HomeScreenData(
-                header = HeaderData(
-                    appTitle = "ODRfast",
-                    businessName = "Best business Pvt Ltd",
-                    selectedTab = OrderTab.OFFLINE,
-                    onTabChange = {},
-                    onProfileClick = {},
-                ),
-                searchFilter = SearchFilterData(
-                    searchQuery = "",
-                    categories = emptyList(),
-                    onSearchChange = {},
-                    onCategorySelect = {},
-                    onSortClick = { showSortDialog = true },
-                ),
+                header = buildHeader(),
+                searchFilter = buildSearchFilter(),
                 foodGrid = FoodGridData(
-                    items = emptyList(),
-                    isLoading = false,
-                    isLoadingMore = false,
-                    hasError = false,
-                    canLoadMore = false,
                     onLoadMore = { viewModel.loadFirstPage() },
-                    onFoodClick = onFoodClick,
-                    onFoodToggle = {},
+                    onFoodAdd = {},
+                    onFoodIncrease = {},
+                    onFoodDecrease = {},
                 ),
-                cartSummary = CartSummaryData(
-                    invoice = InvoiceData(
-                        invoiceNumber = "KKB6266629",
-                        tableNumber = "23",
-                        dateTime = getCurrentDateTime(),
-                    ),
-                    items = emptyList(),
-                    itemCount = 0,
-                    subtotal = "₹0.00",
-                    tax = "₹0.00",
-                    discount = "₹0.00",
-                    total = "₹0.00",
-                    onAcceptPayment = onCheckoutClick,
-                ),
+                cartSummary = buildCartSummary(),
             )
         }
     }
@@ -336,4 +210,3 @@ fun HomeRoute(
         modifier = modifier,
     )
 }
-

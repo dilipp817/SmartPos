@@ -6,13 +6,21 @@ import com.autobill.smartpos.domain.common.Pagination
 import com.autobill.smartpos.domain.common.PaginationResult
 import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.common.UiState
+import com.autobill.smartpos.domain.model.CartItem
 import com.autobill.smartpos.domain.model.Food
+import com.autobill.smartpos.domain.usecase.AddToCartUseCase
+import com.autobill.smartpos.domain.usecase.ClearCartUseCase
+import com.autobill.smartpos.domain.usecase.DecreaseCartQuantityUseCase
+import com.autobill.smartpos.domain.usecase.GetCartUseCase
 import com.autobill.smartpos.domain.usecase.GetFoodsPaginatedUseCase
 import com.autobill.smartpos.domain.usecase.GetFoodsUseCase
+import com.autobill.smartpos.domain.usecase.IncreaseCartQuantityUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -28,50 +36,47 @@ import javax.inject.Inject
 class FoodViewModel @Inject constructor(
     private val getFoodsUseCase: GetFoodsUseCase,
     private val getFoodsPaginatedUseCase: GetFoodsPaginatedUseCase,
+    // Cart use cases
+    private val getCartUseCase: GetCartUseCase,
+    private val addToCartUseCase: AddToCartUseCase,
+    private val increaseCartQuantityUseCase: IncreaseCartQuantityUseCase,
+    private val decreaseCartQuantityUseCase: DecreaseCartQuantityUseCase,
+    private val clearCartUseCase: ClearCartUseCase,
 ) : ViewModel() {
 
-    // Mutable internal state for foods list (legacy non-paginated)
+    // ========== FOOD STATE ==========
+
     private val _foodsState = MutableStateFlow<UiState<List<Food>>>(UiState.Idle)
-    
-    // Public immutable state for foods
     val foodsState: StateFlow<UiState<List<Food>>> = _foodsState.asStateFlow()
 
-    // Mutable internal state for paginated foods (infinite scroll)
     private val _paginatedFoodsState = MutableStateFlow<UiState<Pagination<Food>>>(UiState.Idle)
-    
-    // Public immutable state for paginated foods
     val paginatedFoodsState: StateFlow<UiState<Pagination<Food>>> = _paginatedFoodsState.asStateFlow()
 
-    // Track if we're currently loading more
     private val _isLoadingMore = MutableStateFlow(false)
     val isLoadingMore: StateFlow<Boolean> = _isLoadingMore.asStateFlow()
 
-    // Current pagination state (for tracking offset and hasMore)
     private var currentPagination: Pagination<Food>? = null
 
-    // ========== CART STATE MANAGEMENT ==========
-    
-    // Cart items: Map of foodId to quantity
-    private val _cartItems = MutableStateFlow<Map<String, Int>>(emptyMap())
-    val cartItems: StateFlow<Map<String, Int>> = _cartItems.asStateFlow()
+    // ========== CART STATE (from repository — reactive) ==========
 
-    // Selected tab (Offline/Online)
+    /** Live cart items — sourced from CartRepository */
+    val cartItems: StateFlow<List<CartItem>> = getCartUseCase()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
+
+    // ========== FILTER STATE ==========
+
     private val _selectedTab = MutableStateFlow(OrderTab.OFFLINE)
     val selectedTab: StateFlow<OrderTab> = _selectedTab.asStateFlow()
 
-    // Search query
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    // Selected category filter
     private val _selectedCategory = MutableStateFlow<String?>(null)
     val selectedCategory: StateFlow<String?> = _selectedCategory.asStateFlow()
 
-    // Sort option
     private val _sortOption = MutableStateFlow<String?>(null)
     val sortOption: StateFlow<String?> = _sortOption.asStateFlow()
 
-    // Initialize with first page
     init {
         loadFirstPage()
     }
@@ -79,110 +84,53 @@ class FoodViewModel @Inject constructor(
     // ========== CART OPERATIONS ==========
 
     /**
-     * Toggle food selection (add/remove from cart)
+     * Add a food item to cart. Looks up from current paginated list.
+     * If food is already in cart, quantity is incremented by 1.
      */
-    fun toggleFoodSelection(foodId: String) {
-        _cartItems.update { currentCart ->
-            val newCart = currentCart.toMutableMap()
-            if (newCart.containsKey(foodId)) {
-                newCart.remove(foodId) // Remove if already in cart
-            } else {
-                newCart[foodId] = 1 // Add with quantity 1
-            }
-            newCart
-        }
+    fun addToCart(foodId: String) {
+        val food = currentPagination?.data?.find { it.id.toString() == foodId } ?: return
+        viewModelScope.launch { addToCartUseCase(food) }
     }
 
-    /**
-     * Increase quantity of item in cart
-     */
+    /** Increase quantity of a cart item by 1 */
     fun increaseQuantity(foodId: String) {
-        _cartItems.update { currentCart ->
-            val newCart = currentCart.toMutableMap()
-            val currentQty = newCart[foodId] ?: 0
-            newCart[foodId] = currentQty + 1
-            newCart
+        viewModelScope.launch {
+            increaseCartQuantityUseCase(foodId.toIntOrNull() ?: return@launch)
         }
     }
 
-    /**
-     * Decrease quantity of item in cart
-     * Removes item if quantity reaches 0
-     */
+    /** Decrease quantity by 1 — removes item from cart if quantity reaches 0 */
     fun decreaseQuantity(foodId: String) {
-        _cartItems.update { currentCart ->
-            val newCart = currentCart.toMutableMap()
-            val currentQty = newCart[foodId] ?: return@update currentCart
-            
-            if (currentQty > 1) {
-                newCart[foodId] = currentQty - 1
-            } else {
-                newCart.remove(foodId) // Remove if quantity becomes 0
-            }
-            newCart
+        viewModelScope.launch {
+            decreaseCartQuantityUseCase(foodId.toIntOrNull() ?: return@launch)
         }
     }
 
-    /**
-     * Clear entire cart
-     */
+    /** Remove all items from cart */
     fun clearCart() {
-        _cartItems.value = emptyMap()
+        viewModelScope.launch { clearCartUseCase() }
     }
 
-    /**
-     * Check if a food item is in cart
-     */
-    fun isInCart(foodId: String): Boolean {
-        return _cartItems.value.containsKey(foodId)
-    }
+    /** Get current quantity of a food item in cart (0 = not in cart) */
+    fun getCartQuantity(foodId: Int): Int =
+        cartItems.value.find { it.foodId == foodId }?.quantity ?: 0
 
-    /**
-     * Get quantity of a food item in cart
-     */
-    fun getQuantity(foodId: String): Int {
-        return _cartItems.value[foodId] ?: 0
-    }
+    // ========== FILTER OPERATIONS ==========
 
-    // ========== TAB & FILTER OPERATIONS ==========
+    fun switchTab(tab: OrderTab) { _selectedTab.value = tab }
 
-    /**
-     * Switch between Offline/Online tabs
-     */
-    fun switchTab(tab: OrderTab) {
-        _selectedTab.value = tab
-        // TODO: Reload data based on tab if needed
-    }
+    fun updateSearchQuery(query: String) { _searchQuery.value = query }
 
-    /**
-     * Update search query
-     */
-    fun updateSearchQuery(query: String) {
-        _searchQuery.value = query
-        // TODO: Trigger search API call
-    }
-
-    /**
-     * Select category filter
-     */
     fun selectCategory(categoryId: String?) {
         _selectedCategory.value = categoryId
-        // TODO: Reload data with category filter
         loadFirstPageWithFilters()
     }
 
-    /**
-     * Update sort option
-     */
     fun updateSortOption(sort: String?) {
         _sortOption.value = sort
-        // TODO: Reload data with sort
         loadFirstPageWithFilters()
     }
 
-    /**
-     * Reset all filters to default
-     */
     fun resetFilters() {
         _searchQuery.value = ""
         _selectedCategory.value = null
@@ -190,136 +138,82 @@ class FoodViewModel @Inject constructor(
         loadFirstPage()
     }
 
-    // ========== PAGINATION OPERATIONS ==========
+    // ========== PAGINATION ==========
 
-    /**
-     * Load first page with current filters
-     */
-    private fun loadFirstPageWithFilters() {
-        viewModelScope.launch {
-            _paginatedFoodsState.value = UiState.Loading
-            _isLoadingMore.value = false
-
-            // TODO: Pass category and sort to use case when backend is ready
-            val result = getFoodsPaginatedUseCase(
-                offset = 0,
-                limit = 20,
-                // category = _selectedCategory.value, // TODO: Uncomment when backend ready
-                // sort = _sortOption.value,           // TODO: Uncomment when backend ready
-            )
-            
-            when (result) {
-                is PaginationResult.Success -> {
-                    currentPagination = result.pagination
-                    _paginatedFoodsState.value = UiState.Success(result.pagination)
-                }
-                is PaginationResult.Failure -> {
-                    _paginatedFoodsState.value = UiState.Error(
-                        message = result.exception.message ?: "Failed to load foods",
-                        exception = result.exception
-                    )
-                }
-                PaginationResult.Loading -> {
-                    _paginatedFoodsState.value = UiState.Loading
-                }
-            }
-        }
-    }
-
-
-    /**
-     * Loads the first page of foods with pagination.
-     * This is called on init to populate the initial state.
-     */
     fun loadFirstPage() {
         viewModelScope.launch {
             _paginatedFoodsState.value = UiState.Loading
             _isLoadingMore.value = false
-
             val result = getFoodsPaginatedUseCase(offset = 0, limit = 20)
-            
-            when (result) {
-                is PaginationResult.Success -> {
-                    currentPagination = result.pagination
-                    _paginatedFoodsState.value = UiState.Success(result.pagination)
-                }
-                is PaginationResult.Failure -> {
-                    _paginatedFoodsState.value = UiState.Error(
-                        message = result.exception.message ?: "Failed to load foods",
-                        exception = result.exception
-                    )
-                }
-                PaginationResult.Loading -> {
-                    _paginatedFoodsState.value = UiState.Loading
-                }
-            }
+            handlePaginationResult(result, append = false)
         }
     }
 
-    /**
-     * Loads the next page of foods.
-     * Called by UI when scroll reaches near bottom.
-     * Appends new items to existing list.
-     */
-    fun loadNextPage() {
-        // Prevent duplicate requests and respect hasMore flag
-        if (_isLoadingMore.value) return
-        if (currentPagination == null || !currentPagination!!.canLoadMore) return
+    private fun loadFirstPageWithFilters() {
+        viewModelScope.launch {
+            _paginatedFoodsState.value = UiState.Loading
+            _isLoadingMore.value = false
+            val result = getFoodsPaginatedUseCase(
+                offset = 0,
+                limit = 20,
+                // category = _selectedCategory.value, // TODO: Uncomment when backend ready
+                // sort = _sortOption.value,
+            )
+            handlePaginationResult(result, append = false)
+        }
+    }
 
+    fun loadNextPage() {
+        if (_isLoadingMore.value) return
+        if (currentPagination?.canLoadMore != true) return
         viewModelScope.launch {
             _isLoadingMore.value = true
-
             try {
                 val nextOffset = currentPagination!!.offset + currentPagination!!.limit
                 val result = getFoodsPaginatedUseCase(offset = nextOffset, limit = 20)
-
-                when (result) {
-                    is PaginationResult.Success -> {
-                        val currentState = currentPagination
-                        if (currentState != null) {
-                            // Merge new page with existing data
-                            val mergedPagination = currentState.copy(
-                                data = currentState.data + result.pagination.data,
-                                currentPage = result.pagination.currentPage,
-                                hasMore = result.pagination.hasMore,
-                            )
-                            currentPagination = mergedPagination
-                            _paginatedFoodsState.value = UiState.Success(mergedPagination)
-                        }
-                    }
-                    is PaginationResult.Failure -> {
-                        // On error, keep existing data but show error
-                        _paginatedFoodsState.value = UiState.Error(
-                            message = result.exception.message ?: "Failed to load more foods",
-                            exception = result.exception
-                        )
-                    }
-                    PaginationResult.Loading -> {
-                        // Already showing loading indicator via isLoadingMore
-                    }
-                }
+                handlePaginationResult(result, append = true)
             } finally {
                 _isLoadingMore.value = false
             }
         }
     }
 
-    /**
-     * Legacy method: Loads foods from the use case without pagination.
-     * Kept for backward compatibility.
-     */
+    private fun handlePaginationResult(result: PaginationResult<Food>, append: Boolean) {
+        when (result) {
+            is PaginationResult.Success -> {
+                val newPagination = if (append && currentPagination != null) {
+                    currentPagination!!.copy(
+                        data = currentPagination!!.data + result.pagination.data,
+                        currentPage = result.pagination.currentPage,
+                        hasMore = result.pagination.hasMore,
+                    )
+                } else {
+                    result.pagination
+                }
+                currentPagination = newPagination
+                _paginatedFoodsState.value = UiState.Success(newPagination)
+            }
+            is PaginationResult.Failure -> {
+                _paginatedFoodsState.value = UiState.Error(
+                    message = result.exception.message ?: "Failed to load foods",
+                    exception = result.exception,
+                )
+            }
+            PaginationResult.Loading -> _paginatedFoodsState.value = UiState.Loading
+        }
+    }
+
+    // Legacy non-paginated load (kept for backward compat)
     fun loadFoods() {
         viewModelScope.launch {
             _foodsState.value = UiState.Loading
-
             val result = getFoodsUseCase()
-
             _foodsState.update {
                 when (result) {
                     is Result.Success -> UiState.Success(result.data)
                     is Result.Failure -> UiState.Error(
                         message = result.exception.message ?: "Failed to load foods",
-                        exception = result.exception
+                        exception = result.exception,
                     )
                     Result.Loading -> UiState.Loading
                 }
@@ -327,20 +221,6 @@ class FoodViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Retries loading foods
-     */
-    fun retryLoadFoods() {
-        loadFoods()
-    }
-
-    /**
-     * Retries loading paginated foods (first page)
-     */
-    fun retryLoadPaginatedFoods() {
-        loadFirstPage()
-    }
+    fun retryLoadFoods() = loadFoods()
+    fun retryLoadPaginatedFoods() = loadFirstPage()
 }
-
-
-

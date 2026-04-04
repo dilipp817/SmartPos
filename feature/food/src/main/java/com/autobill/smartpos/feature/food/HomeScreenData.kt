@@ -66,7 +66,8 @@ data class FoodItemUI(
     val description: String? = null,
     val imageUrl: String? = null,
     val isAvailable: Boolean = true,
-    val isSelected: Boolean = false,  // Selected state for checkbox
+    val isSelected: Boolean = false,  // true when quantity > 0
+    val quantity: Int = 0,            // Current quantity in cart (0 = not in cart)
     val rating: Float? = null,
 )
 
@@ -83,7 +84,9 @@ data class FoodGridData(
     val canLoadMore: Boolean = false,
     val onLoadMore: () -> Unit = {},
     val onFoodClick: (String) -> Unit = {},
-    val onFoodToggle: (String) -> Unit = {},  // Toggle selection (checkbox)
+    val onFoodAdd: (String) -> Unit = {},      // Add item to cart (or +1 if already present)
+    val onFoodIncrease: (String) -> Unit = {}, // Increase quantity of existing cart item
+    val onFoodDecrease: (String) -> Unit = {}, // Decrease quantity (removes if reaches 0)
 )
 
 /**

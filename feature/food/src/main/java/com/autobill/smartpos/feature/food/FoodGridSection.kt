@@ -108,8 +108,9 @@ fun FoodGridSection(
                     ) { food ->
                         FoodGridCard(
                             food = food,
-                            onCardClick = { data.onFoodClick(food.id) },
-                            onToggle = { data.onFoodToggle(food.id) },
+                            onAdd = { data.onFoodAdd(food.id) },
+                            onIncrease = { data.onFoodIncrease(food.id) },
+                            onDecrease = { data.onFoodDecrease(food.id) },
                         )
                     }
                 }
