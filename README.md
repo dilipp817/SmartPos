@@ -5,16 +5,17 @@
 ![Platform](https://img.shields.io/badge/Platform-Android-green)
 ![Language](https://img.shields.io/badge/Language-Kotlin-blue)
 ![Architecture](https://img.shields.io/badge/Architecture-Clean%20%2B%20Multi--Module-orange)
-![Status](https://img.shields.io/badge/Status-95%25%20Production%20Ready-brightgreen)
+![Build](https://img.shields.io/badge/Build-Passing-brightgreen)
 
 ---
 
-## 📚 **[📖 Complete Guide - Start Here](SMARTPOS_GUIDE.md)**
+## 📚 Documentation
 
-**Quick Links:**
-- [ODRfast Implementation](ODRFAST_IMPLEMENTATION.md) - UI redesign details
-- [Production Readiness Report](PRODUCTION_READINESS_REPORT.md) - Quality analysis
-- [Backend API Guide](docs/api/BACKEND_IMPLEMENTATION_GUIDE.md) - For backend team
+| File | Purpose |
+|------|---------|
+| [`README.md`](README.md) | Project overview (this file) |
+| [`DEVELOPMENT_ROADMAP.md`](DEVELOPMENT_ROADMAP.md) | Development phases, progress tracking, next steps |
+| [`docs/API_REFERENCE.md`](docs/API_REFERENCE.md) | Complete API documentation — all 28 endpoints |
 
 ---
 
@@ -24,53 +25,19 @@ SmartPos is a production-ready restaurant billing and POS system built with mode
 
 - **Platform:** Android (Kotlin + Jetpack Compose)
 - **Architecture:** Multi-module Clean Architecture
-- **Backend:** 28 RESTful API endpoints
+- **API:** 28 RESTful endpoints (approved & locked)
 - **Database:** Room (local) + Remote API
-- **DI:** Hilt/Dagger
-- **UI:** 100% Jetpack Compose
+- **DI:** Hilt
+- **UI:** 100% Jetpack Compose, tablet-first, landscape
 
 ### Key Features
 
-- 🍽️ **Menu Management** - Categories, items, variants, bulk operations
-- 🪑 **Table Management** - Floor plans, table status, assignments
-- 📋 **Order Management** - Create, modify, track orders in real-time
-- 🧾 **Billing** - Generate bills with discounts, taxes, tips
-- 💳 **Payments** - Cash, Card, UPI, split payments, refunds
-- 👥 **Customer Management** - Profiles, loyalty points, order history
-- 📊 **Analytics** - Sales reports, menu performance, insights
-- 🔄 **Real-time Sync** - WebSocket for live updates
-
----
-
-## 📚 Documentation
-
-Quick reference for essential documentation:
-
-### 🚀 Quick Links
-
-- **[🛠️ Setup & Architecture](ARCHITECTURE_SETUP.md)** - Project architecture, patterns, and setup guide
-- **[🗓️ Development Roadmap](DEVELOPMENT_ROADMAP.md)** - Upcoming phases and features  
-- **[🧪 API Decisions](docs/decisions/FINAL_28_API_DECISION.md)** - Key technical decisions
-- **[🔧 API Specification v1.0](docs/api/API_SPECIFICATION_v1.0.md)** - Complete API documentation
-
-### 📁 Documentation Structure
-
-```
-docs/
-├── README.md                          # Documentation index & navigation
-├── decisions/                         # Technical decision records
-│   ├── DECISION_SUMMARY.md           # Overview of all decisions
-│   ├── 01_API_DESIGN_DECISION.md     # Why 28 APIs, not 50+
-│   ├── 02_ARCHITECTURE_DECISION.md   # Multi-module setup
-│   └── 03_PERFORMANCE_ANALYSIS.md    # Load & cost analysis
-├── api/                              # API documentation
-│   ├── API_SPECIFICATION_v1.0.md     # ⭐ LOCKED API spec
-│   ├── API_QUICK_REFERENCE.md        # Quick examples
-│   └── API_COMPARISON.md             # Before/after analysis
-├── setup/                            # Setup & deployment
-│   └── GETTING_STARTED.md            # Quick start guide
-└── archive/                          # Archived documents
-```
+- 🍽️ **Menu Management** — Categories, items with pagination, search and filter
+- 🪑 **Table Management** — Table status, assignments, real-time availability
+- 📋 **Order Management** — Create, modify, track orders
+- 🧾 **Billing** — Auto bill generation with 18% GST (9% CGST + 9% SGST)
+- 💳 **Payments** — Cash, Card, UPI, Wallet with idempotency
+- 🔄 **Optimistic Locking** — Safe concurrent order/table updates
 
 ---
 
@@ -80,231 +47,109 @@ docs/
 
 ```
 SmartPos/
-├── app/                    # Main application module
-├── core/                   # Core utilities & common code
-├── data/                   # Data layer (Repository, DTOs, Entities)
-│   ├── local/             # Room database
-│   ├── remote/            # API communication
-│   ├── repository/        # Repository implementations
-│   └── mapper/            # Data mappers
-├── domain/                 # Domain layer (Business logic, Models)
-│   ├── model/             # Business models
-│   ├── repository/        # Repository interfaces
-│   └── usecase/           # Use cases
-├── feature/                # Feature modules
-│   └── food/              # Food menu feature
-└── ui-components/         # Shared UI components
+├── app/              # Application entry point, Hilt setup, navigation
+├── core/             # Shared utilities, constants, extensions
+├── data/             # Data layer — DTOs, Room entities, Retrofit, Repository impl, Mappers
+├── domain/           # Domain layer — Business models, Repository interfaces, Use cases
+├── feature/
+│   └── food/         # Home screen, food listing, cart summary, search/filter
+└── ui-components/    # Shared Compose components, Material 3 theme
 ```
-
-**Why Multi-Module?**
-- ✅ Clear separation of concerns
-- ✅ Parallel builds (faster compilation)
-- ✅ Easier testing
-- ✅ Reusable components
-- ✅ Team scalability
-
-[Read more about architecture decisions](docs/decisions/02_ARCHITECTURE_DECISION.md)
-
----
-
-## 🔧 API Overview
-
-### 28 RESTful Endpoints
-
-```
-🔐 Authentication:    3 endpoints
-🏢 Restaurant:        2 endpoints
-🍽️ Menu:             5 endpoints
-🪑 Tables:           3 endpoints
-📋 Orders:           5 endpoints
-🧾 Bills:            4 endpoints
-💳 Payments:         3 endpoints
-👥 Customers:        2 endpoints
-📊 Analytics:        1 endpoint
-```
-
-**Key Design Decisions:**
-- ✅ Optimized from 50+ to 28 endpoints (44% reduction)
-- ✅ Batch operations for 78% performance improvement
-- ✅ 27% cost savings on infrastructure
-- ✅ Industry best practices (Stripe, Shopify patterns)
-
-**Base URL:** `https://api.smartpos.com/v1`
-
-[📖 Full API Specification](docs/api/API_SPECIFICATION_v1.0.md) | [📝 Quick Reference](docs/api/API_QUICK_REFERENCE.md)
 
 ---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- JDK 11 or higher
 - Android Studio (latest stable)
-- Gradle 9.1.0+
+- JDK 17+
+- Android emulator or physical tablet (landscape preferred)
 
 ### Setup
 
 ```bash
-# Clone the repository
 git clone <repository-url>
 cd SmartPos
-
-# Open in Android Studio
-# File > Open > Select SmartPos directory
-
-# Build the project
 ./gradlew build
-
-# Run on device/emulator
 ./gradlew installDebug
 ```
 
-**Detailed setup guide:** [Getting Started](docs/setup/GETTING_STARTED.md)
+> **Note:** `localhost` from Android emulator is `10.0.2.2`.
+
+---
+
+## 🔧 API Overview
+
+**28 RESTful endpoints** — see [`docs/API_REFERENCE.md`](docs/API_REFERENCE.md) for full details.
+
+```
+🔐 Authentication:  3 endpoints  (login, me, validate)
+🏢 Restaurant:      2 endpoints  (get, update)
+🍽️ Foods:           5 endpoints  (list, search, get, list by restaurant, create)
+📂 Categories:      6 endpoints  (list, get, create, update, delete, foods by category)
+🪑 Tables:          9 endpoints  (CRUD + status filters + count)
+📋 Orders:         10 endpoints  (CRUD + status + search + generate-bill)
+🧾 Bills:           8 endpoints  (CRUD + paid/cancel + items)
+💳 Payments:        5 endpoints  (process, get, list, status, refund)
+```
+
+**Status:** ✅ API contract approved (100/100 review score) — April 4, 2026
 
 ---
 
 ## 🧪 Testing
 
 ```bash
-# Run unit tests
-./gradlew test
-
-# Run instrumented tests
-./gradlew connectedAndroidTest
-
-# Run lint
-./gradlew lint
-
-# Generate coverage report
-./gradlew jacocoTestReport
+./gradlew test                    # Unit tests
+./gradlew connectedAndroidTest    # Instrumented tests
+./gradlew lint                    # Lint check
 ```
 
 ---
 
 ## 📊 Project Status
 
-### Current Phase: Foundation ✅
+| Phase | Description | Status |
+|-------|-------------|--------|
+| Phase 0 | Multi-module setup, Hilt DI, Clean Architecture | ✅ Complete |
+| Phase 1 | Material 3 theme, UI component library | ✅ Complete |
+| Phase 2 | Feature screens (Food list done, Cart/Order pending) | 🔄 In Progress |
+| Phase 3 | Table management, Order history | ⏳ Pending |
+| Phase 4 | Auth, Settings, Backend integration | ⏳ Pending |
+| Phase 5 | Testing, performance, production release | ⏳ Pending |
 
-- [x] Multi-module architecture setup
-- [x] Domain models created
-- [x] Data models (DTOs, Entities)
-- [x] UI components library
-- [x] API specification locked
-- [ ] Backend API implementation (In Progress)
-- [ ] Feature screens implementation
-- [ ] Integration testing
-- [ ] Production deployment
-
-### Timeline
-
-| Phase | Duration | Status |
-|-------|----------|--------|
-| Phase 1: Core Setup | Week 1-2 | ✅ Complete |
-| Phase 2: API Development | Week 3-4 | 🔄 In Progress |
-| Phase 3: Features | Week 5-6 | ⏳ Pending |
-| Phase 4: Testing & Deploy | Week 7-8 | ⏳ Pending |
-
-**Target Launch:** April 2026
-
----
-
-## 🎯 Key Technical Decisions
-
-All major technical decisions are documented with rationale:
-
-1. **[API Design](docs/decisions/01_API_DESIGN_DECISION.md)** - Why 28 APIs
-   - 44% fewer endpoints (50+ → 28)
-   - 78% performance improvement
-   - 27% cost savings
-
-2. **[Architecture](docs/decisions/02_ARCHITECTURE_DECISION.md)** - Multi-module setup
-   - Clean separation of concerns
-   - Better testability
-   - Team scalability
-
-3. **[Performance](docs/decisions/03_PERFORMANCE_ANALYSIS.md)** - Load optimization
-   - Batch operations reduce load by 40-90%
-   - Atomic transactions
-   - Fewer database connections
-
-[📋 View All Decisions](docs/decisions/DECISION_SUMMARY.md)
+See [`DEVELOPMENT_ROADMAP.md`](DEVELOPMENT_ROADMAP.md) for detailed task breakdown.
 
 ---
 
 ## 🛠️ Technology Stack
 
-### Frontend (Android)
-- **Language:** Kotlin
-- **UI:** Jetpack Compose
-- **DI:** Hilt
-- **Async:** Coroutines + Flow
-- **Local DB:** Room
-- **Navigation:** Compose Navigation
-
-### Backend (API)
-- **Protocol:** REST
-- **Format:** JSON
-- **Auth:** JWT
-- **Real-time:** WebSocket
-
-### Architecture
-- **Pattern:** Clean Architecture
-- **Structure:** Multi-module
-- **Design:** MVVM with Use Cases
+| Layer | Technology |
+|-------|-----------|
+| Language | Kotlin |
+| UI | Jetpack Compose |
+| DI | Hilt |
+| Async | Coroutines + Flow |
+| Local DB | Room |
+| Network | Retrofit + OkHttp + Moshi |
+| Architecture | MVVM + Use Cases + Repository pattern |
+| Navigation | Compose Navigation |
 
 ---
 
-## 📝 Contributing
-
-### Commit Convention
+## 📝 Commit Convention
 
 ```
-feat: Add new feature
-fix: Fix bug
-docs: Update documentation
+feat:     New feature
+fix:      Bug fix
+docs:     Documentation update
 refactor: Code refactoring
-test: Add tests
-chore: Update dependencies
+test:     Add or update tests
+chore:    Dependencies, build config
 ```
-
-### Workflow
-
-1. Create feature branch from `develop`
-2. Make changes and write tests
-3. Ensure build passes: `./gradlew build`
-4. Create pull request
-
----
-
-## 📖 Additional Resources
-
-### Internal
-- [Architecture Details](docs/architecture/)
-- [API Examples](docs/api/API_QUICK_REFERENCE.md)
-- [Setup Guide](docs/setup/GETTING_STARTED.md)
-
-### External
-- [Kotlin Docs](https://kotlinlang.org/docs/home.html)
-- [Jetpack Compose](https://developer.android.com/jetpack/compose)
-- [Android Architecture](https://developer.android.com/topic/architecture)
-
----
-
-## 📞 Support
-
-- **Documentation:** Check [docs/](docs/) folder
-- **Issues:** Create GitHub issue
-- **Questions:** Team chat
-
----
-
-## 📄 License
-
-[Add your license here]
 
 ---
 
 **Built with ❤️ using Kotlin & Jetpack Compose**
 
-- `localhost` from Android emulator is `10.0.2.2`.
-- If your HTTPS cert is self-signed, configure trusted certs for debug builds.
+```
