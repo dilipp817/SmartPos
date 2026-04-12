@@ -7,9 +7,11 @@ import com.autobill.smartpos.data.mapper.toEntity
 import com.autobill.smartpos.data.remote.TableApiService
 import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.model.Table
+import com.autobill.smartpos.domain.model.TableStatus
 import com.autobill.smartpos.domain.repository.TableRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import retrofit2.HttpException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -95,5 +97,55 @@ class TableRepositoryImpl @Inject constructor(
                 Result.Success(tableDao.countAvailableTables(restaurantId))
             }
         }
+
+    /**
+     * PATCH …/tables/{id}/status?newStatus=CLEANING
+     *
+     * Optimistic locking strategy:
+     *  1. Attempt the PATCH.
+     *  2. On 409 CONFLICT — the server's version has changed (another actor updated the table).
+     *     Re-fetch the table to get the current state, then retry the PATCH once.
+     *  3. Any other error → propagate as [Result.Failure].
+     *  4. On success → upsert the returned DTO into the local cache so the grid reflects
+     *     the change immediately without a full reload.
+     */
+    override suspend fun updateTableStatus(
+        restaurantId: Long,
+        tableId: Long,
+        newStatus: TableStatus,
+    ): Result<Table> = withContext(ioDispatcher) {
+        suspend fun patch(): Result<Table> {
+            val response = apiService.updateTableStatus(restaurantId, tableId, newStatus.value)
+            val dto = checkNotNull(response.data) {
+                response.message ?: "Failed to update table status"
+            }
+            tableDao.upsertAll(listOf(dto.toEntity()))
+            return Result.Success(dto.toDomain())
+        }
+
+        try {
+            patch()
+        } catch (e: HttpException) {
+            if (e.code() == 409) {
+                // 409 CONFLICT — re-fetch to get latest state, then retry once
+                try {
+                    // Refresh local cache with current server state
+                    val refreshResponse = apiService.getTableById(restaurantId, tableId)
+                    val refreshedDto = checkNotNull(refreshResponse.data) {
+                        "Table $tableId not found during 409 recovery"
+                    }
+                    tableDao.upsertAll(listOf(refreshedDto.toEntity()))
+                    // Retry the status update with the refreshed state
+                    patch()
+                } catch (retryEx: Exception) {
+                    Result.Failure(retryEx)
+                }
+            } else {
+                Result.Failure(e)
+            }
+        } catch (e: Exception) {
+            Result.Failure(e)
+        }
+    }
 }
 

@@ -29,6 +29,10 @@ interface TableDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(tables: List<TableEntity>)
 
+    /** Optimistically update status in cache — called immediately before/after PATCH. */
+    @Query("UPDATE tables SET status = :newStatus WHERE id = :tableId")
+    suspend fun updateTableStatusLocally(tableId: Long, newStatus: String)
+
     /** Remove stale data for a restaurant before re-inserting fresh data. */
     @Query("DELETE FROM tables WHERE restaurantId = :restaurantId")
     suspend fun deleteAllByRestaurant(restaurantId: Long)

@@ -6,12 +6,16 @@ import com.autobill.smartpos.domain.model.TableStatus
 /**
  * UI state for the Table List screen.
  *
- * [tables]         — list shown in the grid (filtered by [selectedFilter])
- * [availableCount] — number shown in the header badge
- * [selectedFilter] — active tab: ALL / AVAILABLE / OCCUPIED
- * [isLoading]      — skeleton shown while fetching
- * [isRefreshing]   — pull-to-refresh spinner (tables already visible, just refreshing)
- * [errorMessage]   — non-null when the last fetch failed and cache is empty
+ * [tables]               — list shown in the grid (filtered by [selectedFilter])
+ * [availableCount]       — number shown in the header badge
+ * [selectedFilter]       — active tab: ALL / AVAILABLE / OCCUPIED
+ * [isLoading]            — skeleton shown while fetching
+ * [isRefreshing]         — pull-to-refresh spinner (tables already visible, just refreshing)
+ * [errorMessage]         — non-null when the last fetch failed and cache is empty
+ * [statusUpdateDialog]   — non-null → show the status-change dialog for that table
+ * [isUpdatingStatus]     — true while the PATCH request is in flight
+ * [statusUpdateError]    — non-null when the PATCH failed; shown in a snackbar
+ * [statusUpdateSuccess]  — one-shot true after a successful PATCH; consumed by the screen
  */
 data class TableUiState(
     val tables: List<Table> = emptyList(),
@@ -20,6 +24,22 @@ data class TableUiState(
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
     val errorMessage: String? = null,
+    // ── Status update ────────────────────────────────────────────────────────
+    val statusUpdateDialog: StatusUpdateDialogState? = null,
+    val isUpdatingStatus: Boolean = false,
+    val statusUpdateError: String? = null,
+    val statusUpdateSuccess: Boolean = false,
+)
+
+/**
+ * Carries the data needed to render the status-update dialog.
+ *
+ * [table]               — the table being changed
+ * [availableTransitions] — statuses the user is allowed to switch to from [table.status]
+ */
+data class StatusUpdateDialogState(
+    val table: Table,
+    val availableTransitions: List<TableStatus>,
 )
 
 /**
@@ -30,6 +50,24 @@ enum class TableFilter(val label: String) {
     ALL("All Tables"),
     AVAILABLE("Available"),
     OCCUPIED("Occupied"),
+}
+
+/**
+ * Business rules: valid status transitions for a table.
+ * Enforced client-side for UX (server enforces its own rules independently).
+ *
+ * AVAILABLE   → RESERVED, MAINTENANCE
+ * OCCUPIED    → CLEANING, MAINTENANCE
+ * RESERVED    → AVAILABLE, OCCUPIED
+ * CLEANING    → AVAILABLE, MAINTENANCE
+ * MAINTENANCE → AVAILABLE
+ */
+fun TableStatus.allowedTransitions(): List<TableStatus> = when (this) {
+    TableStatus.AVAILABLE   -> listOf(TableStatus.RESERVED, TableStatus.MAINTENANCE)
+    TableStatus.OCCUPIED    -> listOf(TableStatus.CLEANING, TableStatus.MAINTENANCE)
+    TableStatus.RESERVED    -> listOf(TableStatus.AVAILABLE, TableStatus.OCCUPIED)
+    TableStatus.CLEANING    -> listOf(TableStatus.AVAILABLE, TableStatus.MAINTENANCE)
+    TableStatus.MAINTENANCE -> listOf(TableStatus.AVAILABLE)
 }
 
 /** Colour tokens for each [TableStatus] — used by [TableGridCard]. */
@@ -48,4 +86,6 @@ fun TableStatus.contentColor(): Long = when (this) {
     TableStatus.CLEANING    -> 0xFF1565C0  // blue-800
     TableStatus.MAINTENANCE -> 0xFF6A1B9A  // purple-800
 }
+
+
 

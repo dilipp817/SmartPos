@@ -3,11 +3,14 @@ package com.autobill.smartpos.feature.table
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.autobill.smartpos.domain.common.Result
+import com.autobill.smartpos.domain.model.Table
+import com.autobill.smartpos.domain.model.TableStatus
 import com.autobill.smartpos.domain.usecase.GetAvailableTableCountUseCase
 import com.autobill.smartpos.domain.usecase.GetAvailableTablesUseCase
 import com.autobill.smartpos.domain.usecase.GetOccupiedTablesUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
 import com.autobill.smartpos.domain.usecase.GetTablesUseCase
+import com.autobill.smartpos.domain.usecase.UpdateTableStatusUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,6 +36,7 @@ class TableViewModel @Inject constructor(
     private val getOccupiedTablesUseCase: GetOccupiedTablesUseCase,
     private val getAvailableTableCountUseCase: GetAvailableTableCountUseCase,
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
+    private val updateTableStatusUseCase: UpdateTableStatusUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TableUiState())
@@ -68,6 +72,88 @@ class TableViewModel @Inject constructor(
     fun refresh() {
         _uiState.update { it.copy(isRefreshing = true, errorMessage = null) }
         viewModelScope.launch { loadAll(refreshing = true) }
+    }
+
+    // ── Status update dialog ─────────────────────────────────────────────────
+
+    /**
+     * Open the status-change dialog for [table].
+     * Tapping a non-AVAILABLE card in the grid calls this.
+     */
+    fun showStatusUpdateDialog(table: Table) {
+        val transitions = table.status.allowedTransitions()
+        if (transitions.isEmpty()) return  // no valid moves — don't show an empty dialog
+        _uiState.update {
+            it.copy(
+                statusUpdateDialog = StatusUpdateDialogState(
+                    table = table,
+                    availableTransitions = transitions,
+                ),
+                statusUpdateError = null,
+            )
+        }
+    }
+
+    /** Dismiss the dialog without making any change. */
+    fun dismissStatusUpdateDialog() {
+        _uiState.update { it.copy(statusUpdateDialog = null, statusUpdateError = null) }
+    }
+
+    /**
+     * Execute the status PATCH for [table] → [newStatus].
+     *
+     * Flow:
+     *  1. Optimistically update the table in the local list so the grid is instantly responsive.
+     *  2. Call [UpdateTableStatusUseCase] (handles 409 retry internally).
+     *  3. On success → replace the local row with the server-confirmed data + dismiss dialog.
+     *  4. On failure → roll back the optimistic update + show error in dialog.
+     */
+    fun confirmStatusUpdate(table: Table, newStatus: TableStatus) {
+        val rid = restaurantId ?: return
+        _uiState.update { it.copy(isUpdatingStatus = true, statusUpdateError = null) }
+
+        // Optimistic update: immediately reflect the change in the grid
+        val optimisticTable = table.copy(status = newStatus)
+        _uiState.update { state ->
+            state.copy(tables = state.tables.map { if (it.id == table.id) optimisticTable else it })
+        }
+
+        viewModelScope.launch {
+            when (val result = updateTableStatusUseCase(rid, table.id, newStatus)) {
+                is Result.Success -> {
+                    // Replace optimistic row with server-confirmed data
+                    val confirmed = result.data
+                    _uiState.update { state ->
+                        state.copy(
+                            tables = state.tables.map { if (it.id == confirmed.id) confirmed else it },
+                            statusUpdateDialog = null,
+                            isUpdatingStatus = false,
+                            statusUpdateSuccess = true,
+                            statusUpdateError = null,
+                        )
+                    }
+                    // Refresh badge count after any status change
+                    refreshAvailableCount(rid)
+                }
+                is Result.Failure -> {
+                    // Roll back optimistic update
+                    _uiState.update { state ->
+                        state.copy(
+                            tables = state.tables.map { if (it.id == table.id) table else it },
+                            isUpdatingStatus = false,
+                            statusUpdateError = result.exception.message
+                                ?: "Failed to update table status. Please try again.",
+                        )
+                    }
+                }
+                Result.Loading -> Unit
+            }
+        }
+    }
+
+    /** Consume the one-shot success event after the screen has shown feedback. */
+    fun onStatusUpdateSuccessConsumed() {
+        _uiState.update { it.copy(statusUpdateSuccess = false) }
     }
 
     // ── Private helpers ──────────────────────────────────────────────────────
@@ -109,5 +195,11 @@ class TableViewModel @Inject constructor(
             }
         }
     }
-}
 
+    private suspend fun refreshAvailableCount(restaurantId: Long) {
+        when (val result = getAvailableTableCountUseCase(restaurantId)) {
+            is Result.Success -> _uiState.update { it.copy(availableCount = result.data) }
+            else -> Unit
+        }
+    }
+}

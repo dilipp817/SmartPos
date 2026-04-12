@@ -29,9 +29,14 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,51 +66,97 @@ import com.autobill.smartpos.domain.model.TableStatus
 fun TableListScreen(
     uiState: TableUiState,
     onTableClick: (Table) -> Unit,
+    onChangeTableStatus: (Table) -> Unit,
+    onStatusConfirmed: (Table, TableStatus) -> Unit,
+    onStatusDialogDismiss: () -> Unit,
+    onStatusUpdateSuccessConsumed: () -> Unit,
     onFilterSelect: (TableFilter) -> Unit,
     onRefresh: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color(0xFFF8F9FA)),
-    ) {
-        // ── Header ──────────────────────────────────────────────────────────
-        TableHeader(
-            availableCount = uiState.availableCount,
-            onBack = onBack,
-            onRefresh = onRefresh,
-        )
+    val snackbarHostState = remember { SnackbarHostState() }
 
-        HorizontalDivider(color = Color(0xFFE0E0E0))
+    // Show success snackbar as one-shot event
+    LaunchedEffect(uiState.statusUpdateSuccess) {
+        if (uiState.statusUpdateSuccess) {
+            snackbarHostState.showSnackbar("Table status updated ✓")
+            onStatusUpdateSuccessConsumed()
+        }
+    }
 
-        // ── Filter tabs ─────────────────────────────────────────────────────
-        TableFilterRow(
-            selectedFilter = uiState.selectedFilter,
-            onFilterSelect = onFilterSelect,
-        )
-
-        HorizontalDivider(color = Color(0xFFE0E0E0))
-
-        // ── Content ─────────────────────────────────────────────────────────
-        PullToRefreshBox(
-            isRefreshing = uiState.isRefreshing,
-            onRefresh = onRefresh,
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
+                .fillMaxSize()
+                .background(Color(0xFFF8F9FA)),
         ) {
-            when {
-                uiState.isLoading -> TableLoadingGrid()
-                uiState.errorMessage != null -> TableErrorState(message = uiState.errorMessage, onRetry = onRefresh)
-                uiState.tables.isEmpty() -> TableEmptyState(filter = uiState.selectedFilter)
-                else -> TableGrid(
-                    tables = uiState.tables,
-                    onTableClick = onTableClick,
-                )
+            // ── Header ──────────────────────────────────────────────────────
+            TableHeader(
+                availableCount = uiState.availableCount,
+                onBack = onBack,
+                onRefresh = onRefresh,
+            )
+
+            HorizontalDivider(color = Color(0xFFE0E0E0))
+
+            // ── Filter tabs ─────────────────────────────────────────────────
+            TableFilterRow(
+                selectedFilter = uiState.selectedFilter,
+                onFilterSelect = onFilterSelect,
+            )
+
+            HorizontalDivider(color = Color(0xFFE0E0E0))
+
+            // ── Content ─────────────────────────────────────────────────────
+            PullToRefreshBox(
+                isRefreshing = uiState.isRefreshing,
+                onRefresh = onRefresh,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+            ) {
+                when {
+                    uiState.isLoading -> TableLoadingGrid()
+                    uiState.errorMessage != null -> TableErrorState(
+                        message = uiState.errorMessage,
+                        onRetry = onRefresh,
+                    )
+                    uiState.tables.isEmpty() -> TableEmptyState(filter = uiState.selectedFilter)
+                    else -> TableGrid(
+                        tables = uiState.tables,
+                        onTableClick = onTableClick,
+                        onChangeTableStatus = onChangeTableStatus,
+                    )
+                }
             }
         }
+
+        // ── Snackbar (success) ───────────────────────────────────────────────
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 16.dp),
+        ) { data ->
+            Snackbar(
+                snackbarData = data,
+                containerColor = Color(0xFF2E7D32),
+                contentColor = Color.White,
+                shape = RoundedCornerShape(12.dp),
+            )
+        }
+    }
+
+    // ── Status update dialog ─────────────────────────────────────────────────
+    if (uiState.statusUpdateDialog != null) {
+        TableStatusUpdateDialog(
+            dialogState = uiState.statusUpdateDialog,
+            isUpdating = uiState.isUpdatingStatus,
+            errorMessage = uiState.statusUpdateError,
+            onConfirm = { newStatus -> onStatusConfirmed(uiState.statusUpdateDialog.table, newStatus) },
+            onDismiss = onStatusDialogDismiss,
+        )
     }
 }
 
@@ -204,6 +255,7 @@ private fun TableFilterRow(
 private fun TableGrid(
     tables: List<Table>,
     onTableClick: (Table) -> Unit,
+    onChangeTableStatus: (Table) -> Unit,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 180.dp),
@@ -216,6 +268,7 @@ private fun TableGrid(
             TableGridCard(
                 table = table,
                 onClick = { onTableClick(table) },
+                onChangeStatus = { onChangeTableStatus(table) },
             )
         }
     }
@@ -285,4 +338,3 @@ private fun TableErrorState(message: String, onRetry: () -> Unit) {
         }
     }
 }
-

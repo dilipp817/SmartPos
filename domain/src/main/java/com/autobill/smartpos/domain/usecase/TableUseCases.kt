@@ -2,6 +2,7 @@ package com.autobill.smartpos.domain.usecase
 
 import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.model.Table
+import com.autobill.smartpos.domain.model.TableStatus
 import com.autobill.smartpos.domain.repository.TableRepository
 import javax.inject.Inject
 
@@ -49,5 +50,25 @@ class GetAvailableTableCountUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(restaurantId: Long): Result<Int> =
         repository.countAvailableTables(restaurantId)
+}
+
+/**
+ * Use case: Update the status of a single table.
+ *
+ * Key uses:
+ *  - Staff manually marks a table as CLEANING / MAINTENANCE / RESERVED
+ *  - Payment screen frees a table → newStatus = AVAILABLE
+ *
+ * 409 CONFLICT (optimistic locking) is handled inside [TableRepository] — callers
+ * don't need to implement retry logic themselves.
+ */
+class UpdateTableStatusUseCase @Inject constructor(
+    private val repository: TableRepository,
+) {
+    suspend operator fun invoke(
+        restaurantId: Long,
+        tableId: Long,
+        newStatus: TableStatus,
+    ): Result<Table> = repository.updateTableStatus(restaurantId, tableId, newStatus)
 }
 
