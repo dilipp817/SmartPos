@@ -9,14 +9,12 @@ import javax.inject.Inject
  * Use case for searching foods with pagination support.
  * Implements infinite scroll search results by loading pages progressively.
  *
+ * [restaurantId] MUST come from [GetRestaurantIdUseCase] — never hardcoded.
+ *
  * Usage:
  * ```kotlin
- * val result = searchFoodsPaginatedUseCase(query = "pizza", offset = 0, limit = 20)
- * when (result) {
- *     is PaginationResult.Success -> handleSearchResults(result.pagination)
- *     is PaginationResult.Failure -> handleError(result.exception)
- *     PaginationResult.Loading -> showLoading()
- * }
+ * val restaurantId = getRestaurantIdUseCase()
+ * val result = searchFoodsPaginatedUseCase(query = "pizza", restaurantId = restaurantId)
  * ```
  */
 class SearchFoodsPaginatedUseCase @Inject constructor(
@@ -24,12 +22,13 @@ class SearchFoodsPaginatedUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(
         query: String,
+        restaurantId: Long? = null,
         offset: Int = 0,
         limit: Int = 20,
     ): PaginationResult<Food> = repository.searchFoodsPaginated(
         query = query,
+        restaurantId = restaurantId,
         offset = offset,
         limit = limit,
     )
 }
-

@@ -11,6 +11,9 @@ import javax.inject.Inject
  * Mock FoodRepository for development.
  * Returns realistic restaurant menu data without requiring a backend.
  * Switch to FoodRepositoryImpl in RepositoryModule when backend is ready.
+ *
+ * restaurantId is accepted in all methods but intentionally ignored —
+ * mock data is not multi-tenant. The real implementation will use it.
  */
 class MockFoodRepository @Inject constructor() : FoodRepository {
 
@@ -48,6 +51,7 @@ class MockFoodRepository @Inject constructor() : FoodRepository {
     override suspend fun getFoods(): Result<List<Food>> = Result.Success(mockFoods)
 
     override suspend fun getFoodsPaginated(
+        restaurantId: Long?,  // ignored by mock — real impl will filter by this
         offset: Int,
         limit: Int,
         category: String?,
@@ -82,7 +86,10 @@ class MockFoodRepository @Inject constructor() : FoodRepository {
         return if (food != null) Result.Success(food) else Result.Failure(Exception("Food not found"))
     }
 
-    override suspend fun searchFoods(query: String): Result<List<Food>> {
+    override suspend fun searchFoods(
+        query: String,
+        restaurantId: Long?,  // ignored by mock
+    ): Result<List<Food>> {
         val results = mockFoods.filter {
             it.name.contains(query, ignoreCase = true) ||
                 it.description?.contains(query, ignoreCase = true) == true
@@ -92,6 +99,7 @@ class MockFoodRepository @Inject constructor() : FoodRepository {
 
     override suspend fun searchFoodsPaginated(
         query: String,
+        restaurantId: Long?,  // ignored by mock — real impl will filter by this
         offset: Int,
         limit: Int,
     ): PaginationResult<Food> {

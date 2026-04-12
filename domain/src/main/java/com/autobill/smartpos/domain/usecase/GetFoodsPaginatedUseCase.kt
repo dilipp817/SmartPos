@@ -9,22 +9,29 @@ import javax.inject.Inject
  * Use case for fetching foods with pagination support.
  * Implements infinite scroll by loading pages progressively.
  *
+ * [restaurantId] MUST come from [GetRestaurantIdUseCase] — never hardcoded.
+ * Null only when used by super_admin across all outlets.
+ *
  * Usage:
  * ```kotlin
- * val result = getFoodsPaginatedUseCase(offset = 0, limit = 20)
- * when (result) {
- *     is PaginationResult.Success -> handleData(result.pagination)
- *     is PaginationResult.Failure -> handleError(result.exception)
- *     PaginationResult.Loading -> showLoading()
- * }
+ * val restaurantId = getRestaurantIdUseCase()
+ * val result = getFoodsPaginatedUseCase(restaurantId = restaurantId, offset = 0, limit = 20)
  * ```
  */
 class GetFoodsPaginatedUseCase @Inject constructor(
     private val repository: FoodRepository,
 ) {
     suspend operator fun invoke(
+        restaurantId: Long? = null,
         offset: Int = 0,
         limit: Int = 20,
-    ): PaginationResult<Food> = repository.getFoodsPaginated(offset = offset, limit = limit)
+        category: String? = null,
+        sort: String? = null,
+    ): PaginationResult<Food> = repository.getFoodsPaginated(
+        restaurantId = restaurantId,
+        offset = offset,
+        limit = limit,
+        category = category,
+        sort = sort,
+    )
 }
-
