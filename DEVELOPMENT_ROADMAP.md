@@ -84,15 +84,15 @@
 }
 ```
 
-### 3.2 Session Storage (CRITICAL — Multi-Outlet Rule)
+### 3.2 Session Storage ✅
 
 > ⚠️ **`restaurantId` MUST come from the login response — NEVER hardcode it.**
 > Save it to `SessionDataStore` immediately after login.
 > All restaurant-scoped API calls use this saved value via `GetRestaurantIdUseCase`.
 
-- [ ] Save `{ token, restaurantId, role, userId }` to `SessionDataStore` on login (already exists)
-- [ ] `GetRestaurantIdUseCase` — inject in every ViewModel that calls a restaurant-scoped API
-- [ ] Token persists across app restarts (DataStore already set up)
+- [x] Save `{ token, restaurantId, role, userId }` to `SessionDataStore` on login (already exists)
+- [x] `GetRestaurantIdUseCase` — inject in every ViewModel that calls a restaurant-scoped API
+- [x] Token persists across app restarts (DataStore already set up)
 
 ### 3.3 Session Recovery on App Start
 

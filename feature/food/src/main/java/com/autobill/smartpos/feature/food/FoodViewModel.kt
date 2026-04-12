@@ -14,6 +14,7 @@ import com.autobill.smartpos.domain.usecase.DecreaseCartQuantityUseCase
 import com.autobill.smartpos.domain.usecase.GetCartUseCase
 import com.autobill.smartpos.domain.usecase.GetFoodsPaginatedUseCase
 import com.autobill.smartpos.domain.usecase.GetFoodsUseCase
+import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
 import com.autobill.smartpos.domain.usecase.IncreaseCartQuantityUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,6 +37,7 @@ import javax.inject.Inject
 class FoodViewModel @Inject constructor(
     private val getFoodsUseCase: GetFoodsUseCase,
     private val getFoodsPaginatedUseCase: GetFoodsPaginatedUseCase,
+    private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
     // Cart use cases
     private val getCartUseCase: GetCartUseCase,
     private val addToCartUseCase: AddToCartUseCase,
@@ -56,6 +58,12 @@ class FoodViewModel @Inject constructor(
     val isLoadingMore: StateFlow<Boolean> = _isLoadingMore.asStateFlow()
 
     private var currentPagination: Pagination<Food>? = null
+
+    /**
+     * Cached restaurantId — sourced from [GetRestaurantIdUseCase] once on ViewModel creation.
+     * All restaurant-scoped API calls use this value. NEVER hardcoded.
+     */
+    private var restaurantId: Long? = null
 
     // ========== CART STATE (from repository — reactive) ==========
 
@@ -78,7 +86,23 @@ class FoodViewModel @Inject constructor(
     val sortOption: StateFlow<String?> = _sortOption.asStateFlow()
 
     init {
-        loadFirstPage()
+        viewModelScope.launch {
+            // Load restaurantId from session before any API calls — NEVER hardcode this value.
+            restaurantId = getRestaurantIdUseCase()
+
+            // Defensive guard: restaurantId is null only for super_admin accounts.
+            // This POS app targets counter tablets — super_admin should never log in here.
+            // Surface a clear error rather than letting it fail silently deep in the repository.
+            if (restaurantId == null) {
+                _paginatedFoodsState.value = UiState.Error(
+                    "No restaurant assigned to this account. " +
+                    "Please log in with a counter or manager account."
+                )
+                return@launch
+            }
+
+            loadFirstPage()
+        }
     }
 
     // ========== CART OPERATIONS ==========
@@ -144,7 +168,7 @@ class FoodViewModel @Inject constructor(
         viewModelScope.launch {
             _paginatedFoodsState.value = UiState.Loading
             _isLoadingMore.value = false
-            val result = getFoodsPaginatedUseCase(offset = 0, limit = 20)
+            val result = getFoodsPaginatedUseCase(restaurantId = restaurantId, offset = 0, limit = 20)
             handlePaginationResult(result, append = false)
         }
     }
@@ -154,6 +178,7 @@ class FoodViewModel @Inject constructor(
             _paginatedFoodsState.value = UiState.Loading
             _isLoadingMore.value = false
             val result = getFoodsPaginatedUseCase(
+                restaurantId = restaurantId,
                 offset = 0,
                 limit = 20,
                 // category = _selectedCategory.value, // TODO: Uncomment when backend ready
@@ -170,7 +195,7 @@ class FoodViewModel @Inject constructor(
             _isLoadingMore.value = true
             try {
                 val nextOffset = currentPagination!!.offset + currentPagination!!.limit
-                val result = getFoodsPaginatedUseCase(offset = nextOffset, limit = 20)
+                val result = getFoodsPaginatedUseCase(restaurantId = restaurantId, offset = nextOffset, limit = 20)
                 handlePaginationResult(result, append = true)
             } finally {
                 _isLoadingMore.value = false

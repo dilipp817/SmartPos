@@ -19,6 +19,8 @@ interface FoodRepository {
     /**
      * Fetches foods with pagination support for infinite scroll.
      *
+     * @param restaurantId Outlet scope — from login session via GetRestaurantIdUseCase.
+     *                     NEVER hardcode. Null only for super_admin queries.
      * @param offset Starting position in results
      * @param limit Number of items per page
      * @param category Optional category filter
@@ -26,6 +28,7 @@ interface FoodRepository {
      * @return PaginationResult with food items and pagination metadata
      */
     suspend fun getFoodsPaginated(
+        restaurantId: Long? = null,
         offset: Int = 0,
         limit: Int = 20,
         category: String? = null,
@@ -40,18 +43,20 @@ interface FoodRepository {
     /**
      * Searches foods by name or other criteria (non-paginated).
      */
-    suspend fun searchFoods(query: String): Result<List<Food>>
+    suspend fun searchFoods(query: String, restaurantId: Long? = null): Result<List<Food>>
 
     /**
      * Searches foods with pagination support.
      *
      * @param query Search query string
+     * @param restaurantId Outlet scope — from login session. NEVER hardcode.
      * @param offset Starting position in results
      * @param limit Number of items per page
      * @return PaginationResult with search results and pagination metadata
      */
     suspend fun searchFoodsPaginated(
         query: String,
+        restaurantId: Long? = null,
         offset: Int = 0,
         limit: Int = 20,
     ): PaginationResult<Food>

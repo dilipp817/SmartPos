@@ -51,19 +51,22 @@ class FoodRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getFoodsPaginated(
+        restaurantId: Long?,
         offset: Int,
         limit: Int,
         category: String?,
         sort: String?,
     ): PaginationResult<Food> = withContext(ioDispatcher) {
         try {
-            val restaurantId = sessionDataStore.getRestaurantId()
+            // Prefer restaurantId passed by caller (from GetRestaurantIdUseCase in ViewModel).
+            // Fall back to SessionDataStore for backward compatibility.
+            val effectiveRestaurantId = restaurantId ?: sessionDataStore.getRestaurantId()
                 ?: return@withContext PaginationResult.Failure(Exception("No restaurant ID in session — not logged in"))
             // GET /foods/restaurant/{id} uses page-based pagination (0-indexed page number).
             // Domain layer passes offset (item index); convert: page = offset / limit.
             val page = if (limit > 0) offset / limit else 0
             val response = apiService.getFoodsByRestaurant(
-                restaurantId = restaurantId,
+                restaurantId = effectiveRestaurantId,
                 page = page,
                 limit = limit,
             )
@@ -106,7 +109,10 @@ class FoodRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun searchFoods(query: String): Result<List<Food>> = withContext(ioDispatcher) {
+    override suspend fun searchFoods(
+        query: String,
+        restaurantId: Long?,  // accepted but not used in search API — scoped by auth token
+    ): Result<List<Food>> = withContext(ioDispatcher) {
         try {
             val items = apiService.searchFoods(query = query).data?.data.orEmpty()
             Result.Success(items.map { it.toEntity().toDomain() })
@@ -119,6 +125,7 @@ class FoodRepositoryImpl @Inject constructor(
 
     override suspend fun searchFoodsPaginated(
         query: String,
+        restaurantId: Long?,  // accepted but not used in search API — scoped by auth token
         offset: Int,
         limit: Int,
     ): PaginationResult<Food> = withContext(ioDispatcher) {
