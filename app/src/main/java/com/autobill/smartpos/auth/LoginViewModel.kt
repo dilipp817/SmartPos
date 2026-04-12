@@ -2,6 +2,7 @@ package com.autobill.smartpos.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.autobill.smartpos.core.device.DeviceInfoProvider
 import com.autobill.smartpos.domain.common.UiState
 import com.autobill.smartpos.domain.model.User
 import com.autobill.smartpos.domain.usecase.LoginUseCase
@@ -15,13 +16,26 @@ import javax.inject.Inject
 /**
  * ViewModel for the Login screen.
  *
- * After a successful login the [loginState] transitions to [UiState.Success] and the
- * screen should navigate to the main app — the restaurantId is already persisted in
- * SessionDataStore and is available to all subsequent API calls.
+ * Responsibilities (SRP):
+ *  - Hold username / password input state
+ *  - Invoke [LoginUseCase] and expose [loginState]
+ *  - Nothing else — no platform APIs, no I/O, no session storage
+ *
+ * After a successful login [loginState] transitions to [UiState.Success].
+ * The screen calls [onLoginSuccess]; restaurantId is already persisted in
+ * SessionDataStore by [LoginUseCase] → [AuthRepositoryImpl] → [SessionDataStore].
+ *
+ * Testability:
+ *  Inject fakes for both constructor params — no Robolectric, no Android runner:
+ *      LoginViewModel(
+ *          loginUseCase      = FakeLoginUseCase(),
+ *          deviceInfoProvider = FakeDeviceInfoProvider("test-id", "tablet"),
+ *      )
  */
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
+    private val deviceInfoProvider: DeviceInfoProvider,   // interface — no Context here
 ) : ViewModel() {
 
     private val _loginState = MutableStateFlow<UiState<User>>(UiState.Idle)
@@ -42,12 +56,14 @@ class LoginViewModel @Inject constructor(
             val result = loginUseCase(
                 username = _username.value.trim(),
                 password = _password.value,
+                deviceId   = deviceInfoProvider.getDeviceId(),
+                deviceType = deviceInfoProvider.getDeviceType(),
             )
             _loginState.value = if (result.isSuccess) {
                 UiState.Success(result.getOrThrow())
             } else {
                 UiState.Error(
-                    message = result.exceptionOrNull()?.message ?: "Login failed. Please try again.",
+                    message   = result.exceptionOrNull()?.message ?: "Login failed. Please try again.",
                     exception = result.exceptionOrNull() as? Exception,
                 )
             }
@@ -58,4 +74,3 @@ class LoginViewModel @Inject constructor(
         _loginState.value = UiState.Idle
     }
 }
-

@@ -64,14 +64,15 @@
 > ⚠️ **Must complete before Phase 4.**
 > Every table / order / payment API call requires `restaurantId` obtained from login.
 
-### 3.1 Login Screen
-- [ ] `LoginScreen.kt` — username + password (scaffolded, needs polish)
-- [ ] `LoginViewModel.kt` — uses `LoginUseCase` (scaffolded)
-- [ ] Include optional `deviceId` + `deviceType` in login request
-  - `deviceId = "tablet-counter-1"`, `deviceType = "tablet"`
+### 3.1 Login Screen ✅
+- [x] `LoginScreen.kt` — username + password, polished tablet UI
+- [x] `LoginViewModel.kt` — uses `LoginUseCase`
+- [x] Include optional `deviceId` + `deviceType` in login request
+  - `deviceId` = `Settings.Secure.ANDROID_ID` (stable per device, read in `LoginViewModel`)
+  - `deviceType` = `"tablet"` (hardcoded — this app targets tablet POS counters only)
   - Backend stores which physical device is logged in (for multi-counter analytics)
-- [ ] Show loading / error states
-- [ ] On success → navigate to Home
+- [x] Show loading / error states
+- [x] On success → navigate to Home
 
 **API:** `POST /api/v1/auth/login`
 ```json
