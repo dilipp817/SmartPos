@@ -25,19 +25,28 @@ fun TableRoute(
 
     TableListScreen(
         uiState = uiState,
+        modifier = modifier,
+        // ── Navigation ──────────────────────────────────────────────────
         onTableClick = { table ->
-            // Only AVAILABLE tables are clickable — guard here for safety
-            if (table.status == TableStatus.AVAILABLE) {
-                onTableSelected(table.id)
-            }
+            if (table.status == TableStatus.AVAILABLE) onTableSelected(table.id)
         },
+        onBack = onBack,
+        // ── Filter / Refresh ─────────────────────────────────────────────
+        onFilterSelect = viewModel::selectFilter,
+        onRefresh = viewModel::refresh,
+        // ── Status update ────────────────────────────────────────────────
         onChangeTableStatus = viewModel::showStatusUpdateDialog,
         onStatusConfirmed = viewModel::confirmStatusUpdate,
         onStatusDialogDismiss = viewModel::dismissStatusUpdateDialog,
         onStatusUpdateSuccessConsumed = viewModel::onStatusUpdateSuccessConsumed,
-        onFilterSelect = viewModel::selectFilter,
-        onRefresh = viewModel::refresh,
-        onBack = onBack,
-        modifier = modifier,
+        // ── CRUD (admin / manager) ───────────────────────────────────────
+        onAddTable = viewModel::showCreateDialog,
+        onEditTable = viewModel::showEditDialog,
+        onDeleteTable = viewModel::showDeleteConfirm,
+        onCrudConfirmCreate = viewModel::confirmCreate,
+        onCrudConfirmEdit = viewModel::confirmEdit,
+        onCrudConfirmDelete = viewModel::confirmDelete,
+        onCrudDialogDismiss = viewModel::dismissCrudDialog,
+        onCrudSuccessConsumed = viewModel::onCrudSuccessConsumed,
     )
 }

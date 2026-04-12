@@ -5,6 +5,7 @@ import com.autobill.smartpos.data.local.dao.TableDao
 import com.autobill.smartpos.data.mapper.toDomain
 import com.autobill.smartpos.data.mapper.toEntity
 import com.autobill.smartpos.data.remote.TableApiService
+import com.autobill.smartpos.data.remote.dto.CreateTableRequest
 import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.model.Table
 import com.autobill.smartpos.domain.model.TableStatus
@@ -143,6 +144,77 @@ class TableRepositoryImpl @Inject constructor(
             } else {
                 Result.Failure(e)
             }
+        } catch (e: Exception) {
+            Result.Failure(e)
+        }
+    }
+
+    // ── CRUD — Admin / Manager ───────────────────────────────────────────────
+
+    /** POST …/tables — creates a new table, always starts AVAILABLE. */
+    override suspend fun createTable(
+        restaurantId: Long,
+        tableNumber: String,
+        floor: Int,
+        capacity: Int,
+    ): Result<Table> = withContext(ioDispatcher) {
+        try {
+            val response = apiService.createTable(
+                restaurantId = restaurantId,
+                request = CreateTableRequest(
+                    tableNumber = tableNumber,
+                    floor = floor,
+                    capacity = capacity,
+                    status = "AVAILABLE",
+                ),
+            )
+            val dto = checkNotNull(response.data) {
+                response.message ?: "Failed to create table"
+            }
+            tableDao.upsertAll(listOf(dto.toEntity()))
+            Result.Success(dto.toDomain())
+        } catch (e: Exception) {
+            Result.Failure(e)
+        }
+    }
+
+    /** PUT …/tables/{id} — updates tableNumber, floor, capacity. Status is preserved. */
+    override suspend fun updateTable(
+        restaurantId: Long,
+        tableId: Long,
+        tableNumber: String,
+        floor: Int,
+        capacity: Int,
+    ): Result<Table> = withContext(ioDispatcher) {
+        try {
+            val response = apiService.updateTable(
+                restaurantId = restaurantId,
+                id = tableId,
+                request = CreateTableRequest(
+                    tableNumber = tableNumber,
+                    floor = floor,
+                    capacity = capacity,
+                ),
+            )
+            val dto = checkNotNull(response.data) {
+                response.message ?: "Failed to update table"
+            }
+            tableDao.upsertAll(listOf(dto.toEntity()))
+            Result.Success(dto.toDomain())
+        } catch (e: Exception) {
+            Result.Failure(e)
+        }
+    }
+
+    /** DELETE …/tables/{id} — removes table from backend and local cache. */
+    override suspend fun deleteTable(
+        restaurantId: Long,
+        tableId: Long,
+    ): Result<Unit> = withContext(ioDispatcher) {
+        try {
+            apiService.deleteTable(restaurantId, tableId)
+            tableDao.deleteById(tableId)
+            Result.Success(Unit)
         } catch (e: Exception) {
             Result.Failure(e)
         }

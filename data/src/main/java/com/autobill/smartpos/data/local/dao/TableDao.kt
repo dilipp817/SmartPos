@@ -33,6 +33,10 @@ interface TableDao {
     @Query("UPDATE tables SET status = :newStatus WHERE id = :tableId")
     suspend fun updateTableStatusLocally(tableId: Long, newStatus: String)
 
+    /** Remove a single table after successful DELETE. */
+    @Query("DELETE FROM tables WHERE id = :tableId")
+    suspend fun deleteById(tableId: Long)
+
     /** Remove stale data for a restaurant before re-inserting fresh data. */
     @Query("DELETE FROM tables WHERE restaurantId = :restaurantId")
     suspend fun deleteAllByRestaurant(restaurantId: Long)

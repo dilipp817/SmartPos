@@ -16,6 +16,11 @@ import com.autobill.smartpos.domain.model.TableStatus
  * [isUpdatingStatus]     — true while the PATCH request is in flight
  * [statusUpdateError]    — non-null when the PATCH failed; shown in a snackbar
  * [statusUpdateSuccess]  — one-shot true after a successful PATCH; consumed by the screen
+ * [canManageTables]      — true for admin / manager / super_admin; gates FAB + card overflow
+ * [crudDialog]           — non-null → show Create / Edit / Delete confirmation dialog
+ * [isCrudInFlight]       — true while a POST / PUT / DELETE is in flight
+ * [crudError]            — inline error shown inside the CRUD dialog
+ * [crudSuccessMessage]   — one-shot message for the snackbar after a successful CRUD op
  */
 data class TableUiState(
     val tables: List<Table> = emptyList(),
@@ -29,7 +34,26 @@ data class TableUiState(
     val isUpdatingStatus: Boolean = false,
     val statusUpdateError: String? = null,
     val statusUpdateSuccess: Boolean = false,
+    // ── CRUD (admin / manager) ───────────────────────────────────────────────
+    val canManageTables: Boolean = false,
+    val crudDialog: TableCrudDialogState? = null,
+    val isCrudInFlight: Boolean = false,
+    val crudError: String? = null,
+    val crudSuccessMessage: String? = null,
 )
+
+/**
+ * Represents which CRUD dialog is open.
+ *
+ * [Create]        — empty form for adding a new table
+ * [Edit]          — pre-filled form for changing number / floor / capacity
+ * [DeleteConfirm] — simple yes/no confirmation before calling DELETE
+ */
+sealed class TableCrudDialogState {
+    object Create : TableCrudDialogState()
+    data class Edit(val table: Table) : TableCrudDialogState()
+    data class DeleteConfirm(val table: Table) : TableCrudDialogState()
+}
 
 /**
  * Carries the data needed to render the status-update dialog.

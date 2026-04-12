@@ -5,6 +5,7 @@ import com.autobill.smartpos.domain.model.User
 import com.autobill.smartpos.domain.model.canApplyDiscounts
 import com.autobill.smartpos.domain.model.canCancelOrders
 import com.autobill.smartpos.domain.model.canManageMenu
+import com.autobill.smartpos.domain.model.canManageTables
 import com.autobill.smartpos.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -92,9 +93,10 @@ class ObserveRolePermissionsUseCase @Inject constructor(
         .map { user ->
             if (user == null) RolePermissions.NONE
             else RolePermissions(
-                canCancelOrders  = user.canCancelOrders(),
+                canCancelOrders   = user.canCancelOrders(),
                 canApplyDiscounts = user.canApplyDiscounts(),
-                canManageMenu    = user.canManageMenu(),
+                canManageMenu     = user.canManageMenu(),
+                canManageTables   = user.canManageTables(),
             )
         }
 }

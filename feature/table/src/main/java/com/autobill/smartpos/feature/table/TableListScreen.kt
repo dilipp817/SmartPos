@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -20,9 +19,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -49,39 +50,52 @@ import com.autobill.smartpos.domain.model.TableStatus
 /**
  * Table List / Selection Screen.
  *
- * Layout (landscape tablet):
- * ┌──────────────────────────────────────────┐
- * │  ← Back   Select a Table   🟢 4 available│
- * ├──────────────────────────────────────────┤
- * │  [All Tables] [Available] [Occupied]     │
- * ├──────────────────────────────────────────┤
- * │  ┌───┐  ┌───┐  ┌───┐  ┌───┐  ┌───┐     │
- * │  │T-1│  │T-2│  │T-3│  │T-4│  │T-5│     │
- * │  └───┘  └───┘  └───┘  └───┘  └───┘     │
- * │  ┌───┐  ┌───┐  ...                      │
- * └──────────────────────────────────────────┘
+ * For admin / manager — shows:
+ *  - FAB "Add Table" (bottom-right)
+ *  - ⋮ overflow on each card with Edit / Delete options
+ *
+ * For staff — unchanged behaviour (tap available to select, tap others to change status).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TableListScreen(
     uiState: TableUiState,
+    // ── Navigation ────────────────────────────────────────────────────────
     onTableClick: (Table) -> Unit,
+    onBack: () -> Unit,
+    // ── Filter / Refresh ──────────────────────────────────────────────────
+    onFilterSelect: (TableFilter) -> Unit,
+    onRefresh: () -> Unit,
+    // ── Status update ─────────────────────────────────────────────────────
     onChangeTableStatus: (Table) -> Unit,
     onStatusConfirmed: (Table, TableStatus) -> Unit,
     onStatusDialogDismiss: () -> Unit,
     onStatusUpdateSuccessConsumed: () -> Unit,
-    onFilterSelect: (TableFilter) -> Unit,
-    onRefresh: () -> Unit,
-    onBack: () -> Unit,
+    // ── CRUD (admin / manager) ────────────────────────────────────────────
+    onAddTable: () -> Unit,
+    onEditTable: (Table) -> Unit,
+    onDeleteTable: (Table) -> Unit,
+    onCrudConfirmCreate: (String, Int, Int) -> Unit,
+    onCrudConfirmEdit: (Table, String, Int, Int) -> Unit,
+    onCrudConfirmDelete: (Table) -> Unit,
+    onCrudDialogDismiss: () -> Unit,
+    onCrudSuccessConsumed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Show success snackbar as one-shot event
+    // Status update success (green snackbar)
     LaunchedEffect(uiState.statusUpdateSuccess) {
         if (uiState.statusUpdateSuccess) {
             snackbarHostState.showSnackbar("Table status updated ✓")
             onStatusUpdateSuccessConsumed()
+        }
+    }
+    // CRUD success (green snackbar — reuses the same host)
+    LaunchedEffect(uiState.crudSuccessMessage) {
+        uiState.crudSuccessMessage?.let { msg ->
+            snackbarHostState.showSnackbar(msg)
+            onCrudSuccessConsumed()
         }
     }
 
@@ -91,24 +105,18 @@ fun TableListScreen(
                 .fillMaxSize()
                 .background(Color(0xFFF8F9FA)),
         ) {
-            // ── Header ──────────────────────────────────────────────────────
             TableHeader(
                 availableCount = uiState.availableCount,
                 onBack = onBack,
                 onRefresh = onRefresh,
             )
-
             HorizontalDivider(color = Color(0xFFE0E0E0))
-
-            // ── Filter tabs ─────────────────────────────────────────────────
             TableFilterRow(
                 selectedFilter = uiState.selectedFilter,
                 onFilterSelect = onFilterSelect,
             )
-
             HorizontalDivider(color = Color(0xFFE0E0E0))
 
-            // ── Content ─────────────────────────────────────────────────────
             PullToRefreshBox(
                 isRefreshing = uiState.isRefreshing,
                 onRefresh = onRefresh,
@@ -125,14 +133,33 @@ fun TableListScreen(
                     uiState.tables.isEmpty() -> TableEmptyState(filter = uiState.selectedFilter)
                     else -> TableGrid(
                         tables = uiState.tables,
+                        canManageTables = uiState.canManageTables,
                         onTableClick = onTableClick,
                         onChangeTableStatus = onChangeTableStatus,
+                        onEditTable = onEditTable,
+                        onDeleteTable = onDeleteTable,
                     )
                 }
             }
         }
 
-        // ── Snackbar (success) ───────────────────────────────────────────────
+        // ── FAB — Add Table (admin / manager only) ───────────────────────
+        if (uiState.canManageTables) {
+            ExtendedFloatingActionButton(
+                onClick = onAddTable,
+                icon = {
+                    Icon(Icons.Default.Add, contentDescription = null)
+                },
+                text = { Text("Add Table") },
+                containerColor = Color(0xFFE33E3E),
+                contentColor = Color.White,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(24.dp),
+            )
+        }
+
+        // ── Snackbar (success) ───────────────────────────────────────────
         SnackbarHost(
             hostState = snackbarHostState,
             modifier = Modifier
@@ -148,15 +175,43 @@ fun TableListScreen(
         }
     }
 
-    // ── Status update dialog ─────────────────────────────────────────────────
+    // ── Status update dialog ──────────────────────────────────────────────────
     if (uiState.statusUpdateDialog != null) {
         TableStatusUpdateDialog(
             dialogState = uiState.statusUpdateDialog,
             isUpdating = uiState.isUpdatingStatus,
             errorMessage = uiState.statusUpdateError,
-            onConfirm = { newStatus -> onStatusConfirmed(uiState.statusUpdateDialog.table, newStatus) },
+            onConfirm = { newStatus ->
+                onStatusConfirmed(uiState.statusUpdateDialog.table, newStatus)
+            },
             onDismiss = onStatusDialogDismiss,
         )
+    }
+
+    // ── CRUD dialogs ──────────────────────────────────────────────────────────
+    when (val dialog = uiState.crudDialog) {
+        is TableCrudDialogState.Create -> TableCrudDialog(
+            editTable = null,
+            isInFlight = uiState.isCrudInFlight,
+            errorMessage = uiState.crudError,
+            onConfirm = { num, floor, cap -> onCrudConfirmCreate(num, floor, cap) },
+            onDismiss = onCrudDialogDismiss,
+        )
+        is TableCrudDialogState.Edit -> TableCrudDialog(
+            editTable = dialog.table,
+            isInFlight = uiState.isCrudInFlight,
+            errorMessage = uiState.crudError,
+            onConfirm = { num, floor, cap -> onCrudConfirmEdit(dialog.table, num, floor, cap) },
+            onDismiss = onCrudDialogDismiss,
+        )
+        is TableCrudDialogState.DeleteConfirm -> TableDeleteConfirmDialog(
+            table = dialog.table,
+            isInFlight = uiState.isCrudInFlight,
+            errorMessage = uiState.crudError,
+            onConfirm = { onCrudConfirmDelete(dialog.table) },
+            onDismiss = onCrudDialogDismiss,
+        )
+        null -> Unit
     }
 }
 
@@ -189,7 +244,9 @@ private fun TableHeader(
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF212121),
-            modifier = Modifier.weight(1f).padding(start = 4.dp),
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 4.dp),
         )
 
         // Available count badge
@@ -254,8 +311,11 @@ private fun TableFilterRow(
 @Composable
 private fun TableGrid(
     tables: List<Table>,
+    canManageTables: Boolean,
     onTableClick: (Table) -> Unit,
     onChangeTableStatus: (Table) -> Unit,
+    onEditTable: (Table) -> Unit,
+    onDeleteTable: (Table) -> Unit,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 180.dp),
@@ -269,6 +329,9 @@ private fun TableGrid(
                 table = table,
                 onClick = { onTableClick(table) },
                 onChangeStatus = { onChangeTableStatus(table) },
+                canManageTables = canManageTables,
+                onEdit = { onEditTable(table) },
+                onDelete = { onDeleteTable(table) },
             )
         }
     }
@@ -276,33 +339,23 @@ private fun TableGrid(
 
 @Composable
 private fun TableLoadingGrid() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             CircularProgressIndicator(color = Color(0xFFE33E3E))
             Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = "Loading tables…",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF757575),
-            )
+            Text("Loading tables…", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF757575))
         }
     }
 }
 
 @Composable
 private fun TableEmptyState(filter: TableFilter) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(text = "🪑", style = MaterialTheme.typography.displayMedium)
+            Text("🪑", style = MaterialTheme.typography.displayMedium)
             Text(
                 text = when (filter) {
                     TableFilter.ALL       -> "No tables found"
@@ -318,20 +371,13 @@ private fun TableEmptyState(filter: TableFilter) {
 
 @Composable
 private fun TableErrorState(message: String, onRetry: () -> Unit) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(text = "⚠️", style = MaterialTheme.typography.displayMedium)
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF757575),
-            )
+            Text("⚠️", style = MaterialTheme.typography.displayMedium)
+            Text(message, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF757575))
             androidx.compose.material3.TextButton(onClick = onRetry) {
                 Text("Retry", color = Color(0xFFE33E3E))
             }
