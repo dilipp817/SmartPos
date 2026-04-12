@@ -25,7 +25,7 @@ import java.util.Locale
 @Composable
 fun HomeRoute(
     modifier: Modifier = Modifier,
-    onFoodClick: (String) -> Unit = {},
+    onFoodClick: (Long) -> Unit = {},
     onCheckoutClick: () -> Unit = {},
 ) {
     // Get ViewModel instance
@@ -151,7 +151,7 @@ fun HomeRoute(
                     isLoadingMore = isLoadingMore,
                     canLoadMore = pagination.hasMore,
                     onLoadMore = { viewModel.loadNextPage() },
-                    onFoodClick = onFoodClick,
+                    onFoodClick = { idStr -> onFoodClick(idStr.toLong()) },
                     onFoodAdd = { foodId -> viewModel.addToCart(foodId) },
                     onFoodIncrease = { foodId -> viewModel.increaseQuantity(foodId) },
                     onFoodDecrease = { foodId -> viewModel.decreaseQuantity(foodId) },

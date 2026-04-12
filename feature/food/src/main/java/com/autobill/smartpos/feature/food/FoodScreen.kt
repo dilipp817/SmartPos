@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -35,24 +36,20 @@ import java.util.Locale
 @Composable
 fun FoodRoute(
     modifier: Modifier = Modifier,
+    onFoodClick: (Long) -> Unit = {},
 ) {
-    // Create ViewModel instance using Hilt
     val viewModel: FoodViewModel = hiltViewModel()
-
-    // Observe paginated UI state with infinite scroll support
     val paginatedState by viewModel.paginatedFoodsState.collectAsStateWithLifecycle()
     val isLoadingMore by viewModel.isLoadingMore.collectAsStateWithLifecycle()
-
-    // Remember LazyListState for infinite scroll detection
     val lazyListState = rememberLazyListState()
 
-    // Render the actual screen with current state
     FoodScreen(
         state = paginatedState,
         isLoadingMore = isLoadingMore,
         lazyListState = lazyListState,
         onRetry = { viewModel.retryLoadPaginatedFoods() },
         onLoadMore = { viewModel.loadNextPage() },
+        onFoodClick = onFoodClick,
         modifier = modifier,
     )
 }
@@ -70,6 +67,7 @@ fun FoodScreen(
     lazyListState: androidx.compose.foundation.lazy.LazyListState,
     onRetry: () -> Unit,
     onLoadMore: () -> Unit,
+    onFoodClick: (Long) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -127,7 +125,7 @@ fun FoodScreen(
                                 items = pagination.data,
                                 key = { food -> food.id },
                             ) { food ->
-                                FoodCard(food = food)
+                                FoodCard(food = food, onClick = { onFoodClick(food.id) })
                             }
                         }
 
@@ -195,8 +193,8 @@ fun FoodScreen(
 // Composable: FoodCard
 // Individual food item card component
 @Composable
-private fun FoodCard(food: Food) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+private fun FoodCard(food: Food, onClick: () -> Unit = {}) {
+    Card(modifier = Modifier.fillMaxWidth().clickable { onClick() }) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(text = food.name, style = MaterialTheme.typography.titleMedium)
             Text(text = "ID: ${food.id}")
