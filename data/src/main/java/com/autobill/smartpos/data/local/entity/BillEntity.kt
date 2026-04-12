@@ -6,7 +6,10 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 // Room Entity: Bill
-// Maps to "bills" table in Room database
+// Item 15: removed discountType/discountValue/tableId FK/printedAt/totalTax;
+//          added taxAmount/cgstAmount/sgstAmount/restaurantName/updatedAt;
+//          status now ISSUED | PARTIAL | PAID | CANCELLED (UPPERCASE)
+// Migrated via MIGRATION_4_5 in AppDatabase.
 @Entity(
     tableName = "bills",
     foreignKeys = [
@@ -22,36 +25,30 @@ import androidx.room.PrimaryKey
             childColumns = ["restaurantId"],
             onDelete = ForeignKey.CASCADE,
         ),
-        ForeignKey(
-            entity = TableEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["tableId"],
-            onDelete = ForeignKey.SET_NULL,
-        ),
     ],
     indices = [
         Index(value = ["orderId"]),
         Index(value = ["restaurantId"]),
-        Index(value = ["tableId"]),
         Index(value = ["status"]),
         Index(value = ["createdAt"]),
     ],
 )
 data class BillEntity(
     @PrimaryKey
-    val id: Int,
+    val id: Long,
     val billNumber: String,
-    val orderId: Int,
-    val tableId: Int?,
-    val restaurantId: Int,
+    val orderId: Long,
+    val restaurantId: Long,
+    val restaurantName: String?,
     val subtotal: Double,
-    val discountType: String?, // "percentage", "fixed"
-    val discountValue: Double,
+    val taxAmount: Double,
+    val cgstAmount: Double,         // 9% CGST
+    val sgstAmount: Double,         // 9% SGST
     val discountAmount: Double,
-    val totalTax: Double,
     val totalAmount: Double,
-    val status: String, // "unpaid", "partial", "paid"
+    val paidAmount: Double,         // cumulative paid so far; server-managed
+    val remainingAmount: Double,    // totalAmount - paidAmount; server-managed
+    val status: String,             // ISSUED | PARTIAL | PAID | CANCELLED
     val createdAt: String,
-    val printedAt: String?,
+    val updatedAt: String,
 )
-

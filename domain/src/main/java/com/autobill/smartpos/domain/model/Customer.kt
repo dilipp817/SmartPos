@@ -3,7 +3,7 @@ package com.autobill.smartpos.domain.model
 // Domain Model: Customer
 // Independent of database or API structure
 data class Customer(
-    val id: Int,
+    val id: Long,
     val firstName: String,
     val lastName: String,
     val phone: String,

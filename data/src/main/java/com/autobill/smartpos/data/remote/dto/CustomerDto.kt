@@ -3,12 +3,13 @@ package com.autobill.smartpos.data.remote.dto
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
+// ⚠️ DEPRECATED — Customer API endpoints no longer exist in BillSmart v1.0 API.
+// This file is kept temporarily to avoid breaking builds until callers are migrated.
 // DTO: Customer
-// Maps to API response from POST/GET /restaurants/{restaurantId}/customers
 @JsonClass(generateAdapter = true)
 data class CustomerDto(
     @param:Json(name = "id")
-    val id: Int,
+    val id: Long,
     @param:Json(name = "first_name")
     val firstName: String,
     @param:Json(name = "last_name")

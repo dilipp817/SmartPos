@@ -3,7 +3,7 @@ package com.autobill.smartpos.domain.model
 // Domain Model: Menu Item (Food)
 // Independent of database or API structure
 data class MenuItem(
-    val id: Int,
+    val id: Long,
     val name: String,
     val description: String,
     val category: String,
@@ -14,7 +14,7 @@ data class MenuItem(
     val isVegan: Boolean,
     val isAvailable: Boolean,
     val preparationTimeMinutes: Int,
-    val restaurantId: Int,
+    val restaurantId: Long,
     val ingredients: List<String>? = null,
     val allergens: List<String>? = null,
     val variants: List<MenuItemVariant>? = null,
@@ -24,7 +24,7 @@ data class MenuItem(
 
 // Domain Model: Menu Item Variant
 data class MenuItemVariant(
-    val id: Int,
+    val id: Long,
     val name: String,
     val priceModifier: Double,
     val description: String,

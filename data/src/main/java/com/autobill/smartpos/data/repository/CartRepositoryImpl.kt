@@ -18,7 +18,7 @@ import javax.inject.Singleton
 @Singleton
 class CartRepositoryImpl @Inject constructor() : CartRepository {
 
-    private val _items = MutableStateFlow<LinkedHashMap<Int, CartItem>>(LinkedHashMap())
+    private val _items = MutableStateFlow<LinkedHashMap<Long, CartItem>>(LinkedHashMap())
 
     override fun observeCartItems(): Flow<List<CartItem>> =
         _items.map { it.values.toList() }
@@ -42,7 +42,7 @@ class CartRepositoryImpl @Inject constructor() : CartRepository {
         }
     }
 
-    override suspend fun increaseQuantity(foodId: Int) {
+    override suspend fun increaseQuantity(foodId: Long) {
         _items.update { current ->
             val newMap = LinkedHashMap(current)
             val existing = newMap[foodId] ?: return@update current
@@ -51,7 +51,7 @@ class CartRepositoryImpl @Inject constructor() : CartRepository {
         }
     }
 
-    override suspend fun decreaseQuantity(foodId: Int) {
+    override suspend fun decreaseQuantity(foodId: Long) {
         _items.update { current ->
             val newMap = LinkedHashMap(current)
             val existing = newMap[foodId] ?: return@update current
@@ -68,4 +68,3 @@ class CartRepositoryImpl @Inject constructor() : CartRepository {
         _items.value = LinkedHashMap()
     }
 }
-

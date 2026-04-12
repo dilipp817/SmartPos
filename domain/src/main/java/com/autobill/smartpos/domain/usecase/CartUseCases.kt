@@ -18,16 +18,15 @@ class AddToCartUseCase @Inject constructor(private val repo: CartRepository) {
 
 /** Increase quantity of a cart item by 1 */
 class IncreaseCartQuantityUseCase @Inject constructor(private val repo: CartRepository) {
-    suspend operator fun invoke(foodId: Int) = repo.increaseQuantity(foodId)
+    suspend operator fun invoke(foodId: Long) = repo.increaseQuantity(foodId)
 }
 
 /** Decrease quantity of a cart item by 1 — removes if quantity reaches 0 */
 class DecreaseCartQuantityUseCase @Inject constructor(private val repo: CartRepository) {
-    suspend operator fun invoke(foodId: Int) = repo.decreaseQuantity(foodId)
+    suspend operator fun invoke(foodId: Long) = repo.decreaseQuantity(foodId)
 }
 
 /** Clear all items from cart */
 class ClearCartUseCase @Inject constructor(private val repo: CartRepository) {
     suspend operator fun invoke() = repo.clearCart()
 }
-

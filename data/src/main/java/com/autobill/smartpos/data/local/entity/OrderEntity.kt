@@ -22,36 +22,28 @@ import androidx.room.PrimaryKey
             childColumns = ["tableId"],
             onDelete = ForeignKey.SET_NULL,
         ),
-        ForeignKey(
-            entity = CustomerEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["customerId"],
-            onDelete = ForeignKey.SET_NULL,
-        ),
     ],
     indices = [
         Index(value = ["restaurantId"]),
         Index(value = ["tableId"]),
-        Index(value = ["customerId"]),
         Index(value = ["status"]),
         Index(value = ["createdAt"]),
     ],
 )
 data class OrderEntity(
     @PrimaryKey
-    val id: Int,
+    val id: Long,
     val orderNumber: String,
-    val tableId: Int?,
-    val customerId: Int?,
-    val restaurantId: Int,
-    val orderType: String, // "dine_in", "takeaway", "delivery"
-    val status: String, // "pending", "confirmed", "completed", "cancelled"
-    val subtotal: Double,
-    val tax: Double,
-    val discount: Double,
-    val total: Double,
+    val restaurantId: Long,
+    val tableId: Long?,             // nullable to support SET_NULL on table delete
+    val tableNumber: String,
+    val orderType: String,          // DINE_IN  TAKEAWAY  DELIVERY
+    val status: String,             // PENDING  IN_PROGRESS  COMPLETED  DELIVERED  CANCELLED  HOLD
+    val subtotal: Double,           // pre-tax item total
+    val totalAmount: Double,        // = subtotal at order stage; final amount on bill
     val notes: String?,
     val createdAt: String,
     val updatedAt: String,
+    val version: Long,
+    val customerId: Long? = null,   // always null in v1; populated in v2 (Q1, BACKEND_ALIGNMENT.md)
 )
-

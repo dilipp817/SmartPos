@@ -12,6 +12,6 @@ import javax.inject.Inject
 class GetFoodByIdUseCase @Inject constructor(
     private val repository: FoodRepository,
 ) {
-    suspend operator fun invoke(id: Int): Result<Food> = repository.getFoodById(id)
+    suspend operator fun invoke(id: Long): Result<Food> = repository.getFoodById(id)
 }
 

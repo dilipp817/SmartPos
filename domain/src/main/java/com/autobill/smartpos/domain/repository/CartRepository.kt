@@ -17,12 +17,11 @@ interface CartRepository {
     suspend fun addItem(food: Food)
 
     /** Increment quantity of an existing cart item by 1 */
-    suspend fun increaseQuantity(foodId: Int)
+    suspend fun increaseQuantity(foodId: Long)
 
     /** Decrement quantity by 1 — removes item if quantity reaches 0 */
-    suspend fun decreaseQuantity(foodId: Int)
+    suspend fun decreaseQuantity(foodId: Long)
 
     /** Remove all items from cart */
     suspend fun clearCart()
 }
-

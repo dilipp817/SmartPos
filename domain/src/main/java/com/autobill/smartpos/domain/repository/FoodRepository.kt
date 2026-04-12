@@ -35,7 +35,7 @@ interface FoodRepository {
     /**
      * Fetches a single food by ID.
      */
-    suspend fun getFoodById(id: Int): Result<Food>
+    suspend fun getFoodById(id: Long): Result<Food>
 
     /**
      * Searches foods by name or other criteria (non-paginated).

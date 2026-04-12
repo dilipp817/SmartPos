@@ -1,62 +1,103 @@
 package com.autobill.smartpos.data.remote
 
-import com.autobill.smartpos.data.remote.dto.FoodDto
-import com.autobill.smartpos.data.remote.dto.PaginatedResponseDto
+import com.autobill.smartpos.data.remote.dto.ApiResponse
+import com.autobill.smartpos.data.remote.dto.FoodListItemDto
+import com.autobill.smartpos.data.remote.dto.FoodResponseDto
+import com.autobill.smartpos.data.remote.dto.CreateFoodRequest
+import com.autobill.smartpos.data.remote.dto.PagedDataDto
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 
 /**
- * Retrofit API Service for Food operations.
- * Defines endpoints for retrieving food data from backend.
+ * Retrofit API Service for Food operations (backendapi.md §7).
  *
- * Pagination details:
- * - Default limit: 20 items per page
- * - Offset-based pagination using limit and offset query parameters
- * - Response includes metadata (total, has_more, current_page)
+ * Documented endpoints for mobile:
+ *  - GET /foods/restaurant/{restaurantId}  → getFoodsByRestaurant()  Primary menu load
+ *  - GET /foods/search                     → searchFoods()           Search / filter
+ *  - GET /foods/{id}                       → getFoodById()           Food detail screen
+ *  - POST /foods/restaurant/{restaurantId} → createFood()            🔴 admin only
+ *
+ * Always pass restaurantId from SessionDataStore — NEVER hardcode it.
  */
 interface FoodApiService {
+
     /**
-     * Fetches all foods with pagination support
+     * Home screen food list — primary recommended endpoint (backendapi.md §7).
+     * GET /api/v1/foods/restaurant/{restaurantId}
      *
-     * @param offset Starting position (default: 0)
-     * @param limit Items per page (default: 20)
-     * @param category Optional category filter (e.g., "Main Course", "Beverages")
-     * @param sort Optional sort parameter (e.g., "price:asc", "price:desc", "name:asc")
-     * @return Paginated response with food items and metadata
+     * Response shape: ApiResponse<PagedDataDto<FoodListItemDto>>
+     * backendapi.md v1.1 (April 12, 2026): response is PAGINATED — data is a wrapper object,
+     * not a plain array. Unwrap with: response.data?.data.orEmpty()
+     * Pagination metadata: response.data?.pagination
+     */
+    @GET("foods/restaurant/{restaurantId}")
+    suspend fun getFoodsByRestaurant(
+        @Path("restaurantId") restaurantId: Long,
+        @Query("page") page: Int = 0,
+        @Query("limit") limit: Int = 20,
+        @Query("category_id") categoryId: Long? = null,  // filter by category (backendapi.md §7)
+    ): ApiResponse<PagedDataDto<FoodListItemDto>>
+
+    /**
+     * ⚠️ NOT in backendapi.md — do NOT use this function.
+     *
+     * GET /api/v1/foods (no sub-path) is not documented. The documented endpoints are:
+     *  - GET /foods/restaurant/{id}   → getFoodsByRestaurant() above  (primary menu load)
+     *  - GET /foods/search            → searchFoods() below           (search/filter)
+     *
+     * Additionally, the `search` query param name here is WRONG — the documented search
+     * endpoint uses `q`, not `search`. Calling this will likely return an unfiltered list
+     * or a 404 depending on the backend routing.
+     *
+     * Use getFoodsByRestaurant() or searchFoods() instead.
      */
     @GET("foods")
     suspend fun getFoods(
+        @Query("restaurant_id") restaurantId: Long? = null,
+        @Query("category_id") categoryId: Long? = null,
+        @Query("search") search: String? = null,
+        @Query("is_vegetarian") isVegetarian: Boolean? = null,
+        @Query("is_spicy") isSpicy: Boolean? = null,
+        @Query("sort") sort: String? = null,
         @Query("offset") offset: Int = 0,
         @Query("limit") limit: Int = 20,
-        @Query("category") category: String? = null,
-        @Query("sort") sort: String? = null,
-    ): PaginatedResponseDto<FoodDto>
+    ): ApiResponse<PagedDataDto<FoodListItemDto>>
 
     /**
-     * Fetches a single food by ID
-     *
-     * @param id Food ID
-     * @return Single food item
-     */
-    @GET("foods/{id}")
-    suspend fun getFoodById(
-        @Path("id") id: Int,
-    ): FoodDto
-
-    /**
-     * Searches foods by query with pagination support
-     *
-     * @param query Search query string
-     * @param offset Starting position (default: 0)
-     * @param limit Items per page (default: 20)
-     * @return Paginated response with search results
+     * Search foods.
+     * GET /api/v1/foods/search
      */
     @GET("foods/search")
     suspend fun searchFoods(
-        @Query("q") query: String,
+        @Query("q") query: String? = null,
+        @Query("restaurant_id") restaurantId: Long? = null,
+        @Query("category_id") categoryId: Long? = null,
+        @Query("is_vegetarian") isVegetarian: Boolean? = null,
+        @Query("is_spicy") isSpicy: Boolean? = null,
+        @Query("is_available") isAvailable: Boolean? = null,
         @Query("offset") offset: Int = 0,
         @Query("limit") limit: Int = 20,
-    ): PaginatedResponseDto<FoodDto>
-}
+    ): ApiResponse<PagedDataDto<FoodListItemDto>>
 
+    /**
+     * Food detail.
+     * GET /api/v1/foods/{id}
+     */
+    @GET("foods/{id}")
+    suspend fun getFoodById(
+        @Path("id") id: Long,
+    ): ApiResponse<FoodResponseDto>
+
+    /**
+     * Create food.
+     * POST /api/v1/foods/restaurant/{restaurantId}
+     */
+    @POST("foods/restaurant/{restaurantId}")
+    suspend fun createFood(
+        @Path("restaurantId") restaurantId: Long,
+        @Body request: CreateFoodRequest,
+    ): ApiResponse<FoodResponseDto>
+}

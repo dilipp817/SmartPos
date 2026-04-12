@@ -6,7 +6,7 @@ package com.autobill.smartpos.domain.model
  * Stores food details at time of adding — price changes do not affect in-progress orders.
  */
 data class CartItem(
-    val foodId: Int,
+    val foodId: Long,
     val foodName: String,
     val foodPrice: Double,
     val quantity: Int,

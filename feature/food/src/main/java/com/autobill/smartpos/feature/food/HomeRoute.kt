@@ -139,7 +139,7 @@ fun HomeRoute(
                             name = food.name,
                             price = "₹${String.format(Locale.US, "%.2f", food.price)}",
                             restaurantId = food.restaurantId.toString(),
-                            categoryName = food.category,
+                            categoryName = food.categoryName,
                             description = food.description,
                             imageUrl = food.imageUrl,
                             isAvailable = food.isAvailable,

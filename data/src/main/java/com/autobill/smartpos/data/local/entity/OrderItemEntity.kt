@@ -16,34 +16,23 @@ import androidx.room.PrimaryKey
             childColumns = ["orderId"],
             onDelete = ForeignKey.CASCADE,
         ),
-        ForeignKey(
-            entity = MenuItemEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["menuItemId"],
-            onDelete = ForeignKey.RESTRICT,
-        ),
-        ForeignKey(
-            entity = MenuItemVariantEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["variantId"],
-            onDelete = ForeignKey.SET_NULL,
-        ),
     ],
     indices = [
         Index(value = ["orderId"]),
-        Index(value = ["menuItemId"]),
-        Index(value = ["variantId"]),
+        Index(value = ["foodId"]),
+        Index(value = ["itemStatus"]),
     ],
 )
 data class OrderItemEntity(
     @PrimaryKey
-    val id: Int,
-    val orderId: Int,
-    val menuItemId: Int,
+    val id: Long,
+    val orderId: Long,
+    val foodId: Long,
+    val foodName: String,
     val quantity: Int,
     val unitPrice: Double,
-    val variantId: Int?,
-    val specialInstructions: String?,
     val subtotal: Double,
+    val itemStatus: String,         // PENDING | IN_PROGRESS | COMPLETED
+    val specialRequests: String?,
+    val createdAt: String,
 )
-

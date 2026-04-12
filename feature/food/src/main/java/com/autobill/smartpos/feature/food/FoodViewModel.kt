@@ -95,14 +95,14 @@ class FoodViewModel @Inject constructor(
     /** Increase quantity of a cart item by 1 */
     fun increaseQuantity(foodId: String) {
         viewModelScope.launch {
-            increaseCartQuantityUseCase(foodId.toIntOrNull() ?: return@launch)
+            increaseCartQuantityUseCase(foodId.toLongOrNull() ?: return@launch)
         }
     }
 
     /** Decrease quantity by 1 — removes item from cart if quantity reaches 0 */
     fun decreaseQuantity(foodId: String) {
         viewModelScope.launch {
-            decreaseCartQuantityUseCase(foodId.toIntOrNull() ?: return@launch)
+            decreaseCartQuantityUseCase(foodId.toLongOrNull() ?: return@launch)
         }
     }
 
@@ -112,7 +112,7 @@ class FoodViewModel @Inject constructor(
     }
 
     /** Get current quantity of a food item in cart (0 = not in cart) */
-    fun getCartQuantity(foodId: Int): Int =
+    fun getCartQuantity(foodId: Long): Int =
         cartItems.value.find { it.foodId == foodId }?.quantity ?: 0
 
     // ========== FILTER OPERATIONS ==========

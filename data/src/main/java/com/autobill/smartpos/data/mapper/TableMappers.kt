@@ -9,6 +9,7 @@ import com.autobill.smartpos.domain.model.TableStatus
 // Maps between DTO ↔ Entity ↔ Domain layers
 
 // Table DTO to Domain
+// floor and lastOccupiedAt are now in the API response (backend V22 — BACKEND_ALIGNMENT.md Item 3)
 fun TableDto.toDomain(): Table = Table(
     id = id,
     tableNumber = tableNumber,
@@ -63,4 +64,3 @@ fun Table.toEntity(): TableEntity = TableEntity(
     createdAt = createdAt,
     updatedAt = updatedAt,
 )
-

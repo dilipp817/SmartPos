@@ -12,7 +12,7 @@ import androidx.room.PrimaryKey
 )
 data class RestaurantEntity(
     @PrimaryKey
-    val id: Int,
+    val id: Long,
     val name: String,
     val address: String,
     val phone: String,

@@ -22,7 +22,7 @@ interface FoodDao {
      * Fetches a single food by ID
      */
     @Query("SELECT * FROM foods WHERE id = :id")
-    suspend fun getFoodById(id: Int): FoodEntity?
+    suspend fun getFoodById(id: Long): FoodEntity?
 
     /**
      * Searches foods by name

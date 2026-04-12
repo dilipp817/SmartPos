@@ -6,6 +6,7 @@ package com.autobill.smartpos.app.navigation
  * Each route represents a distinct screen in the app.
  */
 sealed class Screen(val route: String) {
+    object Login : Screen("login")
     object FoodList : Screen("food_list")
     object FoodDetail : Screen("food_detail/{foodId}") {
         fun createRoute(foodId: Int) = "food_detail/$foodId"

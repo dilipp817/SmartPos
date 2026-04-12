@@ -1,31 +1,16 @@
 package com.autobill.smartpos.data.local.entity
 
-import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.Index
-import androidx.room.PrimaryKey
-
-// Room Entity: Customer
-// Maps to "customers" table in Room database
-@Entity(
-    tableName = "customers",
-    foreignKeys = [
-        ForeignKey(
-            entity = RestaurantEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["restaurantId"],
-            onDelete = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["restaurantId"]),
-        Index(value = ["phone"]),
-        Index(value = ["email"]),
-    ],
+// DEPRECATED — Item 15 (April 12, 2026)
+// Customer data is no longer cached locally. The concept of a local customer entity
+// was removed because the backend confirmed customers are not part of the POS v1 flow.
+// This class is kept as a plain data class for reference only.
+// Do NOT register in AppDatabase. Do NOT add new FKs pointing to this class.
+@Deprecated(
+    message = "Customer local caching is removed. Not registered in AppDatabase.",
+    level = DeprecationLevel.WARNING,
 )
 data class CustomerEntity(
-    @PrimaryKey
-    val id: Int,
+    val id: Long,
     val firstName: String,
     val lastName: String,
     val phone: String,
@@ -34,7 +19,6 @@ data class CustomerEntity(
     val loyaltyPoints: Int,
     val totalSpent: Double,
     val totalOrders: Int,
-    val restaurantId: Int,
+    val restaurantId: Long,
     val createdAt: String,
 )
-

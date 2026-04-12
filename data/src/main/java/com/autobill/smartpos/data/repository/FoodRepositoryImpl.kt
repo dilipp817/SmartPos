@@ -1,6 +1,7 @@
 package com.autobill.smartpos.data.repository
 
 import com.autobill.smartpos.data.di.IoDispatcher
+import com.autobill.smartpos.data.local.SessionDataStore
 import com.autobill.smartpos.data.local.dao.FoodDao
 import com.autobill.smartpos.data.mapper.toDomain
 import com.autobill.smartpos.data.mapper.toEntity
@@ -18,27 +19,34 @@ import javax.inject.Inject
  * Implementation of FoodRepository.
  * Handles data access from remote API and local database with proper error handling.
  * Implements offline-first caching strategy with pagination support for infinite scroll.
+ *
+ * Uses GET /foods/restaurant/{restaurantId} (backendapi.md §7) — the primary documented endpoint.
+ * restaurantId is always read from SessionDataStore (set at login) — never hardcoded.
  */
 class FoodRepositoryImpl @Inject constructor(
     private val apiService: FoodApiService,
     private val foodDao: FoodDao,
+    private val sessionDataStore: SessionDataStore,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : FoodRepository {
 
     override suspend fun getFoods(): Result<List<Food>> = withContext(ioDispatcher) {
         try {
-            val remoteFoods = apiService.getFoods()
+            val restaurantId = sessionDataStore.getRestaurantId()
+                ?: return@withContext Result.Failure(Exception("No restaurant ID in session — not logged in"))
+            // GET /foods/restaurant/{restaurantId} — response is PagedDataDto, unwrap .data?.data
+            val items = apiService.getFoodsByRestaurant(
+                restaurantId = restaurantId,
+                page = 0,
+                limit = 100,
+            ).data?.data.orEmpty()
             foodDao.deleteAll()
-            foodDao.upsertAll(remoteFoods.data.map { it.toEntity() })
-            Result.Success(remoteFoods.data.map { it.toEntity().toDomain() })
+            foodDao.upsertAll(items.map { it.toEntity() })
+            Result.Success(items.map { it.toEntity().toDomain() })
         } catch (e: Exception) {
-            // Fallback to cached data
-            val cachedFoods = foodDao.getAllFoods()
-            if (cachedFoods.isNotEmpty()) {
-                Result.Success(cachedFoods.map { it.toDomain() })
-            } else {
-                Result.Failure(e)
-            }
+            val cached = foodDao.getAllFoods()
+            if (cached.isNotEmpty()) Result.Success(cached.map { it.toDomain() })
+            else Result.Failure(e)
         }
     }
 
@@ -49,72 +57,63 @@ class FoodRepositoryImpl @Inject constructor(
         sort: String?,
     ): PaginationResult<Food> = withContext(ioDispatcher) {
         try {
-            val response = apiService.getFoods(
-                offset = offset,
+            val restaurantId = sessionDataStore.getRestaurantId()
+                ?: return@withContext PaginationResult.Failure(Exception("No restaurant ID in session — not logged in"))
+            // GET /foods/restaurant/{id} uses page-based pagination (0-indexed page number).
+            // Domain layer passes offset (item index); convert: page = offset / limit.
+            val page = if (limit > 0) offset / limit else 0
+            val response = apiService.getFoodsByRestaurant(
+                restaurantId = restaurantId,
+                page = page,
                 limit = limit,
-                category = category,
-                sort = sort,
             )
-            
-            // Cache the data (upsert to not lose items from previous pages)
-            foodDao.upsertAll(response.data.map { it.toEntity() })
-            
-            // Create pagination object with response metadata
-            val pagination = Pagination(
-                data = response.data.map { it.toEntity().toDomain() },
-                currentPage = response.currentPage,
-                limit = response.limit,
-                total = response.total,
-                hasMore = response.hasMore,
-            )
-            
-            val result: PaginationResult<Food> = PaginationResult.Success(pagination)
-            result
+            val pagedData = response.data
+            val items = pagedData?.data.orEmpty()
+            foodDao.upsertAll(items.map { it.toEntity() })
+
+            PaginationResult.Success(Pagination(
+                data = items.map { it.toEntity().toDomain() },
+                currentPage = pagedData?.pagination?.currentPage ?: page,
+                limit = pagedData?.pagination?.limit ?: limit,
+                total = pagedData?.pagination?.total ?: items.size,
+                hasMore = pagedData?.pagination?.hasNext ?: false,
+            ))
         } catch (e: Exception) {
-            // Fallback to cached data
-            val cachedFoods = foodDao.getAllFoods()
-            if (cachedFoods.isNotEmpty()) {
-                val pagination = Pagination(
-                    data = cachedFoods.map { it.toDomain() },
+            val cached = foodDao.getAllFoods()
+            if (cached.isNotEmpty()) {
+                PaginationResult.Success(Pagination(
+                    data = cached.map { it.toDomain() },
                     currentPage = 0,
                     limit = limit,
-                    total = cachedFoods.size,
+                    total = cached.size,
                     hasMore = false,
-                )
-                val result: PaginationResult<Food> = PaginationResult.Success(pagination)
-                result
+                ))
             } else {
-                val result: PaginationResult<Food> = PaginationResult.Failure(e)
-                result
+                PaginationResult.Failure(e)
             }
         }
     }
 
-    override suspend fun getFoodById(id: Int): Result<Food> = withContext(ioDispatcher) {
+    override suspend fun getFoodById(id: Long): Result<Food> = withContext(ioDispatcher) {
         try {
-            val food = apiService.getFoodById(id)
+            val food = apiService.getFoodById(id).data
+                ?: return@withContext Result.Failure(Exception("Food not found"))
             Result.Success(food.toEntity().toDomain())
         } catch (e: Exception) {
-            val cachedFood = foodDao.getFoodById(id)
-            if (cachedFood != null) {
-                Result.Success(cachedFood.toDomain())
-            } else {
-                Result.Failure(e)
-            }
+            val cached = foodDao.getFoodById(id)
+            if (cached != null) Result.Success(cached.toDomain())
+            else Result.Failure(e)
         }
     }
 
     override suspend fun searchFoods(query: String): Result<List<Food>> = withContext(ioDispatcher) {
         try {
-            val results = apiService.searchFoods(query)
-            Result.Success(results.data.map { it.toEntity().toDomain() })
+            val items = apiService.searchFoods(query = query).data?.data.orEmpty()
+            Result.Success(items.map { it.toEntity().toDomain() })
         } catch (e: Exception) {
-            val cachedResults = foodDao.searchFoods(query)
-            if (cachedResults.isNotEmpty()) {
-                Result.Success(cachedResults.map { it.toDomain() })
-            } else {
-                Result.Failure(e)
-            }
+            val cached = foodDao.searchFoods(query)
+            if (cached.isNotEmpty()) Result.Success(cached.map { it.toDomain() })
+            else Result.Failure(e)
         }
     }
 
@@ -125,33 +124,30 @@ class FoodRepositoryImpl @Inject constructor(
     ): PaginationResult<Food> = withContext(ioDispatcher) {
         try {
             val response = apiService.searchFoods(query = query, offset = offset, limit = limit)
-            
-            val pagination = Pagination(
-                data = response.data.map { it.toEntity().toDomain() },
-                currentPage = response.currentPage,
-                limit = response.limit,
-                total = response.total,
-                hasMore = response.hasMore,
-            )
-            
-            val result: PaginationResult<Food> = PaginationResult.Success(pagination)
-            result
+            val page = response.data
+            val items = page?.data.orEmpty()
+
+            PaginationResult.Success(Pagination(
+                data = items.map { it.toEntity().toDomain() },
+                currentPage = page?.pagination?.currentPage ?: 0,
+                limit = page?.pagination?.limit ?: limit,
+                total = page?.pagination?.total ?: items.size,
+                hasMore = page?.pagination?.hasNext ?: false,
+            ))
         } catch (e: Exception) {
-            val cachedResults = foodDao.searchFoods(query)
-            if (cachedResults.isNotEmpty()) {
-                val pagination = Pagination(
-                    data = cachedResults.map { it.toDomain() },
+            val cached = foodDao.searchFoods(query)
+            if (cached.isNotEmpty()) {
+                PaginationResult.Success(Pagination(
+                    data = cached.map { it.toDomain() },
                     currentPage = 0,
                     limit = limit,
-                    total = cachedResults.size,
+                    total = cached.size,
                     hasMore = false,
-                )
-                val result: PaginationResult<Food> = PaginationResult.Success(pagination)
-                result
+                ))
             } else {
-                val result: PaginationResult<Food> = PaginationResult.Failure(e)
-                result
+                PaginationResult.Failure(e)
             }
         }
     }
 }
+

@@ -25,14 +25,14 @@ import androidx.room.PrimaryKey
 )
 data class TableEntity(
     @PrimaryKey
-    val id: Int,
+    val id: Long,
     val tableNumber: String,
     val floor: Int,
     val capacity: Int,
     val status: String, // "available", "occupied", "reserved"
-    val currentOrderId: Int?,
+    val currentOrderId: Long?,
     val lastOccupiedAt: String?,
-    val restaurantId: Int,
+    val restaurantId: Long,
     val createdAt: String,
     val updatedAt: String,
 )

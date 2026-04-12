@@ -3,12 +3,14 @@ package com.autobill.smartpos.data.remote.dto
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
+// ⚠️ DEPRECATED — MenuItem API endpoints no longer exist in BillSmart v1.0 API.
+// Use FoodDto (GET /foods/restaurant/{restaurantId}) instead.
+// This file is kept temporarily to avoid breaking builds until callers are migrated.
 // DTO: Menu Item (Food)
-// Maps to API response from GET /restaurants/{restaurantId}/menu/items
 @JsonClass(generateAdapter = true)
 data class MenuItemDto(
     @param:Json(name = "id")
-    val id: Int,
+    val id: Long,
     @param:Json(name = "name")
     val name: String,
     @param:Json(name = "description")
@@ -30,7 +32,7 @@ data class MenuItemDto(
     @param:Json(name = "preparation_time_minutes")
     val preparationTimeMinutes: Int,
     @param:Json(name = "restaurant_id")
-    val restaurantId: Int,
+    val restaurantId: Long,
     @param:Json(name = "ingredients")
     val ingredients: List<String>? = null,
     @param:Json(name = "allergens")
@@ -47,7 +49,7 @@ data class MenuItemDto(
 @JsonClass(generateAdapter = true)
 data class MenuItemVariantDto(
     @param:Json(name = "id")
-    val id: Int,
+    val id: Long,
     @param:Json(name = "name")
     val name: String,
     @param:Json(name = "price_modifier")
@@ -65,16 +67,5 @@ data class PaginatedMenuItemsDto(
     val pagination: PaginationDto,
 )
 
-// DTO: Pagination Info
-@JsonClass(generateAdapter = true)
-data class PaginationDto(
-    @param:Json(name = "page")
-    val page: Int,
-    @param:Json(name = "limit")
-    val limit: Int,
-    @param:Json(name = "total")
-    val total: Int,
-    @param:Json(name = "total_pages")
-    val totalPages: Int,
-)
+// PaginationDto moved to PaginatedResponseDto.kt
 

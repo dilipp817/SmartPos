@@ -1,30 +1,17 @@
 package com.autobill.smartpos.data.local.entity
 
-import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.Index
-import androidx.room.PrimaryKey
-
-// Room Entity: Menu Item Variant
-// Maps to "menu_item_variants" table in Room database
-@Entity(
-    tableName = "menu_item_variants",
-    foreignKeys = [
-        ForeignKey(
-            entity = MenuItemEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["menuItemId"],
-            onDelete = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [Index(value = ["menuItemId"])],
+// DEPRECATED — Item 15 (April 12, 2026)
+// Variants are not part of the POS v1 order flow (removed in OrderItem domain model).
+// Kept as a plain data class for reference only.
+// Do NOT register in AppDatabase.
+@Deprecated(
+    message = "MenuItemVariant caching removed. Variants not supported in POS v1. Not registered in AppDatabase.",
+    level = DeprecationLevel.WARNING,
 )
 data class MenuItemVariantEntity(
-    @PrimaryKey
-    val id: Int,
-    val menuItemId: Int,
+    val id: Long,
+    val menuItemId: Long,
     val name: String,
     val priceModifier: Double,
     val description: String,
 )
-

@@ -1,7 +1,15 @@
 package com.autobill.smartpos.data.di
 
 import com.autobill.smartpos.data.BuildConfig
+import com.autobill.smartpos.data.remote.AuthApiService
+import com.autobill.smartpos.data.remote.AuthInterceptor
+import com.autobill.smartpos.data.remote.BillApiService
+import com.autobill.smartpos.data.remote.CategoryApiService
 import com.autobill.smartpos.data.remote.FoodApiService
+import com.autobill.smartpos.data.remote.OrderApiService
+import com.autobill.smartpos.data.remote.PaymentApiService
+
+import com.autobill.smartpos.data.remote.TableApiService
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
@@ -31,8 +39,11 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient {
+    fun provideOkHttpClient(authInterceptor: AuthInterceptor): OkHttpClient {
         val builder = OkHttpClient.Builder()
+
+        // Auth interceptor — attaches Bearer token to every request
+        builder.addInterceptor(authInterceptor)
 
         if (BuildConfig.DEBUG) {
             // Add logging interceptor for debug builds
@@ -79,5 +90,41 @@ object NetworkModule {
     @Singleton
     fun provideFoodApiService(retrofit: Retrofit): FoodApiService {
         return retrofit.create(FoodApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAuthApiService(retrofit: Retrofit): AuthApiService {
+        return retrofit.create(AuthApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideOrderApiService(retrofit: Retrofit): OrderApiService {
+        return retrofit.create(OrderApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideTableApiService(retrofit: Retrofit): TableApiService {
+        return retrofit.create(TableApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideBillApiService(retrofit: Retrofit): BillApiService {
+        return retrofit.create(BillApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun providePaymentApiService(retrofit: Retrofit): PaymentApiService {
+        return retrofit.create(PaymentApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCategoryApiService(retrofit: Retrofit): CategoryApiService {
+        return retrofit.create(CategoryApiService::class.java)
     }
 }

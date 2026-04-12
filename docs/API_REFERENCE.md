@@ -4,7 +4,7 @@
 **Base URL:** `http://localhost:8080`  
 **API Version:** v1  
 **Prefix:** All endpoints start with `/api/v1/`  
-**Status:** ✅ **Approved & Locked** — April 4, 2026  
+**Status:** ✅ **Updated** — April 11, 2026 (Multi-outlet support added)
 **Total Endpoints:** 28
 
 ---
@@ -20,8 +20,12 @@
 | **Idempotency** | `referenceNumber` field | Prevents duplicate payments on retry |
 | **Concurrency** | Optimistic locking via `version` | Safe concurrent order updates |
 | **Backend staging** | Not required to start | Proceed with mock data, integrate when ready |
+| **Multi-outlet** | `restaurantId` in login response + JWT | Each user is bound to one outlet; app always uses `restaurantId` from login — never hardcoded |
+| **Multi-counter** | One user account per billing counter | e.g. `counter_1`, `counter_2` — all with same `restaurantId`; zero new code needed |
+| **Device tracking** | Optional `deviceId` + `deviceType` in login | Backend stores which physical device is logged in; enables future per-counter analytics |
 
-**Review result:** 100/100 — all 13 issues raised by mobile team were resolved by backend team.
+**Review result:** 100/100 — all 13 issues raised by mobile team were resolved by backend team.  
+**Multi-outlet update:** April 11, 2026 — `restaurantId` added to all auth responses per `MULTI_OUTLET_COUNTER_DESIGN.md`.
 
 ---
 
@@ -108,13 +112,17 @@ Login and get JWT token.
 ```json
 {
   "username": "admin",
-  "password": "password123"
+  "password": "password123",
+  "deviceId": "tablet-counter-1",
+  "deviceType": "tablet"
 }
 ```
 
 **Validation:**
 - `username` — required, 3–50 characters
 - `password` — required, 6–100 characters
+- `deviceId` — optional, tracks which physical device is logging in (for multi-counter setups)
+- `deviceType` — optional, `tablet` | `mobile` | `desktop`
 
 **Success Response `200 OK`:**
 ```json
@@ -126,13 +134,16 @@ Login and get JWT token.
     "username": "admin",
     "email": "admin@restaurant.com",
     "role": "ADMIN",
+    "restaurantId": 1,
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "expiresIn": 86400
   }
 }
 ```
 
-> `expiresIn` is in seconds (86400 = 24 hours)
+> `expiresIn` is in seconds (86400 = 24 hours)  
+> `restaurantId` — the outlet this user belongs to. **Mobile must save this and use it in all subsequent API calls.** `null` for super_admin users.  
+> JWT token embeds `restaurantId` as a claim — backend uses it for multi-tenant security.
 
 ---
 
@@ -151,10 +162,15 @@ Get current logged-in user info.
     "username": "admin",
     "email": "admin@restaurant.com",
     "role": "ADMIN",
+    "restaurantId": 1,
+    "deviceId": "tablet-counter-1",
+    "deviceType": "tablet",
     "isActive": true
   }
 }
 ```
+
+> `restaurantId` — use this to recover the outlet ID if local storage was cleared.
 
 ---
 
@@ -172,10 +188,13 @@ Validate a JWT token.
     "valid": true,
     "username": "admin",
     "userId": 1,
-    "role": "staff"
+    "role": "staff",
+    "restaurantId": 1
   }
 }
 ```
+
+> `restaurantId` is extracted from JWT claims. Mobile can use this as a fallback if local session data is lost.
 
 ---
 
@@ -1106,4 +1125,59 @@ All `Order` and `Table` entities have a `version` field to handle concurrent upd
 5. **Bill generation** — Use `POST /orders/{orderId}/generate-bill` — backend handles 18% GST (9% CGST + 9% SGST) automatically.
 6. **`X-Idempotency-Key` header is NOT used** — idempotency is via `referenceNumber` in request body only.
 7. **Order type** — `orderType: "OFFLINE"` for dine-in, `orderType: "ONLINE"` for delivery. Defaults to `OFFLINE`.
+8. **`restaurantId` must come from login response** — never hardcode it. Store it locally after login and use in all restaurant-scoped calls.
+9. **Session recovery** — if local storage is cleared, call `GET /auth/me` with the stored JWT to recover `restaurantId` without re-login.
+
+---
+
+## 🏢 Multi-Outlet & Multi-Counter Setup
+
+> See `MULTI_OUTLET_COUNTER_DESIGN.md` for full architecture discussion.
+
+### How User → Restaurant Binding Works
+
+Every user in the system is bound to exactly one restaurant outlet via `restaurantId`:
+
+```
+User(admin,    restaurantId=1) → Can only access Spice Garden data
+User(counter1, restaurantId=1) → Can only access Spice Garden data
+User(staff2,   restaurantId=2) → Can only access The Burger House data
+super_admin  (restaurantId=null) → Can access all restaurants
+```
+
+### Multi-Counter Setup (v1 — One User per Counter)
+
+For an outlet with multiple billing counters, create one user per counter. All share the same `restaurantId`:
+
+```
+Outlet: Spice Garden (restaurantId = 1)
+
+counter_1 / [password]  (role: staff)   → Counter 1 device
+counter_2 / [password]  (role: staff)   → Counter 2 device
+manager_1 / [password]  (role: manager) → Manager tablet
+kitchen   / [password]  (role: staff)   → Kitchen display
+```
+
+### Correct Login Flow
+
+```
+1. App POSTs /auth/login with credentials
+2. Response includes:  { token, restaurantId: 1, role: "staff" }
+3. App saves restaurantId = 1 locally            ← CRITICAL
+4. All subsequent calls use saved restaurantId:
+   GET /api/v1/restaurants/1/tables
+   POST /api/v1/restaurants/1/orders
+   ── never hardcoded, always from login ──
+```
+
+### Role Reference
+
+| Role | Create Order | Cancel Order | Apply Discount | Manage Menu |
+|------|-------------|-------------|---------------|-------------|
+| `super_admin` | ✅ | ✅ | ✅ | ✅ |
+| `admin` | ✅ | ✅ | ✅ | ✅ |
+| `manager` | ✅ | ✅ | ✅ | ✅ |
+| `staff` | ✅ | ❌ | ❌ | ❌ |
+
+> ⚠️ Role enforcement at API level is planned for v2. In v1 all authenticated users have full access.
 
