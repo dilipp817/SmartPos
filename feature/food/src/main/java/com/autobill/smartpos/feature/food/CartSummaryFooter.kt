@@ -124,8 +124,9 @@ fun CartSummaryFooter(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            BillRow(label = "Total", value = data.subtotal, isRegular = true)
-            BillRow(label = "Tax", value = data.tax, isRegular = true)
+            BillRow(label = "Subtotal", value = data.subtotal, isRegular = true)
+            // Est. tax shown for preview only — actual GST computed server-side via generate-bill (Phase 6)
+            BillRow(label = "Est. GST (18%)", value = data.tax, isRegular = true)
             if (data.discount != "₹0.00") {
                 BillRow(label = "Discount", value = data.discount, isRegular = true)
             }
@@ -315,8 +316,8 @@ private fun CartItemRow(
 private fun BillRow(
     label: String,
     value: String,
-    isRegular: Boolean = true,
     modifier: Modifier = Modifier,
+    isRegular: Boolean = true,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),

@@ -60,6 +60,9 @@ fun AppNavHost(
                 onFoodClick = { foodId ->
                     navController.navigate(Screen.FoodDetail.createRoute(foodId))
                 },
+                onCheckoutClick = {
+                    navController.navigate(Screen.Billing.route)
+                },
                 modifier = Modifier.fillMaxSize(),
             )
         }
