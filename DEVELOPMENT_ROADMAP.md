@@ -148,10 +148,10 @@ kitchen   / password → restaurantId: 1 → Kitchen display
 - [x] Table status chips: `AVAILABLE` | `OCCUPIED` | `RESERVED` | `CLEANING` | `MAINTENANCE`
 - [x] Tap available table → proceed to Create Order (Phase 5)
 
-### 4.2 Table Status Update
-- [ ] `PATCH /restaurants/{restaurantId}/tables/{id}/status?newStatus=CLEANING`
-- [ ] Free table after payment: `?newStatus=AVAILABLE` (called from Payment screen)
-- [ ] Optimistic locking: handle `409 CONFLICT` → re-fetch table (new `version`) → retry
+### 4.2 Table Status Update ✅
+- [x] `PATCH /restaurants/{restaurantId}/tables/{id}/status?newStatus=CLEANING`
+- [x] Free table after payment: `?newStatus=AVAILABLE` (called from Payment screen)
+- [x] Optimistic locking: handle `409 CONFLICT` → re-fetch table (new `version`) → retry
 
 ### 4.3 Table CRUD (Admin / Manager)
 - [ ] `POST /restaurants/{restaurantId}/tables` — create table

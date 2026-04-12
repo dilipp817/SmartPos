@@ -31,10 +31,13 @@ fun TableRoute(
                 onTableSelected(table.id)
             }
         },
+        onChangeTableStatus = viewModel::showStatusUpdateDialog,
+        onStatusConfirmed = viewModel::confirmStatusUpdate,
+        onStatusDialogDismiss = viewModel::dismissStatusUpdateDialog,
+        onStatusUpdateSuccessConsumed = viewModel::onStatusUpdateSuccessConsumed,
         onFilterSelect = viewModel::selectFilter,
         onRefresh = viewModel::refresh,
         onBack = onBack,
         modifier = modifier,
     )
 }
-
