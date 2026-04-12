@@ -139,14 +139,14 @@ kitchen   / password → restaurantId: 1 → Kitchen display
 
 > Requires Phase 3 complete (`restaurantId` available from session).
 
-### 4.1 Table List / Selection Screen
-- [ ] `GET /restaurants/{restaurantId}/tables` — all tables
-- [ ] `GET /restaurants/{restaurantId}/tables/available` — available tables
+### 4.1 Table List / Selection Screen ✅
+- [x] `GET /restaurants/{restaurantId}/tables` — all tables
+- [x] `GET /restaurants/{restaurantId}/tables/available` — available tables
   - Support `?capacity=4` to filter by minimum seating
-- [ ] `GET /restaurants/{restaurantId}/tables/occupied` — occupied tables view
-- [ ] `GET /restaurants/{restaurantId}/tables/count/available` — count for header badge
-- [ ] Table status chips: `AVAILABLE` | `OCCUPIED` | `RESERVED` | `CLEANING` | `MAINTENANCE`
-- [ ] Tap available table → proceed to Create Order (Phase 5)
+- [x] `GET /restaurants/{restaurantId}/tables/occupied` — occupied tables view
+- [x] `GET /restaurants/{restaurantId}/tables/count/available` — count for header badge
+- [x] Table status chips: `AVAILABLE` | `OCCUPIED` | `RESERVED` | `CLEANING` | `MAINTENANCE`
+- [x] Tap available table → proceed to Create Order (Phase 5)
 
 ### 4.2 Table Status Update
 - [ ] `PATCH /restaurants/{restaurantId}/tables/{id}/status?newStatus=CLEANING`

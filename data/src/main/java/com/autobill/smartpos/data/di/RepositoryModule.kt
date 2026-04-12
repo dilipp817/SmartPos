@@ -3,9 +3,11 @@ package com.autobill.smartpos.data.di
 import com.autobill.smartpos.data.repository.AuthRepositoryImpl
 import com.autobill.smartpos.data.repository.CartRepositoryImpl
 import com.autobill.smartpos.data.repository.MockFoodRepository
+import com.autobill.smartpos.data.repository.TableRepositoryImpl
 import com.autobill.smartpos.domain.repository.AuthRepository
 import com.autobill.smartpos.domain.repository.CartRepository
 import com.autobill.smartpos.domain.repository.FoodRepository
+import com.autobill.smartpos.domain.repository.TableRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -35,4 +37,9 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindCartRepository(impl: CartRepositoryImpl): CartRepository
+
+    /** Table data — network-first with Room cache fallback */
+    @Binds
+    @Singleton
+    abstract fun bindTableRepository(impl: TableRepositoryImpl): TableRepository
 }
