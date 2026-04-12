@@ -25,6 +25,10 @@ interface TableDao {
     @Query("SELECT COUNT(*) FROM tables WHERE restaurantId = :restaurantId AND status = 'AVAILABLE'")
     suspend fun countAvailableTables(restaurantId: Long): Int
 
+    /** Fetch a single table by ID — used by Create Order screen for display. */
+    @Query("SELECT * FROM tables WHERE id = :tableId LIMIT 1")
+    suspend fun getTableById(tableId: Long): TableEntity?
+
     /** Insert or replace all tables (called after every successful API fetch). */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(tables: List<TableEntity>)

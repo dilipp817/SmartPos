@@ -12,6 +12,7 @@ import androidx.navigation.navArgument
 import com.autobill.smartpos.auth.LoginScreen
 import com.autobill.smartpos.feature.food.FoodDetailRoute
 import com.autobill.smartpos.feature.food.HomeRoute
+import com.autobill.smartpos.feature.order.CreateOrderRoute
 import com.autobill.smartpos.feature.table.TableRoute
 
 /**
@@ -84,13 +85,41 @@ fun AppNavHost(
         // Table List / Selection Screen — user selects an available table before creating an order
         composable(route = Screen.TableList.route) {
             TableRoute(
-                onTableSelected = { _: Long ->
-                    // TODO Phase 5: navigate to Create Order with tableId
-                    // navController.navigate(Screen.CreateOrder.createRoute(it))
+                onTableSelected = { tableId ->
+                    navController.navigate(Screen.CreateOrder.createRoute(tableId))
                 },
                 onBack = { navController.popBackStack() },
                 modifier = Modifier.fillMaxSize(),
             )
+        }
+
+        // Create Order — receives tableId from TableList
+        composable(
+            route = Screen.CreateOrder.route,
+            arguments = listOf(navArgument("tableId") { type = NavType.LongType }),
+        ) {
+            CreateOrderRoute(
+                onOrderCreated = { orderId ->
+                    // Phase 5.3 — navigate to OrderDetail; for now pop back to food list
+                    navController.navigate(Screen.FoodList.route) {
+                        popUpTo(Screen.FoodList.route) { inclusive = false }
+                    }
+                },
+                onBack = { navController.popBackStack() },
+                onReselectTable = {
+                    // Pop back to TableList so user can pick a different table
+                    navController.popBackStack(Screen.TableList.route, inclusive = false)
+                },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        // Order Detail — Phase 5.3 (stub)
+        composable(
+            route = Screen.OrderDetail.route,
+            arguments = listOf(navArgument("orderId") { type = NavType.LongType }),
+        ) {
+            // TODO Phase 5.3: OrderDetailRoute()
         }
 
         // Search Screen
