@@ -13,6 +13,8 @@ import com.autobill.smartpos.auth.LoginScreen
 import com.autobill.smartpos.feature.food.FoodDetailRoute
 import com.autobill.smartpos.feature.food.HomeRoute
 import com.autobill.smartpos.feature.order.CreateOrderRoute
+import com.autobill.smartpos.feature.order.OrderDetailScreen
+import com.autobill.smartpos.feature.order.OrderRoute
 import com.autobill.smartpos.feature.table.TableRoute
 
 /**
@@ -100,8 +102,8 @@ fun AppNavHost(
         ) {
             CreateOrderRoute(
                 onOrderCreated = { orderId ->
-                    // Phase 5.3 — navigate to OrderDetail; for now pop back to food list
-                    navController.navigate(Screen.FoodList.route) {
+                    // Navigate to Order List after placing an order; clear back-stack up to FoodList
+                    navController.navigate(Screen.OrderList.route) {
                         popUpTo(Screen.FoodList.route) { inclusive = false }
                     }
                 },
@@ -114,12 +116,28 @@ fun AppNavHost(
             )
         }
 
-        // Order Detail — Phase 5.3 (stub)
+        // Order List Screen — entry point for staff to monitor all orders
+        composable(route = Screen.OrderList.route) {
+            OrderRoute(
+                onOrderClick = { orderId ->
+                    navController.navigate(Screen.OrderDetail.createRoute(orderId))
+                },
+                onBack = { navController.popBackStack() },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        // Order Detail — Phase 5.3 (stub with back navigation wired)
         composable(
             route = Screen.OrderDetail.route,
             arguments = listOf(navArgument("orderId") { type = NavType.LongType }),
-        ) {
-            // TODO Phase 5.3: OrderDetailRoute()
+        ) { backStackEntry ->
+            val orderId = backStackEntry.arguments?.getLong("orderId") ?: return@composable
+            OrderDetailScreen(
+                orderId = orderId,
+                onBack = { navController.popBackStack() },
+                modifier = Modifier.fillMaxSize(),
+            )
         }
 
         // Search Screen

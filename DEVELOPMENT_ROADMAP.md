@@ -191,12 +191,12 @@ kitchen   / password → restaurantId: 1 → Kitchen display
 - [x] `OrderMappers`, `OrderDao`, `OrderRepositoryImpl` added to data layer
 - [x] `Screen.CreateOrder` + `Screen.OrderDetail` (stub) wired in `NavHost`
 
-### 5.2 Order List Screen
-- [ ] `GET /restaurants/{restaurantId}/orders` — all orders
-- [ ] `GET /restaurants/{restaurantId}/orders/active` — not DELIVERED or CANCELLED
-- [ ] `GET /restaurants/{restaurantId}/orders/status/{status}` — filter by status
-- [ ] `GET /restaurants/{restaurantId}/orders/count/pending` — badge in nav bar
-- [ ] `GET /restaurants/{restaurantId}/orders/search?q=ORD-001` — search by order/table number
+### 5.2 Order List Screen ✅
+- [x] `GET /restaurants/{restaurantId}/orders` — all orders
+- [x] `GET /restaurants/{restaurantId}/orders/active` — not DELIVERED or CANCELLED
+- [x] `GET /restaurants/{restaurantId}/orders/status/{status}` — filter by status
+- [x] `GET /restaurants/{restaurantId}/orders/count/pending` — badge in nav bar
+- [x] `GET /restaurants/{restaurantId}/orders/search?q=ORD-001` — search by order/table number
 
 **Order Status Flow:**
 ```
@@ -470,7 +470,7 @@ feature/billing/
 | Done | 2 | Food Browsing & Local Cart | ✅ DONE |
 | W1 | 3 | Authentication & Session | 🔄 IN PROGRESS |
 | W2 | 4 | Table Management | ✅ DONE |
-| W3 | 5 | Order Flow + KDS | TODO |
+| W3 | 5 | Order Flow + KDS | 🔄 IN PROGRESS (5.1 ✅ 5.2 ✅) |
 | W4 | 6 | Billing & Payment | TODO |
 | W5 | 7 | Restaurant & Category Management | TODO |
 | W6 | 8 | Reports & Analytics | TODO |

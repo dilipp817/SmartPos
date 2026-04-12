@@ -2,6 +2,7 @@ package com.autobill.smartpos.domain.usecase
 
 import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.model.Order
+import com.autobill.smartpos.domain.model.OrderStatus
 import com.autobill.smartpos.domain.model.OrderType
 import com.autobill.smartpos.domain.repository.OrderLineItem
 import com.autobill.smartpos.domain.repository.OrderRepository
@@ -36,5 +37,49 @@ class CreateOrderUseCase @Inject constructor(
         orderType    = orderType,
         notes        = notes,
     )
+}
+
+/** Use case: Fetch all orders for a restaurant. */
+class GetAllOrdersUseCase @Inject constructor(
+    private val repository: OrderRepository,
+) {
+    suspend operator fun invoke(restaurantId: Long): Result<List<Order>> =
+        repository.getAllOrders(restaurantId)
+}
+
+/** Use case: Fetch active orders (not DELIVERED or CANCELLED). */
+class GetActiveOrdersUseCase @Inject constructor(
+    private val repository: OrderRepository,
+) {
+    suspend operator fun invoke(restaurantId: Long): Result<List<Order>> =
+        repository.getActiveOrders(restaurantId)
+}
+
+/** Use case: Fetch orders filtered by a specific [OrderStatus]. */
+class GetOrdersByStatusUseCase @Inject constructor(
+    private val repository: OrderRepository,
+) {
+    suspend operator fun invoke(
+        restaurantId: Long,
+        status: OrderStatus,
+    ): Result<List<Order>> = repository.getOrdersByStatus(restaurantId, status)
+}
+
+/** Use case: Get count of PENDING orders (used for nav badge). */
+class GetPendingOrdersCountUseCase @Inject constructor(
+    private val repository: OrderRepository,
+) {
+    suspend operator fun invoke(restaurantId: Long): Result<Int> =
+        repository.countPendingOrders(restaurantId)
+}
+
+/** Use case: Search orders by order number, table number, or status keyword. */
+class SearchOrdersUseCase @Inject constructor(
+    private val repository: OrderRepository,
+) {
+    suspend operator fun invoke(
+        restaurantId: Long,
+        query: String,
+    ): Result<List<Order>> = repository.searchOrders(restaurantId, query)
 }
 

@@ -15,6 +15,9 @@ interface OrderDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertOrder(order: OrderEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertOrders(orders: List<OrderEntity>)
+
     @Query("SELECT * FROM orders WHERE id = :orderId LIMIT 1")
     suspend fun getOrderById(orderId: Long): OrderEntity?
 
@@ -23,6 +26,12 @@ interface OrderDao {
 
     @Query("SELECT * FROM orders WHERE restaurantId = :restaurantId AND status = :status ORDER BY createdAt DESC")
     suspend fun getOrdersByStatus(restaurantId: Long, status: String): List<OrderEntity>
+
+    @Query("SELECT * FROM orders WHERE restaurantId = :restaurantId AND status NOT IN ('DELIVERED','CANCELLED') ORDER BY createdAt DESC")
+    suspend fun getActiveOrders(restaurantId: Long): List<OrderEntity>
+
+    @Query("SELECT * FROM orders WHERE restaurantId = :restaurantId AND (orderNumber LIKE '%' || :query || '%' OR tableNumber LIKE '%' || :query || '%') ORDER BY createdAt DESC")
+    suspend fun searchOrders(restaurantId: Long, query: String): List<OrderEntity>
 
     @Query("DELETE FROM orders WHERE id = :orderId")
     suspend fun deleteOrderById(orderId: Long)

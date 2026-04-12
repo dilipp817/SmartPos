@@ -2,6 +2,7 @@ package com.autobill.smartpos.domain.repository
 
 import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.model.Order
+import com.autobill.smartpos.domain.model.OrderStatus
 import com.autobill.smartpos.domain.model.OrderType
 
 /**
@@ -29,6 +30,21 @@ interface OrderRepository {
         orderType: OrderType,
         notes: String?,
     ): Result<Order>
+
+    /** GET /restaurants/{restaurantId}/orders */
+    suspend fun getAllOrders(restaurantId: Long): Result<List<Order>>
+
+    /** GET /restaurants/{restaurantId}/orders/active — not DELIVERED or CANCELLED */
+    suspend fun getActiveOrders(restaurantId: Long): Result<List<Order>>
+
+    /** GET /restaurants/{restaurantId}/orders/status/{status} */
+    suspend fun getOrdersByStatus(restaurantId: Long, status: OrderStatus): Result<List<Order>>
+
+    /** GET /restaurants/{restaurantId}/orders/count/pending */
+    suspend fun countPendingOrders(restaurantId: Long): Result<Int>
+
+    /** GET /restaurants/{restaurantId}/orders/search?q=... */
+    suspend fun searchOrders(restaurantId: Long, query: String): Result<List<Order>>
 }
 
 /**
