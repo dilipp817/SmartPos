@@ -130,6 +130,24 @@ fun CartSummaryFooter(
             if (data.discount != "₹0.00") {
                 BillRow(label = "Discount", value = data.discount, isRegular = true)
             }
+            // Apply Discount button — only visible for manager / admin / super_admin
+            if (data.canApplyDiscount) {
+                OutlinedButton(
+                    onClick = data.onApplyDiscountClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(36.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Color(0xFFE33E3E),
+                    ),
+                ) {
+                    Text(
+                        text = "Apply Discount",
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                }
+            }
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),

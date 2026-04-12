@@ -1,5 +1,8 @@
 package com.autobill.smartpos.feature.food
 
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,6 +30,7 @@ fun HomeRoute(
     modifier: Modifier = Modifier,
     onFoodClick: (Long) -> Unit = {},
     onCheckoutClick: () -> Unit = {},
+    onLogout: () -> Unit = {},
 ) {
     // Get ViewModel instance
     val viewModel: FoodViewModel = hiltViewModel()
@@ -42,8 +46,14 @@ fun HomeRoute(
     val selectedCategory by viewModel.selectedCategory.collectAsStateWithLifecycle()
     val sortOption by viewModel.sortOption.collectAsStateWithLifecycle()
 
+    // ✅ Observe role permissions — drives show/hide of privileged controls
+    val rolePermissions by viewModel.rolePermissions.collectAsStateWithLifecycle()
+
     // Sort dialog state
     var showSortDialog by remember { mutableStateOf(false) }
+
+    // Logout confirmation dialog state — prevents accidental logout on POS counters
+    var showLogoutDialog by remember { mutableStateOf(false) }
 
     // Helper function to get current date/time
     fun getCurrentDateTime(): String {
@@ -88,6 +98,8 @@ fun HomeRoute(
             onClear = { viewModel.clearCart() },
             onReset = { viewModel.resetFilters() },
             onPrint = {},
+            canApplyDiscount = rolePermissions.canApplyDiscounts,
+            onApplyDiscountClick = { /* TODO: show discount input dialog — Phase 6 */ },
         )
     }
 
@@ -96,7 +108,9 @@ fun HomeRoute(
         businessName = "Best Business Pvt Ltd",
         selectedTab = selectedTab,
         onTabChange = { tab -> viewModel.switchTab(tab) },
-        onProfileClick = {},
+        onProfileClick = { showLogoutDialog = true },
+        canManageMenu = rolePermissions.canManageMenu,
+        onManageMenuClick = { /* TODO: navigate to Manage Menu — Phase 7 */ },
     )
 
     fun buildSearchFilter() = SearchFilterData(
@@ -192,6 +206,30 @@ fun HomeRoute(
                 cartSummary = buildCartSummary(),
             )
         }
+    }
+
+    // Logout confirmation dialog — shown when profile icon is tapped
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Log out?") },
+            text = { Text("You will be returned to the login screen. Any unsaved cart items will be lost.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLogoutDialog = false
+                        onLogout()
+                    }
+                ) {
+                    Text("Log out")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancel")
+                }
+            },
+        )
     }
 
     // Show sort dialog when requested
