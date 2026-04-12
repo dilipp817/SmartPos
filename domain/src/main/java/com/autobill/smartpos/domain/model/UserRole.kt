@@ -32,3 +32,7 @@ fun User.canApplyDiscounts(): Boolean =
 fun User.canManageMenu(): Boolean =
     role == UserRole.ADMIN || restaurantId == null
 
+/** True if user can create / edit / delete tables (manager or admin or super_admin). */
+fun User.canManageTables(): Boolean =
+    role == UserRole.MANAGER || role == UserRole.ADMIN || restaurantId == null
+

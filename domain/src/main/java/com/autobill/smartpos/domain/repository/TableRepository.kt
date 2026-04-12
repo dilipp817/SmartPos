@@ -38,5 +38,40 @@ interface TableRepository {
         tableId: Long,
         newStatus: TableStatus,
     ): Result<Table>
+
+    // ── CRUD — Admin / Manager ──────────────────────────────────────────────
+
+    /**
+     * POST /restaurants/{restaurantId}/tables
+     * Creates a new table, always starts as AVAILABLE.
+     */
+    suspend fun createTable(
+        restaurantId: Long,
+        tableNumber: String,
+        floor: Int,
+        capacity: Int,
+    ): Result<Table>
+
+    /**
+     * PUT /restaurants/{restaurantId}/tables/{tableId}
+     * Updates tableNumber, floor, and capacity. Status is NOT changed here —
+     * use [updateTableStatus] for that.
+     */
+    suspend fun updateTable(
+        restaurantId: Long,
+        tableId: Long,
+        tableNumber: String,
+        floor: Int,
+        capacity: Int,
+    ): Result<Table>
+
+    /**
+     * DELETE /restaurants/{restaurantId}/tables/{tableId}
+     * Permanently removes a table. Only available for AVAILABLE / MAINTENANCE status.
+     */
+    suspend fun deleteTable(
+        restaurantId: Long,
+        tableId: Long,
+    ): Result<Unit>
 }
 

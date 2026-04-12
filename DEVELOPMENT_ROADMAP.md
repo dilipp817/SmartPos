@@ -153,22 +153,12 @@ kitchen   / password → restaurantId: 1 → Kitchen display
 - [x] Free table after payment: `?newStatus=AVAILABLE` (called from Payment screen)
 - [x] Optimistic locking: handle `409 CONFLICT` → re-fetch table (new `version`) → retry
 
-### 4.3 Table CRUD (Admin / Manager)
-- [ ] `POST /restaurants/{restaurantId}/tables` — create table
-- [ ] `PUT /restaurants/{restaurantId}/tables/{id}` — update tableNumber / capacity
-- [ ] `DELETE /restaurants/{restaurantId}/tables/{id}` — remove table
-
-**Files to create:**
-```
-feature/table/
-  TableViewModel.kt
-  TableUiState.kt
-  TableListScreen.kt
-  TableGridCard.kt
-  TableRoute.kt
-```
-
-**Time Estimate**: 2–3 days
+### 4.3 Table CRUD (Admin / Manager) ✅
+- [x] `POST /restaurants/{restaurantId}/tables` — create table
+- [x] `PUT /restaurants/{restaurantId}/tables/{id}` — update tableNumber / capacity / floor
+- [x] `DELETE /restaurants/{restaurantId}/tables/{id}` — remove table
+- [x] Role-gated: FAB "Add Table" + card ⋮ overflow (Edit / Delete) visible to manager / admin / super_admin only
+- [x] `canManageTables` added to `RolePermissions` — driven by `ObserveRolePermissionsUseCase`
 
 ---
 
@@ -475,7 +465,7 @@ feature/billing/
 | Done | 1 | Design System | ✅ DONE |
 | Done | 2 | Food Browsing & Local Cart | ✅ DONE |
 | W1 | 3 | Authentication & Session | 🔄 IN PROGRESS |
-| W2 | 4 | Table Management | TODO |
+| W2 | 4 | Table Management | ✅ DONE |
 | W3 | 5 | Order Flow + KDS | TODO |
 | W4 | 6 | Billing & Payment | TODO |
 | W5 | 7 | Restaurant & Category Management | TODO |

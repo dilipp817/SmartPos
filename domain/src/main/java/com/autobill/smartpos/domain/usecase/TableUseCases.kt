@@ -72,3 +72,49 @@ class UpdateTableStatusUseCase @Inject constructor(
     ): Result<Table> = repository.updateTableStatus(restaurantId, tableId, newStatus)
 }
 
+// ── CRUD — Admin / Manager ──────────────────────────────────────────────────
+
+/**
+ * Use case: Create a new table.
+ * Always starts as AVAILABLE — status is set by the backend on creation.
+ */
+class CreateTableUseCase @Inject constructor(
+    private val repository: TableRepository,
+) {
+    suspend operator fun invoke(
+        restaurantId: Long,
+        tableNumber: String,
+        floor: Int,
+        capacity: Int,
+    ): Result<Table> = repository.createTable(restaurantId, tableNumber, floor, capacity)
+}
+
+/**
+ * Use case: Update table number, floor, and capacity.
+ * Status is intentionally excluded — use [UpdateTableStatusUseCase] for that.
+ */
+class UpdateTableUseCase @Inject constructor(
+    private val repository: TableRepository,
+) {
+    suspend operator fun invoke(
+        restaurantId: Long,
+        tableId: Long,
+        tableNumber: String,
+        floor: Int,
+        capacity: Int,
+    ): Result<Table> = repository.updateTable(restaurantId, tableId, tableNumber, floor, capacity)
+}
+
+/**
+ * Use case: Permanently delete a table.
+ * The backend enforces that only AVAILABLE / MAINTENANCE tables can be deleted.
+ */
+class DeleteTableUseCase @Inject constructor(
+    private val repository: TableRepository,
+) {
+    suspend operator fun invoke(
+        restaurantId: Long,
+        tableId: Long,
+    ): Result<Unit> = repository.deleteTable(restaurantId, tableId)
+}
+

@@ -5,17 +5,23 @@ import androidx.lifecycle.viewModelScope
 import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.model.Table
 import com.autobill.smartpos.domain.model.TableStatus
+import com.autobill.smartpos.domain.usecase.CreateTableUseCase
+import com.autobill.smartpos.domain.usecase.DeleteTableUseCase
 import com.autobill.smartpos.domain.usecase.GetAvailableTableCountUseCase
 import com.autobill.smartpos.domain.usecase.GetAvailableTablesUseCase
 import com.autobill.smartpos.domain.usecase.GetOccupiedTablesUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
 import com.autobill.smartpos.domain.usecase.GetTablesUseCase
+import com.autobill.smartpos.domain.usecase.ObserveRolePermissionsUseCase
 import com.autobill.smartpos.domain.usecase.UpdateTableStatusUseCase
+import com.autobill.smartpos.domain.usecase.UpdateTableUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -28,6 +34,8 @@ import javax.inject.Inject
  *  - Fetch available table count for the header badge
  *  - Support pull-to-refresh
  *  - Guard against null restaurantId (super_admin — should not reach this screen)
+ *  - Expose role-based [TableUiState.canManageTables] for FAB / card overflow gating
+ *  - Full table CRUD for admin / manager roles
  */
 @HiltViewModel
 class TableViewModel @Inject constructor(
@@ -37,6 +45,10 @@ class TableViewModel @Inject constructor(
     private val getAvailableTableCountUseCase: GetAvailableTableCountUseCase,
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
     private val updateTableStatusUseCase: UpdateTableStatusUseCase,
+    private val observeRolePermissionsUseCase: ObserveRolePermissionsUseCase,
+    private val createTableUseCase: CreateTableUseCase,
+    private val updateTableUseCase: UpdateTableUseCase,
+    private val deleteTableUseCase: DeleteTableUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TableUiState())
@@ -46,6 +58,13 @@ class TableViewModel @Inject constructor(
     private var restaurantId: Long? = null
 
     init {
+        // Observe role permissions so FAB / card overflow react to session changes
+        observeRolePermissionsUseCase()
+            .onEach { perms ->
+                _uiState.update { it.copy(canManageTables = perms.canManageTables) }
+            }
+            .launchIn(viewModelScope)
+
         viewModelScope.launch {
             restaurantId = getRestaurantIdUseCase()
             if (restaurantId == null) {
@@ -154,6 +173,134 @@ class TableViewModel @Inject constructor(
     /** Consume the one-shot success event after the screen has shown feedback. */
     fun onStatusUpdateSuccessConsumed() {
         _uiState.update { it.copy(statusUpdateSuccess = false) }
+    }
+
+    // ── CRUD — Admin / Manager ───────────────────────────────────────────────
+
+    /** Open blank Create dialog. */
+    fun showCreateDialog() {
+        _uiState.update { it.copy(crudDialog = TableCrudDialogState.Create, crudError = null) }
+    }
+
+    /** Open Edit dialog pre-filled with [table]'s current values. */
+    fun showEditDialog(table: Table) {
+        _uiState.update {
+            it.copy(crudDialog = TableCrudDialogState.Edit(table), crudError = null)
+        }
+    }
+
+    /** Open Delete confirmation dialog for [table]. */
+    fun showDeleteConfirm(table: Table) {
+        _uiState.update {
+            it.copy(crudDialog = TableCrudDialogState.DeleteConfirm(table), crudError = null)
+        }
+    }
+
+    /** Dismiss any open CRUD dialog without making changes. */
+    fun dismissCrudDialog() {
+        _uiState.update { it.copy(crudDialog = null, crudError = null) }
+    }
+
+    /**
+     * POST /restaurants/{restaurantId}/tables
+     * On success: prepend new table to grid + show snackbar.
+     */
+    fun confirmCreate(tableNumber: String, floor: Int, capacity: Int) {
+        val rid = restaurantId ?: return
+        _uiState.update { it.copy(isCrudInFlight = true, crudError = null) }
+        viewModelScope.launch {
+            when (val result = createTableUseCase(rid, tableNumber.trim(), floor, capacity)) {
+                is Result.Success -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            tables = listOf(result.data) + state.tables,
+                            crudDialog = null,
+                            isCrudInFlight = false,
+                            crudError = null,
+                            crudSuccessMessage = "Table ${result.data.tableNumber} created ✓",
+                        )
+                    }
+                    refreshAvailableCount(rid)
+                }
+                is Result.Failure -> _uiState.update {
+                    it.copy(
+                        isCrudInFlight = false,
+                        crudError = it.crudError ?: result.exception.message
+                            ?: "Failed to create table.",
+                    )
+                }
+                Result.Loading -> Unit
+            }
+        }
+    }
+
+    /**
+     * PUT /restaurants/{restaurantId}/tables/{id}
+     * On success: replace the row in the grid + show snackbar.
+     */
+    fun confirmEdit(table: Table, tableNumber: String, floor: Int, capacity: Int) {
+        val rid = restaurantId ?: return
+        _uiState.update { it.copy(isCrudInFlight = true, crudError = null) }
+        viewModelScope.launch {
+            when (val result = updateTableUseCase(rid, table.id, tableNumber.trim(), floor, capacity)) {
+                is Result.Success -> {
+                    val updated = result.data
+                    _uiState.update { state ->
+                        state.copy(
+                            tables = state.tables.map { if (it.id == updated.id) updated else it },
+                            crudDialog = null,
+                            isCrudInFlight = false,
+                            crudError = null,
+                            crudSuccessMessage = "Table ${updated.tableNumber} updated ✓",
+                        )
+                    }
+                }
+                is Result.Failure -> _uiState.update {
+                    it.copy(
+                        isCrudInFlight = false,
+                        crudError = result.exception.message ?: "Failed to update table.",
+                    )
+                }
+                Result.Loading -> Unit
+            }
+        }
+    }
+
+    /**
+     * DELETE /restaurants/{restaurantId}/tables/{id}
+     * On success: remove from grid + show snackbar.
+     */
+    fun confirmDelete(table: Table) {
+        val rid = restaurantId ?: return
+        _uiState.update { it.copy(isCrudInFlight = true, crudError = null) }
+        viewModelScope.launch {
+            when (val result = deleteTableUseCase(rid, table.id)) {
+                is Result.Success -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            tables = state.tables.filter { it.id != table.id },
+                            crudDialog = null,
+                            isCrudInFlight = false,
+                            crudError = null,
+                            crudSuccessMessage = "Table ${table.tableNumber} deleted",
+                        )
+                    }
+                    refreshAvailableCount(rid)
+                }
+                is Result.Failure -> _uiState.update {
+                    it.copy(
+                        isCrudInFlight = false,
+                        crudError = result.exception.message ?: "Failed to delete table.",
+                    )
+                }
+                Result.Loading -> Unit
+            }
+        }
+    }
+
+    /** Consume the one-shot CRUD success snackbar message. */
+    fun onCrudSuccessConsumed() {
+        _uiState.update { it.copy(crudSuccessMessage = null) }
     }
 
     // ── Private helpers ──────────────────────────────────────────────────────

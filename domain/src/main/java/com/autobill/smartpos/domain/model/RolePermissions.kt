@@ -7,6 +7,8 @@ data class RolePermissions(
     val canApplyDiscounts: Boolean = false,
     /** Can create / edit / delete menu items (admin / super_admin only). */
     val canManageMenu: Boolean = false,
+    /** Can create / edit / delete tables (manager / admin / super_admin). */
+    val canManageTables: Boolean = false,
 ) {
     companion object {
         /**
