@@ -12,6 +12,7 @@ import androidx.navigation.navArgument
 import com.autobill.smartpos.auth.LoginScreen
 import com.autobill.smartpos.feature.food.FoodDetailRoute
 import com.autobill.smartpos.feature.food.HomeRoute
+import com.autobill.smartpos.feature.table.TableRoute
 
 /**
  * Application navigation graph.
@@ -61,7 +62,8 @@ fun AppNavHost(
                     navController.navigate(Screen.FoodDetail.createRoute(foodId))
                 },
                 onCheckoutClick = {
-                    navController.navigate(Screen.Billing.route)
+                    // Cart → Select Table → Create Order (Phase 5)
+                    navController.navigate(Screen.TableList.route)
                 },
                 onLogout = onLogout,
                 modifier = Modifier.fillMaxSize(),
@@ -74,6 +76,18 @@ fun AppNavHost(
             arguments = listOf(navArgument("foodId") { type = NavType.LongType }),
         ) {
             FoodDetailRoute(
+                onBack = { navController.popBackStack() },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        // Table List / Selection Screen — user selects an available table before creating an order
+        composable(route = Screen.TableList.route) {
+            TableRoute(
+                onTableSelected = { _: Long ->
+                    // TODO Phase 5: navigate to Create Order with tableId
+                    // navController.navigate(Screen.CreateOrder.createRoute(it))
+                },
                 onBack = { navController.popBackStack() },
                 modifier = Modifier.fillMaxSize(),
             )

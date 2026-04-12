@@ -27,4 +27,5 @@ include(":domain")
 include(":data")
 include(":ui-components")
 include(":feature:food")
+include(":feature:table")
 

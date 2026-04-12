@@ -1,0 +1,99 @@
+package com.autobill.smartpos.data.repository
+
+import com.autobill.smartpos.data.di.IoDispatcher
+import com.autobill.smartpos.data.local.dao.TableDao
+import com.autobill.smartpos.data.mapper.toDomain
+import com.autobill.smartpos.data.mapper.toEntity
+import com.autobill.smartpos.data.remote.TableApiService
+import com.autobill.smartpos.domain.common.Result
+import com.autobill.smartpos.domain.model.Table
+import com.autobill.smartpos.domain.repository.TableRepository
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/**
+ * TableRepository implementation.
+ *
+ * Strategy: network-first with Room cache fallback.
+ *  - On success → upsert to Room, return live data.
+ *  - On network failure → return cached data (stale-but-usable for offline resilience).
+ *  - If both fail → propagate the network error.
+ */
+@Singleton
+class TableRepositoryImpl @Inject constructor(
+    private val apiService: TableApiService,
+    private val tableDao: TableDao,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+) : TableRepository {
+
+    override suspend fun getAllTables(restaurantId: Long): Result<List<Table>> =
+        withContext(ioDispatcher) {
+            try {
+                val response = apiService.getAllTables(restaurantId)
+                val data = checkNotNull(response.data) {
+                    response.message ?: "Failed to fetch tables"
+                }
+                val tables = data.tables.map { it.toDomain() }
+                tableDao.upsertAll(data.tables.map { it.toEntity() })
+                Result.Success(tables)
+            } catch (e: Exception) {
+                val cached = tableDao.getAllTables(restaurantId).map { it.toDomain() }
+                if (cached.isNotEmpty()) Result.Success(cached) else Result.Failure(e)
+            }
+        }
+
+    override suspend fun getAvailableTables(
+        restaurantId: Long,
+        minCapacity: Int?,
+    ): Result<List<Table>> = withContext(ioDispatcher) {
+        try {
+            val response = apiService.getAvailableTables(restaurantId, minCapacity)
+            val tables = checkNotNull(response.data) {
+                response.message ?: "Failed to fetch available tables"
+            }.map { it.toDomain() }
+            // Upsert into cache so offline mode reflects latest availability
+            tableDao.upsertAll(
+                checkNotNull(response.data).map { it.toEntity() }
+            )
+            Result.Success(tables)
+        } catch (e: Exception) {
+            val cached = tableDao.getAvailableTables(restaurantId).map { it.toDomain() }
+                .let { all ->
+                    if (minCapacity != null) all.filter { it.capacity >= minCapacity } else all
+                }
+            if (cached.isNotEmpty()) Result.Success(cached) else Result.Failure(e)
+        }
+    }
+
+    override suspend fun getOccupiedTables(restaurantId: Long): Result<List<Table>> =
+        withContext(ioDispatcher) {
+            try {
+                val response = apiService.getOccupiedTables(restaurantId)
+                val tables = checkNotNull(response.data) {
+                    response.message ?: "Failed to fetch occupied tables"
+                }.map { it.toDomain() }
+                tableDao.upsertAll(checkNotNull(response.data).map { it.toEntity() })
+                Result.Success(tables)
+            } catch (e: Exception) {
+                val cached = tableDao.getOccupiedTables(restaurantId).map { it.toDomain() }
+                if (cached.isNotEmpty()) Result.Success(cached) else Result.Failure(e)
+            }
+        }
+
+    override suspend fun countAvailableTables(restaurantId: Long): Result<Int> =
+        withContext(ioDispatcher) {
+            try {
+                val response = apiService.countAvailableTables(restaurantId)
+                val count = checkNotNull(response.data) {
+                    response.message ?: "Failed to fetch available count"
+                }
+                Result.Success(count)
+            } catch (e: Exception) {
+                // Fall back to local count — good enough for the badge
+                Result.Success(tableDao.countAvailableTables(restaurantId))
+            }
+        }
+}
+
