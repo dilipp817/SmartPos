@@ -94,20 +94,20 @@
 - [x] `GetRestaurantIdUseCase` — inject in every ViewModel that calls a restaurant-scoped API
 - [x] Token persists across app restarts (DataStore already set up)
 
-### 3.3 Session Recovery on App Start
+### 3.3 Session Recovery on App Start ✅
 
 > If a token exists in DataStore but `restaurantId` is missing locally:
 > Call `GET /auth/me` → extract `restaurantId` → save. **Do NOT force re-login.**
 
-- [ ] `RecoverSessionUseCase` (scaffolded — wire it into app startup)
-- [ ] `MainViewModel`: on app start → token present? → recover session → navigate to Home
-- [ ] Token expired / invalid → navigate to Login
+- [x] `RecoverSessionUseCase` (scaffolded — wire it into app startup)
+- [x] `MainViewModel`: on app start → token present? → recover session → navigate to Home
+- [x] Token expired / invalid → navigate to Login
 
-### 3.4 Logout
-- [ ] `LogoutUseCase` — clears all session data from DataStore
-- [ ] Navigate to `LoginScreen` on logout
+### 3.4 Logout ✅
+- [x] `LogoutUseCase` — clears all session data from DataStore
+- [x] Navigate to `LoginScreen` on logout
 
-### 3.5 Role-Aware UI (enforcement at API level in v2)
+### 3.5 Role-Aware UI ✅ (enforcement at API level in v2)
 
 | Role | Show Cancel Order | Show Apply Discount | Show Manage Menu |
 |------|:-----------------:|:-------------------:|:----------------:|

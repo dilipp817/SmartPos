@@ -8,6 +8,7 @@ import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.common.UiState
 import com.autobill.smartpos.domain.model.CartItem
 import com.autobill.smartpos.domain.model.Food
+import com.autobill.smartpos.domain.model.RolePermissions
 import com.autobill.smartpos.domain.usecase.AddToCartUseCase
 import com.autobill.smartpos.domain.usecase.ClearCartUseCase
 import com.autobill.smartpos.domain.usecase.DecreaseCartQuantityUseCase
@@ -16,6 +17,7 @@ import com.autobill.smartpos.domain.usecase.GetFoodsPaginatedUseCase
 import com.autobill.smartpos.domain.usecase.GetFoodsUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
 import com.autobill.smartpos.domain.usecase.IncreaseCartQuantityUseCase
+import com.autobill.smartpos.domain.usecase.ObserveRolePermissionsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -38,6 +40,7 @@ class FoodViewModel @Inject constructor(
     private val getFoodsUseCase: GetFoodsUseCase,
     private val getFoodsPaginatedUseCase: GetFoodsPaginatedUseCase,
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
+    private val observeRolePermissionsUseCase: ObserveRolePermissionsUseCase,
     // Cart use cases
     private val getCartUseCase: GetCartUseCase,
     private val addToCartUseCase: AddToCartUseCase,
@@ -70,6 +73,16 @@ class FoodViewModel @Inject constructor(
     /** Live cart items — sourced from CartRepository */
     val cartItems: StateFlow<List<CartItem>> = getCartUseCase()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
+
+    // ========== ROLE PERMISSIONS (from session — reactive) ==========
+
+    /**
+     * Live role-based UI permissions — updated whenever the session changes.
+     * Starts as [RolePermissions.NONE] (no elevated controls) until session loads.
+     * Screens observe this to show/hide Cancel Order, Apply Discount, Manage Menu.
+     */
+    val rolePermissions: StateFlow<RolePermissions> = observeRolePermissionsUseCase()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), RolePermissions.NONE)
 
     // ========== FILTER STATE ==========
 

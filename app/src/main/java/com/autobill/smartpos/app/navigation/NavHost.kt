@@ -63,6 +63,7 @@ fun AppNavHost(
                 onCheckoutClick = {
                     navController.navigate(Screen.Billing.route)
                 },
+                onLogout = onLogout,
                 modifier = Modifier.fillMaxSize(),
             )
         }

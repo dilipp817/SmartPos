@@ -7,9 +7,10 @@ import com.autobill.smartpos.domain.usecase.LogoutUseCase
 import com.autobill.smartpos.domain.usecase.ObserveSessionUseCase
 import com.autobill.smartpos.domain.usecase.RecoverSessionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -17,13 +18,18 @@ import javax.inject.Inject
 /**
  * App-level ViewModel — determines the initial navigation destination.
  *
- * [sessionState]:
- *   - null  → still loading (show splash)
- *   - User  → valid session exists → navigate to main screen
- *   - (emitted as null after clearSession) → logged out → navigate to login
+ * Startup sequence:
+ *  1. [sessionState] starts as [SessionResult.Loading] → splash spinner shown.
+ *  2. [RecoverSessionUseCase] runs:
+ *       - No token       → nothing to do.
+ *       - Token valid    → session refreshed from GET /auth/me (restaurantId guaranteed).
+ *       - Token expired  → session cleared → [ObserveSessionUseCase] emits null.
+ *  3. [_startupComplete] flips to true → [sessionState] resolves:
+ *       - User in DataStore  → [SessionResult.Resolved(user)]  → navigate to Home.
+ *       - No user in DataStore → [SessionResult.Resolved(null)] → navigate to Login.
  *
- * On startup, if a token is stored but the restaurantId is missing, [RecoverSessionUseCase]
- * calls GET /auth/me and re-populates the session from the backend.
+ * Keeping [Loading] until recovery is done prevents a brief flash of the Home screen
+ * when an expired token is detected and the session is cleared.
  */
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -33,25 +39,36 @@ class MainViewModel @Inject constructor(
 ) : ViewModel() {
 
     /**
-     * Tri-state:
-     *  - Loading phase  → null (internal sentinel — not exposed directly)
-     *  - Session exists → User
-     *  - No session     → null User (after DataStore emits null)
-     *
-     * We use a wrapper so the UI can distinguish "still loading" from "logged out".
+     * Flips to true once [RecoverSessionUseCase] completes (success or failure).
+     * While false, [sessionState] stays [SessionResult.Loading] regardless of DataStore.
      */
-    val sessionState: StateFlow<SessionResult> = observeSessionUseCase()
-        .map { user -> SessionResult.Resolved(user) }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000L),
-            initialValue = SessionResult.Loading,
-        )
+    private val _startupComplete = MutableStateFlow(false)
+
+    /**
+     * Combined flow: only resolves after startup recovery is done.
+     *
+     * - [SessionResult.Loading]       → recovery still running — show splash
+     * - [SessionResult.Resolved(user)] → recovery done, user non-null → Home
+     * - [SessionResult.Resolved(null)] → recovery done, no session → Login
+     */
+    val sessionState: StateFlow<SessionResult> = combine(
+        observeSessionUseCase(),
+        _startupComplete,
+    ) { user, startupComplete ->
+        if (!startupComplete) SessionResult.Loading
+        else SessionResult.Resolved(user)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000L),
+        initialValue = SessionResult.Loading,
+    )
 
     init {
-        // On first launch, attempt to recover session from backend if restaurantId is missing.
         viewModelScope.launch {
+            // Run recovery first — validate token, refresh restaurantId, or clear expired session.
             recoverSessionUseCase()
+            // Only after recovery completes does the UI move past the splash screen.
+            _startupComplete.value = true
         }
     }
 
@@ -62,10 +79,10 @@ class MainViewModel @Inject constructor(
 
 /** Tri-state result for app startup navigation. */
 sealed interface SessionResult {
-    /** DataStore not yet emitted — show splash/loading. */
+    /** Recovery still running — show splash/loading indicator. */
     object Loading : SessionResult
 
-    /** DataStore emitted. [user] is null when logged out, non-null when logged in. */
+    /** Recovery complete. [user] is null when logged out, non-null when logged in. */
     data class Resolved(val user: User?) : SessionResult
 }
 

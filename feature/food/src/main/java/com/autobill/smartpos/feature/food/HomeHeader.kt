@@ -11,12 +11,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
@@ -103,41 +105,66 @@ fun HomeHeader(
                 )
             }
 
-            // Right: Business Profile
+            // Right: Manage Menu chip (admin / super_admin only) + Business Profile
             Row(
-                modifier = Modifier
-                    .clickable(onClick = data.onProfileClick)
-                    .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text(
-                    text = data.businessName,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Color(0xFF212121),
-                )
-                
-                // Avatar
-                Box(
+                // "Manage Menu" chip — only shown for admin / super_admin
+                if (data.canManageMenu) {
+                    Surface(
+                        onClick = data.onManageMenuClick,
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xFFFFF3E0),
+                        modifier = Modifier.height(32.dp),
+                    ) {
+                        Box(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "Manage Menu",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color(0xFFE65100),
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
+                    }
+                }
+
+                // Business Profile button
+                Row(
                     modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFFE0E0E0)),
-                    contentAlignment = Alignment.Center,
+                        .clickable(onClick = data.onProfileClick)
+                        .padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
+                    Text(
+                        text = data.businessName,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color(0xFF212121),
+                    )
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFE0E0E0)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Profile",
+                            modifier = Modifier.size(20.dp),
+                            tint = Color(0xFF757575),
+                        )
+                    }
                     Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = "Profile",
-                        modifier = Modifier.size(20.dp),
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = "Dropdown",
                         tint = Color(0xFF757575),
                     )
                 }
-                
-                Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = "Dropdown",
-                    tint = Color(0xFF757575),
-                )
             }
         }
 

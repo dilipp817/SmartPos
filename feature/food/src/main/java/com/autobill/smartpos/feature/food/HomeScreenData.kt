@@ -19,6 +19,9 @@ data class HeaderData(
     val selectedTab: OrderTab = OrderTab.OFFLINE,
     val onTabChange: (OrderTab) -> Unit = {},
     val onProfileClick: () -> Unit = {},
+    /** Show "Manage Menu" action — visible for admin / super_admin only. */
+    val canManageMenu: Boolean = false,
+    val onManageMenuClick: () -> Unit = {},
 )
 
 /**
@@ -131,6 +134,9 @@ data class CartSummaryData(
     val onClear: () -> Unit = {},
     val onReset: () -> Unit = {},
     val onPrint: () -> Unit = {},
+    /** Show "Apply Discount" button — visible for manager / admin / super_admin only. */
+    val canApplyDiscount: Boolean = false,
+    val onApplyDiscountClick: () -> Unit = {},
 )
 
 /**
