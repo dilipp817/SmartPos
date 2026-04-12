@@ -94,8 +94,25 @@ class TableRepositoryImpl @Inject constructor(
                 }
                 Result.Success(count)
             } catch (e: Exception) {
-                // Fall back to local count — good enough for the badge
                 Result.Success(tableDao.countAvailableTables(restaurantId))
+            }
+        }
+
+    override suspend fun getTableById(restaurantId: Long, tableId: Long): Result<Table> =
+        withContext(ioDispatcher) {
+            // Cache-first: Room is always up-to-date from Phase 4 list fetches
+            val cached = tableDao.getTableById(tableId)
+            if (cached != null) return@withContext Result.Success(cached.toDomain())
+            // Fallback to network if cache misses (e.g. deep-link or fresh install)
+            try {
+                val response = apiService.getTableById(restaurantId, tableId)
+                val dto = checkNotNull(response.data) {
+                    response.message ?: "Table not found"
+                }
+                tableDao.upsertAll(listOf(dto.toEntity()))
+                Result.Success(dto.toDomain())
+            } catch (e: Exception) {
+                Result.Failure(e)
             }
         }
 

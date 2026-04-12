@@ -38,5 +38,17 @@ sealed class Result<out T> {
 // Extension functions for common operations
 fun <T> Result<T>.isSuccess(): Boolean = this is Result.Success
 fun <T> Result<T>.isFailure(): Boolean = this is Result.Failure
+
+/**
+ * Typed exception representing an HTTP 409 CONFLICT from the backend.
+ * Thrown by repository implementations and caught by ViewModels in feature modules
+ * without needing a Retrofit dependency in the presentation layer.
+ *
+ * Common causes:
+ *  - Table already OCCUPIED when creating an order
+ *  - Optimistic lock violation on an order/table
+ *  - Bill already exists for this order
+ */
+class HttpConflictException(message: String = "Resource conflict (HTTP 409)") : Exception(message)
 fun <T> Result<T>.isLoading(): Boolean = this is Result.Loading
 

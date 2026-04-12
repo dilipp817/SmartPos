@@ -28,4 +28,5 @@ include(":data")
 include(":ui-components")
 include(":feature:food")
 include(":feature:table")
+include(":feature:order")
 

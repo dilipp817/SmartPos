@@ -166,12 +166,12 @@ kitchen   / password → restaurantId: 1 → Kitchen display
 
 > Core POS flow: Cart → Create Order → Manage Items → Update Status → KDS
 
-### 5.1 Create Order from Local Cart
+### 5.1 Create Order from Local Cart ✅
 
 > Called from `CartSummaryFooter` after user selects a table.
 > On success — **clear local cart**.
 
-- [ ] `POST /restaurants/{restaurantId}/orders`
+- [x] `POST /restaurants/{restaurantId}/orders`
   ```json
   {
     "tableId": 1,
@@ -183,9 +183,13 @@ kitchen   / password → restaurantId: 1 → Kitchen display
   - `orderType`: `DINE_IN` | `TAKEAWAY` | `DELIVERY`
   - Backend auto-sets table → `OCCUPIED`
   - Food price **captured at order time** — future price changes don't affect this order
-- [ ] Handle `409 CONFLICT` (table already occupied — prompt re-select)
-- [ ] `ClearCartUseCase` after successful order creation
-- [ ] Navigate to Order Detail screen
+- [x] Handle `409 CONFLICT` → mapped to `HttpConflictException` in data layer → "Re-select Table" banner shown
+- [x] `ClearCartUseCase` called after successful order creation
+- [x] Navigate to Order Detail screen (stub — full detail in Phase 5.3)
+- [x] New module `feature:order` created with `CreateOrderScreen`, `CreateOrderViewModel`, `CreateOrderRoute`
+- [x] `OrderRepository` + `CreateOrderUseCase` + `GetTableByIdUseCase` added to domain
+- [x] `OrderMappers`, `OrderDao`, `OrderRepositoryImpl` added to data layer
+- [x] `Screen.CreateOrder` + `Screen.OrderDetail` (stub) wired in `NavHost`
 
 ### 5.2 Order List Screen
 - [ ] `GET /restaurants/{restaurantId}/orders` — all orders

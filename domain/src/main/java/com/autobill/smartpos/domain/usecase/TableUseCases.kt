@@ -53,6 +53,18 @@ class GetAvailableTableCountUseCase @Inject constructor(
 }
 
 /**
+ * Use case: Get a single table by ID.
+ * Used by the Create Order screen to display table details (number, floor, capacity).
+ * Reads from local Room cache first — no full refresh needed.
+ */
+class GetTableByIdUseCase @Inject constructor(
+    private val repository: TableRepository,
+) {
+    suspend operator fun invoke(restaurantId: Long, tableId: Long): Result<Table> =
+        repository.getTableById(restaurantId, tableId)
+}
+
+/**
  * Use case: Update the status of a single table.
  *
  * Key uses:

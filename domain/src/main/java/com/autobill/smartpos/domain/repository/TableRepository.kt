@@ -29,6 +29,13 @@ interface TableRepository {
     suspend fun countAvailableTables(restaurantId: Long): Result<Int>
 
     /**
+     * GET /restaurants/{restaurantId}/tables/{tableId}
+     * Checks local Room cache first; falls back to network if not found.
+     * Used by the Create Order screen to display table details without a full refresh.
+     */
+    suspend fun getTableById(restaurantId: Long, tableId: Long): Result<Table>
+
+    /**
      * PATCH /restaurants/{restaurantId}/tables/{tableId}/status?newStatus={status}
      * On 409 CONFLICT (optimistic lock) — implementation re-fetches and retries once.
      * Reusable from Payment screen to free a table after checkout.
