@@ -20,7 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Whatshot
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -349,7 +349,7 @@ private fun SpicyBadge() {
         horizontalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Icon(
-                imageVector = Icons.Filled.Whatshot,
+                imageVector = Icons.Filled.LocalFireDepartment,
             contentDescription = "Spicy",
             tint = Color(0xFFF44336),
             modifier = Modifier.size(14.dp),

@@ -64,6 +64,9 @@ fun HomeRoute(
             )
         }
         val subtotal = cartItems.sumOf { it.subtotal }
+        // ⚠️ Local estimate for cart preview UX only.
+        // The real bill (with exact CGST/SGST breakdown) is computed server-side via
+        // POST /orders/{id}/generate-bill in Phase 6 — never use this value for actual billing.
         val tax = subtotal * 0.18
         val total = subtotal + tax
         return CartSummaryData(
@@ -126,7 +129,6 @@ fun HomeRoute(
 
         is UiState.Success -> {
             val pagination = (paginatedState as UiState.Success).data
-            val foodList = pagination.data
 
             HomeScreenData(
                 header = buildHeader(),
