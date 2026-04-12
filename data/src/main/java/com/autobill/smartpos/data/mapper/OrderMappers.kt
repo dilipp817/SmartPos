@@ -78,3 +78,35 @@ fun OrderItemDto.toEntity(orderId: Long): OrderItemEntity = OrderItemEntity(
     createdAt       = createdAt,
 )
 
+// ── Entity → Domain ──────────────────────────────────────────────────────────
+
+fun OrderItemEntity.toDomain(): OrderItem = OrderItem(
+    id              = id,
+    foodId          = foodId,
+    foodName        = foodName,
+    quantity        = quantity,
+    unitPrice       = unitPrice,
+    subtotal        = subtotal,
+    itemStatus      = ItemStatus.fromValue(itemStatus),
+    specialRequests = specialRequests,
+    createdAt       = createdAt,
+)
+
+fun OrderEntity.toDomain(items: List<OrderItemEntity> = emptyList()): Order = Order(
+    id           = id,
+    restaurantId = restaurantId,
+    tableId      = tableId ?: 0L,
+    tableNumber  = tableNumber,
+    orderNumber  = orderNumber,
+    status       = OrderStatus.fromValue(status),
+    orderType    = OrderType.fromValue(orderType),
+    items        = items.map { it.toDomain() },
+    subtotal     = subtotal,
+    totalAmount  = totalAmount,
+    notes        = notes,
+    customerId   = customerId,
+    createdAt    = createdAt,
+    updatedAt    = updatedAt,
+    version      = version,
+)
+

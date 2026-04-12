@@ -1,0 +1,194 @@
+package com.autobill.smartpos.feature.order
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.autobill.smartpos.domain.common.Result
+import com.autobill.smartpos.domain.model.OrderStatus
+import com.autobill.smartpos.domain.usecase.GetActiveOrdersUseCase
+import com.autobill.smartpos.domain.usecase.GetAllOrdersUseCase
+import com.autobill.smartpos.domain.usecase.GetOrdersByStatusUseCase
+import com.autobill.smartpos.domain.usecase.GetPendingOrdersCountUseCase
+import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
+import com.autobill.smartpos.domain.usecase.ObserveRolePermissionsUseCase
+import com.autobill.smartpos.domain.usecase.SearchOrdersUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+/**
+ * ViewModel for the Order List screen.
+ *
+ * Responsibilities:
+ *  - Load orders based on the active [OrderFilter] tab
+ *  - Fetch pending count concurrently with the list (nav badge)
+ *  - Support pull-to-refresh
+ *  - Search orders with client-side debounce (400 ms)
+ *  - Guard against null restaurantId (super_admin without outlet)
+ *  - Expose [OrderUiState.canCancelOrders] for role-gated cancel action
+ */
+@HiltViewModel
+class OrderViewModel @Inject constructor(
+    private val getAllOrdersUseCase: GetAllOrdersUseCase,
+    private val getActiveOrdersUseCase: GetActiveOrdersUseCase,
+    private val getOrdersByStatusUseCase: GetOrdersByStatusUseCase,
+    private val getPendingOrdersCountUseCase: GetPendingOrdersCountUseCase,
+    private val searchOrdersUseCase: SearchOrdersUseCase,
+    private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
+    private val observeRolePermissionsUseCase: ObserveRolePermissionsUseCase,
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(OrderUiState())
+    val uiState: StateFlow<OrderUiState> = _uiState.asStateFlow()
+
+    /** Cached restaurantId — sourced from session, never hardcoded. */
+    private var restaurantId: Long? = null
+
+    /** Tracks the last active search debounce job so it can be cancelled on new input. */
+    private var searchJob: Job? = null
+
+    init {
+        observeRolePermissionsUseCase()
+            .onEach { perms ->
+                _uiState.update { it.copy(canCancelOrders = perms.canCancelOrders) }
+            }
+            .launchIn(viewModelScope)
+
+        viewModelScope.launch {
+            restaurantId = getRestaurantIdUseCase()
+            if (restaurantId == null) {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = "No restaurant assigned to this account. Please log in again.",
+                    )
+                }
+                return@launch
+            }
+            loadAll()
+        }
+    }
+
+    // ── Filter / Search ──────────────────────────────────────────────────────
+
+    /** Switch filter tab and reload immediately. */
+    fun selectFilter(filter: OrderFilter) {
+        if (_uiState.value.selectedFilter == filter) return
+        _uiState.update {
+            it.copy(
+                selectedFilter = filter,
+                isLoading = true,
+                errorMessage = null,
+                searchQuery = "",
+                isSearchActive = false,
+            )
+        }
+        viewModelScope.launch { loadOrders() }
+    }
+
+    /**
+     * Toggle search bar visibility.
+     * Closing the bar resets the query and reloads the current filter — one atomic state update.
+     */
+    fun onSearchActiveToggle(active: Boolean) {
+        if (!active) {
+            _uiState.update { it.copy(isSearchActive = false, searchQuery = "", isLoading = true) }
+            viewModelScope.launch { loadOrders() }
+        } else {
+            _uiState.update { it.copy(isSearchActive = true) }
+        }
+    }
+
+    /**
+     * Called on every keystroke in the search field.
+     * Debounced 400 ms — only fires a network call when typing pauses.
+     */
+    fun onSearchQueryChange(query: String) {
+        _uiState.update { it.copy(searchQuery = query) }
+        searchJob?.cancel()
+        if (query.isBlank()) {
+            _uiState.update { it.copy(isLoading = true) }
+            viewModelScope.launch { loadOrders() }
+            return
+        }
+        searchJob = viewModelScope.launch {
+            delay(400)
+            val rid = restaurantId ?: return@launch
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            when (val result = searchOrdersUseCase(rid, query.trim())) {
+                is Result.Success -> _uiState.update {
+                    it.copy(orders = result.data, isLoading = false, errorMessage = null)
+                }
+                is Result.Failure -> _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = result.exception.message ?: "Search failed.",
+                    )
+                }
+                Result.Loading -> Unit
+            }
+        }
+    }
+
+    /** Pull-to-refresh — shows spinner without clearing the existing list. */
+    fun refresh() {
+        _uiState.update { it.copy(isRefreshing = true, errorMessage = null) }
+        viewModelScope.launch { loadAll(refreshing = true) }
+    }
+
+    // ── Private helpers ──────────────────────────────────────────────────────
+
+    /**
+     * Fetches the order list and pending count concurrently.
+     * Matches the [TableViewModel.loadAll] structured-concurrency pattern:
+     *  - Both jobs are [async] children of [viewModelScope].
+     *  - [isRefreshing] is reset only after both complete.
+     */
+    private suspend fun loadAll(refreshing: Boolean = false) {
+        val rid = restaurantId ?: return
+        val ordersDeferred = viewModelScope.async { loadOrders() }
+        val countDeferred  = viewModelScope.async {
+            when (val result = getPendingOrdersCountUseCase(rid)) {
+                is Result.Success -> _uiState.update { it.copy(pendingCount = result.data) }
+                else -> Unit  // badge count failure is non-critical — keep previous value
+            }
+        }
+        ordersDeferred.await()
+        countDeferred.await()
+        if (refreshing) _uiState.update { it.copy(isRefreshing = false) }
+    }
+
+    private suspend fun loadOrders() {
+        val rid = restaurantId ?: return
+        val result = when (val filter = _uiState.value.selectedFilter) {
+            OrderFilter.ALL         -> getAllOrdersUseCase(rid)
+            OrderFilter.ACTIVE      -> getActiveOrdersUseCase(rid)
+            // Inline the status mapping — eliminates the need for a force-unwrap (!!)
+            OrderFilter.PENDING     -> getOrdersByStatusUseCase(rid, OrderStatus.PENDING)
+            OrderFilter.IN_PROGRESS -> getOrdersByStatusUseCase(rid, OrderStatus.IN_PROGRESS)
+            OrderFilter.COMPLETED   -> getOrdersByStatusUseCase(rid, OrderStatus.COMPLETED)
+        }
+        _uiState.update {
+            when (result) {
+                is Result.Success -> it.copy(
+                    orders = result.data,
+                    isLoading = false,
+                    errorMessage = null,
+                )
+                is Result.Failure -> it.copy(
+                    isLoading = false,
+                    errorMessage = result.exception.message ?: "Failed to load orders. Please try again.",
+                )
+                Result.Loading -> it.copy(isLoading = true)
+            }
+        }
+    }
+}

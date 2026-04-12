@@ -10,6 +10,7 @@ import com.autobill.smartpos.data.remote.dto.OrderItemRequestDto
 import com.autobill.smartpos.domain.common.HttpConflictException
 import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.model.Order
+import com.autobill.smartpos.domain.model.OrderStatus
 import com.autobill.smartpos.domain.model.OrderType
 import com.autobill.smartpos.domain.repository.OrderLineItem
 import com.autobill.smartpos.domain.repository.OrderRepository
@@ -83,6 +84,86 @@ class OrderRepositoryImpl @Inject constructor(
             Result.Failure(e)
         }
     }
+
+    // ── Phase 5.2 — Read operations ──────────────────────────────────────────
+
+    override suspend fun getAllOrders(restaurantId: Long): Result<List<Order>> =
+        withContext(ioDispatcher) {
+            try {
+                val response = apiService.getAllOrders(restaurantId)
+                val dto = checkNotNull(response.data) { response.message ?: "Failed to fetch orders" }
+                val orders = dto.orders.map { it.toDomain() }
+                orderDao.upsertOrders(dto.orders.map { it.toEntity() })
+                dto.orders.forEach { orderDto ->
+                    orderDao.upsertItems(orderDto.items.map { it.toEntity(orderDto.id) })
+                }
+                Result.Success(orders)
+            } catch (e: Exception) {
+                val cached = orderDao.getAllOrders(restaurantId).map { it.toDomain() }
+                if (cached.isNotEmpty()) Result.Success(cached) else Result.Failure(e)
+            }
+        }
+
+    override suspend fun getActiveOrders(restaurantId: Long): Result<List<Order>> =
+        withContext(ioDispatcher) {
+            try {
+                val response = apiService.getActiveOrders(restaurantId)
+                val dto = checkNotNull(response.data) { response.message ?: "Failed to fetch active orders" }
+                val orders = dto.orders.map { it.toDomain() }
+                orderDao.upsertOrders(dto.orders.map { it.toEntity() })
+                dto.orders.forEach { orderDto ->
+                    orderDao.upsertItems(orderDto.items.map { it.toEntity(orderDto.id) })
+                }
+                Result.Success(orders)
+            } catch (e: Exception) {
+                val cached = orderDao.getActiveOrders(restaurantId).map { it.toDomain() }
+                if (cached.isNotEmpty()) Result.Success(cached) else Result.Failure(e)
+            }
+        }
+
+    override suspend fun getOrdersByStatus(
+        restaurantId: Long,
+        status: OrderStatus,
+    ): Result<List<Order>> = withContext(ioDispatcher) {
+        try {
+            val response = apiService.getOrdersByStatus(restaurantId, status.value)
+            val dto = checkNotNull(response.data) { response.message ?: "Failed to fetch orders by status" }
+            val orders = dto.orders.map { it.toDomain() }
+            orderDao.upsertOrders(dto.orders.map { it.toEntity() })
+            dto.orders.forEach { orderDto ->
+                orderDao.upsertItems(orderDto.items.map { it.toEntity(orderDto.id) })
+            }
+            Result.Success(orders)
+        } catch (e: Exception) {
+            val cached = orderDao.getOrdersByStatus(restaurantId, status.value).map { it.toDomain() }
+            if (cached.isNotEmpty()) Result.Success(cached) else Result.Failure(e)
+        }
+    }
+
+    override suspend fun countPendingOrders(restaurantId: Long): Result<Int> =
+        withContext(ioDispatcher) {
+            try {
+                val response = apiService.countPendingOrders(restaurantId)
+                val dto = checkNotNull(response.data) { response.message ?: "Failed to fetch pending count" }
+                Result.Success(dto.pendingCount)
+            } catch (e: Exception) {
+                // Fallback: count from local cache
+                val count = orderDao.getOrdersByStatus(restaurantId, OrderStatus.PENDING.value).size
+                Result.Success(count)
+            }
+        }
+
+    override suspend fun searchOrders(restaurantId: Long, query: String): Result<List<Order>> =
+        withContext(ioDispatcher) {
+            try {
+                val response = apiService.searchOrders(restaurantId, query)
+                val dto = checkNotNull(response.data) { response.message ?: "Search failed" }
+                Result.Success(dto.orders.map { it.toDomain() })
+            } catch (e: Exception) {
+                val cached = orderDao.searchOrders(restaurantId, query).map { it.toDomain() }
+                if (cached.isNotEmpty()) Result.Success(cached) else Result.Failure(e)
+            }
+        }
 }
 
 
