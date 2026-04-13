@@ -1,11 +1,16 @@
 package com.autobill.smartpos.app.navigation
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PermanentDrawerSheet
 import androidx.compose.material3.PermanentNavigationDrawer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -14,6 +19,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.autobill.smartpos.auth.LoginScreen
+import com.autobill.smartpos.feature.billing.BillingRoute
+import com.autobill.smartpos.feature.billing.PaymentRoute
 import com.autobill.smartpos.feature.food.FoodDetailRoute
 import com.autobill.smartpos.feature.food.HomeRoute
 import com.autobill.smartpos.feature.order.CreateOrderRoute
@@ -219,6 +226,9 @@ private fun AppNavGraph(
         ) {
             OrderDetailRoute(
                 onBack = { navController.popBackStack() },
+                onBillingClick = { orderId, tableId ->
+                    navController.navigate(Screen.OrderBilling.createRoute(orderId, tableId))
+                },
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -228,9 +238,63 @@ private fun AppNavGraph(
             // TODO: SearchRoute()
         }
 
-        // Billing / Checkout Screen
+        // Billing overview — accessible from the drawer.
+        // Full bills history will be added in Phase 7.
+        // Actual bill generation is accessed from Order Detail → "Generate Bill".
         composable(route = Screen.Billing.route) {
-            // TODO: BillingRoute(onBack = { navController.popBackStack() }, onLogout = onLogout)
+            androidx.compose.foundation.layout.Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                androidx.compose.material3.Text(
+                    text = "To generate a bill, open an order\nand tap \"Generate Bill\".",
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(32.dp),
+                )
+            }
+        }
+
+        // Order-specific bill generation — Phase 6.1 / 6.2
+        composable(
+            route = Screen.OrderBilling.route,
+            arguments = listOf(
+                navArgument("orderId") { type = NavType.LongType },
+                navArgument("tableId") { type = NavType.LongType },
+            ),
+        ) {
+            BillingRoute(
+                onBack = { navController.popBackStack() },
+                onNavigateToPayment = { billId, orderId, tableId, totalAmount, remainingAmount ->
+                    navController.navigate(
+                        Screen.Payment.createRoute(billId, orderId, tableId, totalAmount, remainingAmount)
+                    )
+                },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        // Payment — Phase 6.3
+        composable(
+            route = Screen.Payment.route,
+            arguments = listOf(
+                navArgument("billId")          { type = NavType.LongType },
+                navArgument("orderId")         { type = NavType.LongType },
+                navArgument("tableId")         { type = NavType.LongType },
+                navArgument("totalAmount")     { type = NavType.StringType },
+                navArgument("remainingAmount") { type = NavType.StringType },
+            ),
+        ) {
+            PaymentRoute(
+                onBack = { navController.popBackStack() },
+                onPaymentSuccess = {
+                    // Payment confirmed → go back to Order List, clear billing back-stack
+                    navController.navigate(Screen.OrderList.route) {
+                        popUpTo(Screen.FoodList.route) { inclusive = false }
+                    }
+                },
+                modifier = Modifier.fillMaxSize(),
+            )
         }
 
         // Settings Screen

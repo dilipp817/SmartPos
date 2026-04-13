@@ -85,7 +85,11 @@ private val drawerNavItems = listOf(
         icon = Icons.Default.CreditCard,
         label = "Billing",
         navigateTo = Screen.Billing.route,
-        activeRoutes = setOf(Screen.Billing.route),
+        activeRoutes = setOf(
+            Screen.Billing.route,
+            Screen.OrderBilling.route,
+            Screen.Payment.route,
+        ),
     ),
     DrawerNavItem(
         icon = Icons.Default.Settings,

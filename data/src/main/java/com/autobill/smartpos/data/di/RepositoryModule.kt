@@ -1,14 +1,18 @@
 package com.autobill.smartpos.data.di
 
 import com.autobill.smartpos.data.repository.AuthRepositoryImpl
+import com.autobill.smartpos.data.repository.BillRepositoryImpl
 import com.autobill.smartpos.data.repository.CartRepositoryImpl
 import com.autobill.smartpos.data.repository.MockFoodRepository
 import com.autobill.smartpos.data.repository.OrderRepositoryImpl
+import com.autobill.smartpos.data.repository.PaymentRepositoryImpl
 import com.autobill.smartpos.data.repository.TableRepositoryImpl
 import com.autobill.smartpos.domain.repository.AuthRepository
+import com.autobill.smartpos.domain.repository.BillRepository
 import com.autobill.smartpos.domain.repository.CartRepository
 import com.autobill.smartpos.domain.repository.FoodRepository
 import com.autobill.smartpos.domain.repository.OrderRepository
+import com.autobill.smartpos.domain.repository.PaymentRepository
 import com.autobill.smartpos.domain.repository.TableRepository
 import dagger.Binds
 import dagger.Module
@@ -49,4 +53,14 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindOrderRepository(impl: OrderRepositoryImpl): OrderRepository
+
+    /** Bill data — generate, fetch, and cancel bills */
+    @Binds
+    @Singleton
+    abstract fun bindBillRepository(impl: BillRepositoryImpl): BillRepository
+
+    /** Payment data — process, confirm, refund payments */
+    @Binds
+    @Singleton
+    abstract fun bindPaymentRepository(impl: PaymentRepositoryImpl): PaymentRepository
 }

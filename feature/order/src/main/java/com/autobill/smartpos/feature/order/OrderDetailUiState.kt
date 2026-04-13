@@ -82,6 +82,14 @@ data class OrderDetailUiState(
     /** True when the order is in a final state (no further actions possible). */
     val isOrderFinal: Boolean
         get() = order?.status == OrderStatus.DELIVERED || order?.status == OrderStatus.CANCELLED
+
+    /**
+     * True when the "Generate Bill" button should be shown.
+     * Bill generation is available for any active (non-cancelled) order.
+     * The server handles the 409 case if a bill already exists.
+     */
+    val canBill: Boolean
+        get() = order != null && order.status != OrderStatus.CANCELLED
 }
 
 /**
