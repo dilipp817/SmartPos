@@ -2,6 +2,7 @@ package com.autobill.smartpos
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.autobill.smartpos.data.local.AppPrefsDataStore
 import com.autobill.smartpos.domain.model.User
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantUseCase
@@ -40,7 +41,16 @@ class MainViewModel @Inject constructor(
     private val logoutUseCase: LogoutUseCase,
     private val getRestaurantUseCase: GetRestaurantUseCase,
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
+    appPrefsDataStore: AppPrefsDataStore,
 ) : ViewModel() {
+
+    /** Observed by [MainActivity] to set the theme before the first frame. */
+    val isDarkTheme: StateFlow<Boolean> = appPrefsDataStore.observeIsDarkTheme()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = false,
+        )
 
     /**
      * Flips to true once [RecoverSessionUseCase] completes (success or failure).

@@ -391,10 +391,26 @@ data/di/NetworkModule.kt              (provideCategoryApiService already present
 - `RepositoryModule` binds `CategoryRepository → CategoryRepositoryImpl`
 - Admin-only mutations gated by `RolePermissions.canManageMenu` (enforced server-side with 403)
 
-### 7.3 Settings Screen
-- [ ] User profile display (username, email, role — from session)
-- [ ] Theme selection (light / dark)
-- [ ] Logout
+### 7.3 Settings Screen ✅
+- [x] User profile display (username, email, role chip — from session)
+- [x] Restaurant / outlet info (name, currency — from RestaurantDataStore cache)
+- [x] Theme selection (light / dark — persisted in AppPrefsDataStore)
+- [x] Logout with confirmation dialog
+
+**Files created:**
+```
+data/local/AppPrefsDataStore.kt          (DataStore<Preferences>: isDarkTheme boolean)
+app/settings/SettingsUiState.kt          (profile, restaurant, isDarkTheme, isLoggingOut)
+app/settings/SettingsViewModel.kt        (observes session + restaurant + theme prefs)
+app/settings/SettingsScreen.kt           (Profile / Outlet / Appearance / Logout sections)
+app/settings/SettingsRoute.kt
+```
+**Updated:**
+- `ui-components/Theme.kt`: added `SmartPosDarkColorScheme` (warm dark palette);
+  `SmartPosTheme` now accepts `darkTheme: Boolean` param (defaults to system preference)
+- `MainViewModel.kt`: injects `AppPrefsDataStore`; exposes `isDarkTheme: StateFlow<Boolean>`
+- `MainActivity.kt`: observes `isDarkTheme` from `MainViewModel`, passes to `SmartPosTheme`
+- `NavHost.kt`: `Screen.Settings` wired to `SettingsRoute`
 
 **Time Estimate**: 3–4 days
 
