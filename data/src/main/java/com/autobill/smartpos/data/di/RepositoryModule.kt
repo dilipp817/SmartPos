@@ -3,6 +3,7 @@ package com.autobill.smartpos.data.di
 import com.autobill.smartpos.data.repository.AuthRepositoryImpl
 import com.autobill.smartpos.data.repository.BillRepositoryImpl
 import com.autobill.smartpos.data.repository.CartRepositoryImpl
+import com.autobill.smartpos.data.repository.CategoryRepositoryImpl
 import com.autobill.smartpos.data.repository.MockFoodRepository
 import com.autobill.smartpos.data.repository.OrderRepositoryImpl
 import com.autobill.smartpos.data.repository.PaymentRepositoryImpl
@@ -11,6 +12,7 @@ import com.autobill.smartpos.data.repository.TableRepositoryImpl
 import com.autobill.smartpos.domain.repository.AuthRepository
 import com.autobill.smartpos.domain.repository.BillRepository
 import com.autobill.smartpos.domain.repository.CartRepository
+import com.autobill.smartpos.domain.repository.CategoryRepository
 import com.autobill.smartpos.domain.repository.FoodRepository
 import com.autobill.smartpos.domain.repository.OrderRepository
 import com.autobill.smartpos.domain.repository.PaymentRepository
@@ -70,4 +72,9 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindRestaurantRepository(impl: RestaurantRepositoryImpl): RestaurantRepository
+
+    /** Category list — in-memory cache refreshed on every fetch */
+    @Binds
+    @Singleton
+    abstract fun bindCategoryRepository(impl: CategoryRepositoryImpl): CategoryRepository
 }
