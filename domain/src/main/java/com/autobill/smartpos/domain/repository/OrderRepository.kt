@@ -45,6 +45,49 @@ interface OrderRepository {
 
     /** GET /restaurants/{restaurantId}/orders/search?q=... */
     suspend fun searchOrders(restaurantId: Long, query: String): Result<List<Order>>
+
+    // ── Phase 5.3 — Order Detail mutations ───────────────────────────────────
+
+    /** GET /restaurants/{restaurantId}/orders/{orderId} — full order with items + version */
+    suspend fun getOrderById(restaurantId: Long, orderId: Long): Result<Order>
+
+    /** PATCH /restaurants/{restaurantId}/orders/{orderId}/status */
+    suspend fun updateOrderStatus(
+        restaurantId: Long,
+        orderId: Long,
+        status: OrderStatus,
+    ): Result<Order>
+
+    /** POST /restaurants/{restaurantId}/orders/{orderId}/items — PENDING or HOLD only */
+    suspend fun addItemToOrder(
+        restaurantId: Long,
+        orderId: Long,
+        foodId: Long,
+        quantity: Int,
+        specialRequests: String?,
+    ): Result<Order>
+
+    /**
+     * PUT /restaurants/{restaurantId}/orders/{orderId}/items/{itemId}
+     * ⚠️ Returns 400 if item is READY, SERVED, or CANCELLED (server-locked).
+     */
+    suspend fun updateOrderItem(
+        restaurantId: Long,
+        orderId: Long,
+        itemId: Long,
+        quantity: Int,
+        specialRequests: String?,
+    ): Result<Order>
+
+    /** DELETE /restaurants/{restaurantId}/orders/{orderId}/items/{itemId} */
+    suspend fun removeItemFromOrder(
+        restaurantId: Long,
+        orderId: Long,
+        itemId: Long,
+    ): Result<Order>
+
+    /** DELETE /restaurants/{restaurantId}/orders/{orderId} — cancel entire order */
+    suspend fun cancelOrder(restaurantId: Long, orderId: Long): Result<Order>
 }
 
 /**

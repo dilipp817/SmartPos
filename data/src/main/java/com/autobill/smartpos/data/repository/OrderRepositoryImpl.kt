@@ -7,6 +7,8 @@ import com.autobill.smartpos.data.mapper.toEntity
 import com.autobill.smartpos.data.remote.OrderApiService
 import com.autobill.smartpos.data.remote.dto.CreateOrderRequest
 import com.autobill.smartpos.data.remote.dto.OrderItemRequestDto
+import com.autobill.smartpos.data.remote.dto.UpdateOrderItemRequest
+import com.autobill.smartpos.data.remote.dto.UpdateOrderStatusRequest
 import com.autobill.smartpos.domain.common.HttpConflictException
 import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.model.Order
@@ -164,6 +166,151 @@ class OrderRepositoryImpl @Inject constructor(
                 if (cached.isNotEmpty()) Result.Success(cached) else Result.Failure(e)
             }
         }
+
+    // ── Phase 5.3 — Order Detail mutations ───────────────────────────────────
+
+    override suspend fun getOrderById(restaurantId: Long, orderId: Long): Result<Order> =
+        withContext(ioDispatcher) {
+            try {
+                val response = apiService.getOrderById(restaurantId, orderId)
+                val dto = checkNotNull(response.data) { response.message ?: "Order not found" }
+                orderDao.upsertOrder(dto.toEntity())
+                orderDao.upsertItems(dto.items.map { it.toEntity(dto.id) })
+                Result.Success(dto.toDomain())
+            } catch (e: Exception) {
+                // Cache fallback — rebuild with items
+                val entity = orderDao.getOrderById(orderId)
+                if (entity != null) {
+                    val items = orderDao.getItemsForOrder(orderId)
+                    Result.Success(entity.toDomain(items))
+                } else {
+                    Result.Failure(e)
+                }
+            }
+        }
+
+    override suspend fun updateOrderStatus(
+        restaurantId: Long,
+        orderId: Long,
+        status: OrderStatus,
+    ): Result<Order> = withContext(ioDispatcher) {
+        try {
+            val response = apiService.updateOrderStatus(
+                restaurantId = restaurantId,
+                orderId      = orderId,
+                request      = UpdateOrderStatusRequest(status = status.value),
+            )
+            val dto = checkNotNull(response.data) { response.message ?: "Failed to update status" }
+            orderDao.upsertOrder(dto.toEntity())
+            orderDao.upsertItems(dto.items.map { it.toEntity(dto.id) })
+            Result.Success(dto.toDomain())
+        } catch (e: HttpException) {
+            if (e.code() == 409) Result.Failure(HttpConflictException("Order was modified by another process."))
+            else Result.Failure(e)
+        } catch (e: Exception) {
+            Result.Failure(e)
+        }
+    }
+
+    override suspend fun addItemToOrder(
+        restaurantId: Long,
+        orderId: Long,
+        foodId: Long,
+        quantity: Int,
+        specialRequests: String?,
+    ): Result<Order> = withContext(ioDispatcher) {
+        try {
+            val response = apiService.addItemToOrder(
+                restaurantId = restaurantId,
+                orderId      = orderId,
+                request      = OrderItemRequestDto(
+                    foodId          = foodId,
+                    quantity        = quantity,
+                    specialRequests = specialRequests,
+                ),
+            )
+            val dto = checkNotNull(response.data) { response.message ?: "Failed to add item" }
+            orderDao.upsertOrder(dto.toEntity())
+            orderDao.upsertItems(dto.items.map { it.toEntity(dto.id) })
+            Result.Success(dto.toDomain())
+        } catch (e: HttpException) {
+            if (e.code() == 409) Result.Failure(HttpConflictException("Order was modified by another process."))
+            else Result.Failure(e)
+        } catch (e: Exception) {
+            Result.Failure(e)
+        }
+    }
+
+    override suspend fun updateOrderItem(
+        restaurantId: Long,
+        orderId: Long,
+        itemId: Long,
+        quantity: Int,
+        specialRequests: String?,
+    ): Result<Order> = withContext(ioDispatcher) {
+        try {
+            val response = apiService.updateOrderItem(
+                restaurantId = restaurantId,
+                orderId      = orderId,
+                itemId       = itemId,
+                request      = UpdateOrderItemRequest(
+                    quantity        = quantity,
+                    specialRequests = specialRequests,
+                ),
+            )
+            val dto = checkNotNull(response.data) { response.message ?: "Failed to update item" }
+            orderDao.upsertOrder(dto.toEntity())
+            orderDao.upsertItems(dto.items.map { it.toEntity(dto.id) })
+            Result.Success(dto.toDomain())
+        } catch (e: HttpException) {
+            when (e.code()) {
+                409  -> Result.Failure(HttpConflictException("Order was modified by another process."))
+                400  -> Result.Failure(Exception("This item cannot be edited — it is already ${getLockedItemReason(e)}."))
+                else -> Result.Failure(e)
+            }
+        } catch (e: Exception) {
+            Result.Failure(e)
+        }
+    }
+
+    override suspend fun removeItemFromOrder(
+        restaurantId: Long,
+        orderId: Long,
+        itemId: Long,
+    ): Result<Order> = withContext(ioDispatcher) {
+        try {
+            val response = apiService.removeItemFromOrder(restaurantId, orderId, itemId)
+            val dto = checkNotNull(response.data) { response.message ?: "Failed to remove item" }
+            orderDao.upsertOrder(dto.toEntity())
+            orderDao.deleteItemsForOrder(orderId)
+            orderDao.upsertItems(dto.items.map { it.toEntity(dto.id) })
+            Result.Success(dto.toDomain())
+        } catch (e: HttpException) {
+            if (e.code() == 409) Result.Failure(HttpConflictException("Order was modified by another process."))
+            else Result.Failure(e)
+        } catch (e: Exception) {
+            Result.Failure(e)
+        }
+    }
+
+    override suspend fun cancelOrder(restaurantId: Long, orderId: Long): Result<Order> =
+        withContext(ioDispatcher) {
+            try {
+                val response = apiService.cancelOrder(restaurantId, orderId)
+                val dto = checkNotNull(response.data) { response.message ?: "Failed to cancel order" }
+                orderDao.upsertOrder(dto.toEntity())
+                Result.Success(dto.toDomain())
+            } catch (e: HttpException) {
+                if (e.code() == 409) Result.Failure(HttpConflictException("Order was modified by another process."))
+                else Result.Failure(e)
+            } catch (e: Exception) {
+                Result.Failure(e)
+            }
+        }
+
+    /** Extracts a human-readable lock reason from a 400 response body (best-effort). */
+    private fun getLockedItemReason(e: HttpException): String =
+        try { e.response()?.errorBody()?.string() ?: "locked" } catch (_: Exception) { "locked" }
 }
 
 

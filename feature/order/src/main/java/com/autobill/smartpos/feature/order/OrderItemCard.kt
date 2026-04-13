@@ -152,7 +152,7 @@ fun OrderItemCard(
  *
  * Falls back to the raw string on parse failure.
  */
-private fun formatOrderTime(createdAt: String): String {
+internal fun formatOrderTime(createdAt: String): String {
     return try {
         // Split on "T" separator: "2026-04-13T10:32:00" → ["2026-04-13", "10:32:00"]
         val parts = createdAt.split("T")
