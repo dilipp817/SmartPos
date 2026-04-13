@@ -28,6 +28,7 @@ import com.autobill.smartpos.feature.order.KitchenDisplayRoute
 import com.autobill.smartpos.feature.order.OrderDetailRoute
 import com.autobill.smartpos.feature.order.OrderRoute
 import com.autobill.smartpos.feature.table.TableRoute
+import com.autobill.smartpos.settings.SettingsRoute
 
 /**
  * Application navigation graph.
@@ -297,9 +298,12 @@ private fun AppNavGraph(
             )
         }
 
-        // Settings Screen
+        // Settings Screen — Phase 7.3
         composable(route = Screen.Settings.route) {
-            // TODO: SettingsRoute(onLogout = onLogout)
+            SettingsRoute(
+                onBack   = { navController.popBackStack() },
+                modifier = Modifier.fillMaxSize(),
+            )
         }
     }
 }

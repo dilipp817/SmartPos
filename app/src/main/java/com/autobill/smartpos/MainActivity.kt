@@ -47,9 +47,11 @@ class MainActivity : ComponentActivity() {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
 
         setContent {
-            SmartPosTheme {
-                val mainViewModel: MainViewModel = hiltViewModel()
-                val sessionState by mainViewModel.sessionState.collectAsStateWithLifecycle()
+            val mainViewModel: MainViewModel = hiltViewModel()
+            val sessionState by mainViewModel.sessionState.collectAsStateWithLifecycle()
+            val isDarkTheme  by mainViewModel.isDarkTheme.collectAsStateWithLifecycle()
+
+            SmartPosTheme(darkTheme = isDarkTheme) {
 
                 when (val state = sessionState) {
 
