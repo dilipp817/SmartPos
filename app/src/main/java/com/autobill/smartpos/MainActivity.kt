@@ -4,7 +4,6 @@ import android.content.pm.ActivityInfo
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,13 +27,15 @@ import dagger.hilt.android.AndroidEntryPoint
  * Responsibilities:
  *  1. Enforce landscape mode (tablet-first app)
  *  2. Resolve session state via [MainViewModel]
- *  3. Show a splash indicator while DataStore emits the first value
- *  4. Hand off to [AppNavHost] with the correct start destination once resolved
+ *  3. Show a splash indicator while the session is being resolved
+ *  4. Hand off to [AppNavHost] with the correct start destination
  *
- * Auth state changes (login success / logout) are handled inside [AppNavHost].
- * [key()] around [AppNavHost] ensures the nav-stack is fully reset when the
- * auth state flips (logged-in ↔ logged-out) so the user can never back-navigate
- * past the login screen.
+ * Auth state changes (login / logout) are handled inside [AppNavHost].
+ * [key()] around [AppNavHost] fully resets the nav-stack when the
+ * auth state flips so staff can never back-navigate past the login screen.
+ *
+ * Navigation chrome (PermanentNavigationDrawer) lives in [AppNavHost],
+ * not here — MainActivity stays intentionally thin.
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -42,16 +43,17 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Tablet-first: always landscape
+        // Tablet-first: always landscape (also declared in manifest for process-death safety)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
 
+        setContent {
             SmartPosTheme {
                 val mainViewModel: MainViewModel = hiltViewModel()
                 val sessionState by mainViewModel.sessionState.collectAsStateWithLifecycle()
 
                 when (val state = sessionState) {
 
-                    // ── Splash — DataStore hasn't emitted yet ───────────────
+                    // ── Splash — session not yet resolved ──────────────────
                     SessionResult.Loading -> {
                         Box(
                             modifier = Modifier
@@ -65,9 +67,8 @@ class MainActivity : ComponentActivity() {
 
                     // ── Resolved — navigate to Login or Home ────────────────
                     is SessionResult.Resolved -> {
-                        // key() recreates AppNavHost (and resets the back-stack)
-                        // whenever login state toggles, preventing back-navigation
-                        // past the Login screen after logout.
+                        // key() recreates AppNavHost (and its PermanentNavigationDrawer)
+                        // whenever login state toggles, resetting the entire back-stack.
                         key(state.user != null) {
                             AppNavHost(
                                 startDestination = if (state.user != null) {
