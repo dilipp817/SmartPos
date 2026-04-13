@@ -3,6 +3,8 @@ package com.autobill.smartpos
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.autobill.smartpos.domain.model.User
+import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
+import com.autobill.smartpos.domain.usecase.GetRestaurantUseCase
 import com.autobill.smartpos.domain.usecase.LogoutUseCase
 import com.autobill.smartpos.domain.usecase.ObserveSessionUseCase
 import com.autobill.smartpos.domain.usecase.RecoverSessionUseCase
@@ -36,6 +38,8 @@ class MainViewModel @Inject constructor(
     observeSessionUseCase: ObserveSessionUseCase,
     private val recoverSessionUseCase: RecoverSessionUseCase,
     private val logoutUseCase: LogoutUseCase,
+    private val getRestaurantUseCase: GetRestaurantUseCase,
+    private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
 ) : ViewModel() {
 
     /**
@@ -69,7 +73,19 @@ class MainViewModel @Inject constructor(
             recoverSessionUseCase()
             // Only after recovery completes does the UI move past the splash screen.
             _startupComplete.value = true
+            // Load restaurant details in the background so settings and name are available
+            // immediately when any screen opens. Non-blocking — navigation already resolved above.
+            loadRestaurantDetails()
         }
+    }
+
+    /**
+     * Fetch restaurant details from the network and cache locally.
+     * Silent on failure — cached value (from a previous session) will be used instead.
+     */
+    private suspend fun loadRestaurantDetails() {
+        val restaurantId = getRestaurantIdUseCase() ?: return  // not logged in
+        getRestaurantUseCase(restaurantId)                     // result cached in RestaurantDataStore
     }
 
     fun logout() {

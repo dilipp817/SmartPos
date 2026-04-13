@@ -339,12 +339,29 @@ feature/billing/BillingRoute.kt
 
 ---
 
-## 🏢 Phase 7: Restaurant & Category Management (Week 5)
+## ✅ Phase 7: Restaurant & Category Management (Week 5)
 
-### 7.1 Restaurant Details
-- [ ] `GET /restaurants/{restaurantId}` — load on app start
+### 7.1 Restaurant Details ✅
+- [x] `GET /restaurants/{restaurantId}` — load on app start
   - Store: `name`, `taxRate`, `currency`, `settings.enableTips`, `settings.autoPrintBill`
-- [ ] `PATCH /restaurants/{restaurantId}` — update settings (admin / manager only)
+- [x] `PATCH /restaurants/{restaurantId}` — update settings (admin / manager only)
+
+**Files created:**
+```
+domain/model/Restaurant.kt              (updated: added RestaurantSettings, UpdateRestaurantSettingsRequest)
+domain/repository/RestaurantRepository.kt
+domain/usecase/RestaurantUseCases.kt    (GetRestaurantUseCase, ObserveRestaurantUseCase, UpdateRestaurantSettingsUseCase)
+data/remote/dto/RestaurantDto.kt        (RestaurantDto, RestaurantSettingsDto, UpdateRestaurantRequest)
+data/remote/RestaurantApiService.kt
+data/mapper/RestaurantMappers.kt
+data/local/RestaurantDataStore.kt       (DataStore cache: name, taxRate, currency, settings flags)
+data/repository/RestaurantRepositoryImpl.kt  (network-first + cache-fallback)
+```
+**Wired:**
+- `RepositoryModule` binds `RestaurantRepository`
+- `NetworkModule` provides `RestaurantApiService`
+- `AuthRepositoryImpl.clearSession()` now also clears `RestaurantDataStore`
+- `MainViewModel` calls `GetRestaurantUseCase` on every cold app start (after session recovery)
 
 ### 7.2 Category Management
 - [ ] `GET /categories?restaurantId={id}` — list (already used in food filter)
