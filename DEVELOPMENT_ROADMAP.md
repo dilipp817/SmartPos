@@ -215,14 +215,14 @@ IN_PROGRESS → CANCELLED                         (abort)
 - [x] `DELETE /restaurants/{restaurantId}/orders/{orderId}` — cancel entire order
 - [x] Handle `409 CONFLICT` → re-fetch order (new `version`) → retry
 
-### 5.4 Kitchen Display Screen (KDS)
+### 5.4 Kitchen Display Screen (KDS) ✅
 
 > Item-level status drives kitchen workflow. UI enforces forward-only progression.
 
-- [ ] `PATCH /restaurants/{restaurantId}/orders/{orderId}/items/{itemId}/status?newStatus=IN_PROGRESS`
-- [ ] Item status flow: `PENDING` → `IN_PROGRESS` → `READY` → `SERVED` | `CANCELLED`
-- [ ] KDS view: orders grouped by table, items colour-coded by status
-- [ ] Items in `READY`, `SERVED`, `CANCELLED` — disable all edit controls (server-locked)
+- [x] `PATCH /restaurants/{restaurantId}/orders/{orderId}/items/{itemId}/status?newStatus=IN_PROGRESS`
+- [x] Item status flow: `PENDING` → `IN_PROGRESS` → `READY` → `SERVED` | `CANCELLED`
+- [x] KDS view: orders grouped by table, items colour-coded by status
+- [x] Items in `READY`, `SERVED`, `CANCELLED` — disable all edit controls (server-locked)
 
 **Item Status Rules:**
 ```
@@ -470,7 +470,7 @@ feature/billing/
 | Done | 2 | Food Browsing & Local Cart | ✅ DONE |
 | W1 | 3 | Authentication & Session | 🔄 IN PROGRESS |
 | W2 | 4 | Table Management | ✅ DONE |
-| W3 | 5 | Order Flow + KDS | 🔄 IN PROGRESS (5.1 ✅ 5.2 ✅ 5.3 ✅) |
+| W3 | 5 | Order Flow + KDS | ✅ DONE (5.1 ✅ 5.2 ✅ 5.3 ✅ 5.4 ✅) |
 | W4 | 6 | Billing & Payment | TODO |
 | W5 | 7 | Restaurant & Category Management | TODO |
 | W6 | 8 | Reports & Analytics | TODO |

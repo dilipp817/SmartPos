@@ -164,3 +164,27 @@ class CancelOrderUseCase @Inject constructor(
         repository.cancelOrder(restaurantId, orderId)
 }
 
+// ── Phase 5.4 — KDS ──────────────────────────────────────────────────────────
+
+/**
+ * Use case: Update the kitchen status of a single order item.
+ *
+ * Forward-only KDS progression:
+ *   PENDING → IN_PROGRESS | CANCELLED
+ *   IN_PROGRESS → READY | CANCELLED
+ *   READY → SERVED
+ *   SERVED / CANCELLED → locked (UI must not call this)
+ *
+ * PATCH /restaurants/{restaurantId}/orders/{orderId}/items/{itemId}/status?newStatus=IN_PROGRESS
+ */
+class UpdateItemStatusUseCase @Inject constructor(
+    private val repository: OrderRepository,
+) {
+    suspend operator fun invoke(
+        restaurantId: Long,
+        orderId: Long,
+        itemId: Long,
+        newStatus: com.autobill.smartpos.domain.model.ItemStatus,
+    ): Result<Order> = repository.updateItemStatus(restaurantId, orderId, itemId, newStatus)
+}
+

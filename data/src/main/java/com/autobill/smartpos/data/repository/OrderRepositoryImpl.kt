@@ -308,6 +308,35 @@ class OrderRepositoryImpl @Inject constructor(
             }
         }
 
+    // ── Phase 5.4 — KDS item status update ───────────────────────────────────
+
+    override suspend fun updateItemStatus(
+        restaurantId: Long,
+        orderId: Long,
+        itemId: Long,
+        newStatus: com.autobill.smartpos.domain.model.ItemStatus,
+    ): Result<com.autobill.smartpos.domain.model.Order> = withContext(ioDispatcher) {
+        try {
+            val response = apiService.updateOrderItemStatus(
+                restaurantId = restaurantId,
+                orderId      = orderId,
+                itemId       = itemId,
+                newStatus    = newStatus.value,
+            )
+            val dto = checkNotNull(response.data) {
+                response.message ?: "Failed to update item status"
+            }
+            orderDao.upsertOrder(dto.toEntity())
+            orderDao.upsertItems(dto.items.map { it.toEntity(dto.id) })
+            Result.Success(dto.toDomain())
+        } catch (e: HttpException) {
+            if (e.code() == 409) Result.Failure(HttpConflictException("Order was modified by another process."))
+            else Result.Failure(e)
+        } catch (e: Exception) {
+            Result.Failure(e)
+        }
+    }
+
     /** Extracts a human-readable lock reason from a 400 response body (best-effort). */
     private fun getLockedItemReason(e: HttpException): String =
         try { e.response()?.errorBody()?.string() ?: "locked" } catch (_: Exception) { "locked" }

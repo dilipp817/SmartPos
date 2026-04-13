@@ -88,6 +88,24 @@ interface OrderRepository {
 
     /** DELETE /restaurants/{restaurantId}/orders/{orderId} — cancel entire order */
     suspend fun cancelOrder(restaurantId: Long, orderId: Long): Result<Order>
+
+    // ── Phase 5.4 — KDS item status update ───────────────────────────────────
+
+    /**
+     * PATCH /restaurants/{restaurantId}/orders/{orderId}/items/{itemId}/status?newStatus=IN_PROGRESS
+     *
+     * Forward-only KDS progression:
+     *   PENDING → IN_PROGRESS | CANCELLED
+     *   IN_PROGRESS → READY | CANCELLED
+     *   READY → SERVED
+     *   SERVED / CANCELLED → locked (caller must not call this)
+     */
+    suspend fun updateItemStatus(
+        restaurantId: Long,
+        orderId: Long,
+        itemId: Long,
+        newStatus: com.autobill.smartpos.domain.model.ItemStatus,
+    ): Result<Order>
 }
 
 /**

@@ -64,6 +64,7 @@ fun OrderListScreen(
     uiState: OrderUiState,
     onOrderClick: (Long) -> Unit,
     onBack: () -> Unit,
+    onKdsClick: () -> Unit,
     onFilterSelect: (OrderFilter) -> Unit,
     onRefresh: () -> Unit,
     onSearchActiveToggle: (Boolean) -> Unit,
@@ -77,10 +78,11 @@ fun OrderListScreen(
     ) {
         // ── Header ────────────────────────────────────────────────────────
         OrderListHeader(
-            pendingCount = uiState.pendingCount,
+            pendingCount   = uiState.pendingCount,
             isSearchActive = uiState.isSearchActive,
-            onBack = onBack,
-            onRefresh = onRefresh,
+            onBack         = onBack,
+            onKdsClick     = onKdsClick,
+            onRefresh      = onRefresh,
             onSearchToggle = { onSearchActiveToggle(!uiState.isSearchActive) },
         )
 
@@ -141,6 +143,7 @@ private fun OrderListHeader(
     pendingCount: Int,
     isSearchActive: Boolean,
     onBack: () -> Unit,
+    onKdsClick: () -> Unit,
     onRefresh: () -> Unit,
     onSearchToggle: () -> Unit,
 ) {
@@ -177,7 +180,19 @@ private fun OrderListHeader(
             }
         }
 
-        // Search toggle
+        // KDS navigation button
+        androidx.compose.material3.TextButton(
+            onClick = onKdsClick,
+            colors  = androidx.compose.material3.ButtonDefaults.textButtonColors(
+                contentColor = Color(0xFFE33E3E),
+            ),
+        ) {
+            Text(
+                text       = "🍳 KDS",
+                style      = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+            )
+        }
         IconButton(onClick = onSearchToggle) {
             Icon(
                 imageVector = if (isSearchActive) Icons.Default.Clear else Icons.Default.Search,
