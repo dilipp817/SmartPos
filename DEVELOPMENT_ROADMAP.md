@@ -205,15 +205,15 @@ PENDING → HOLD → PENDING / CANCELLED            (paused)
 IN_PROGRESS → CANCELLED                         (abort)
 ```
 
-### 5.3 Order Detail Screen
-- [ ] `GET /restaurants/{restaurantId}/orders/{orderId}` — full order with items + `version`
-- [ ] `PATCH /restaurants/{restaurantId}/orders/{orderId}/status { "status": "IN_PROGRESS" }`
-- [ ] `POST /restaurants/{restaurantId}/orders/{orderId}/items` — add item (PENDING or HOLD only)
-- [ ] `PUT /restaurants/{restaurantId}/orders/{orderId}/items/{itemId}` — update qty / special requests
+### 5.3 Order Detail Screen ✅
+- [x] `GET /restaurants/{restaurantId}/orders/{orderId}` — full order with items + `version`
+- [x] `PATCH /restaurants/{restaurantId}/orders/{orderId}/status { "status": "IN_PROGRESS" }`
+- [x] `POST /restaurants/{restaurantId}/orders/{orderId}/items` — add item (PENDING or HOLD only)
+- [x] `PUT /restaurants/{restaurantId}/orders/{orderId}/items/{itemId}` — update qty / special requests
   - ⚠️ Blocked if item is `READY`, `SERVED`, or `CANCELLED` (returns 400)
-- [ ] `DELETE /restaurants/{restaurantId}/orders/{orderId}/items/{itemId}` — remove item
-- [ ] `DELETE /restaurants/{restaurantId}/orders/{orderId}` — cancel entire order
-- [ ] Handle `409 CONFLICT` → re-fetch order (new `version`) → retry
+- [x] `DELETE /restaurants/{restaurantId}/orders/{orderId}/items/{itemId}` — remove item
+- [x] `DELETE /restaurants/{restaurantId}/orders/{orderId}` — cancel entire order
+- [x] Handle `409 CONFLICT` → re-fetch order (new `version`) → retry
 
 ### 5.4 Kitchen Display Screen (KDS)
 
@@ -470,7 +470,7 @@ feature/billing/
 | Done | 2 | Food Browsing & Local Cart | ✅ DONE |
 | W1 | 3 | Authentication & Session | 🔄 IN PROGRESS |
 | W2 | 4 | Table Management | ✅ DONE |
-| W3 | 5 | Order Flow + KDS | 🔄 IN PROGRESS (5.1 ✅ 5.2 ✅) |
+| W3 | 5 | Order Flow + KDS | 🔄 IN PROGRESS (5.1 ✅ 5.2 ✅ 5.3 ✅) |
 | W4 | 6 | Billing & Payment | TODO |
 | W5 | 7 | Restaurant & Category Management | TODO |
 | W6 | 8 | Reports & Analytics | TODO |

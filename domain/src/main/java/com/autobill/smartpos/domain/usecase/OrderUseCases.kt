@@ -83,3 +83,84 @@ class SearchOrdersUseCase @Inject constructor(
     ): Result<List<Order>> = repository.searchOrders(restaurantId, query)
 }
 
+// ── Phase 5.3 — Order Detail use cases ──────────────────────────────────────
+
+/** Use case: Fetch a single order by ID — full detail with all items. */
+class GetOrderByIdUseCase @Inject constructor(
+    private val repository: OrderRepository,
+) {
+    suspend operator fun invoke(restaurantId: Long, orderId: Long): Result<Order> =
+        repository.getOrderById(restaurantId, orderId)
+}
+
+/** Use case: Update the status of an order (e.g. PENDING → IN_PROGRESS). */
+class UpdateOrderStatusUseCase @Inject constructor(
+    private val repository: OrderRepository,
+) {
+    suspend operator fun invoke(
+        restaurantId: Long,
+        orderId: Long,
+        status: OrderStatus,
+    ): Result<Order> = repository.updateOrderStatus(restaurantId, orderId, status)
+}
+
+/** Use case: Add a new item to an existing order (PENDING or HOLD only). */
+class AddItemToOrderUseCase @Inject constructor(
+    private val repository: OrderRepository,
+) {
+    suspend operator fun invoke(
+        restaurantId: Long,
+        orderId: Long,
+        foodId: Long,
+        quantity: Int,
+        specialRequests: String?,
+    ): Result<Order> = repository.addItemToOrder(
+        restaurantId    = restaurantId,
+        orderId         = orderId,
+        foodId          = foodId,
+        quantity        = quantity,
+        specialRequests = specialRequests,
+    )
+}
+
+/**
+ * Use case: Update quantity / special requests for an existing order item.
+ * ⚠️ Will fail with an error if the item is in READY, SERVED, or CANCELLED state.
+ */
+class UpdateOrderItemUseCase @Inject constructor(
+    private val repository: OrderRepository,
+) {
+    suspend operator fun invoke(
+        restaurantId: Long,
+        orderId: Long,
+        itemId: Long,
+        quantity: Int,
+        specialRequests: String?,
+    ): Result<Order> = repository.updateOrderItem(
+        restaurantId    = restaurantId,
+        orderId         = orderId,
+        itemId          = itemId,
+        quantity        = quantity,
+        specialRequests = specialRequests,
+    )
+}
+
+/** Use case: Remove a single item from an order. */
+class RemoveItemFromOrderUseCase @Inject constructor(
+    private val repository: OrderRepository,
+) {
+    suspend operator fun invoke(
+        restaurantId: Long,
+        orderId: Long,
+        itemId: Long,
+    ): Result<Order> = repository.removeItemFromOrder(restaurantId, orderId, itemId)
+}
+
+/** Use case: Cancel an entire order. Role-gated — caller must verify [canCancelOrders] first. */
+class CancelOrderUseCase @Inject constructor(
+    private val repository: OrderRepository,
+) {
+    suspend operator fun invoke(restaurantId: Long, orderId: Long): Result<Order> =
+        repository.cancelOrder(restaurantId, orderId)
+}
+

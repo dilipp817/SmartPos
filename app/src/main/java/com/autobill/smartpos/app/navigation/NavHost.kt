@@ -13,7 +13,7 @@ import com.autobill.smartpos.auth.LoginScreen
 import com.autobill.smartpos.feature.food.FoodDetailRoute
 import com.autobill.smartpos.feature.food.HomeRoute
 import com.autobill.smartpos.feature.order.CreateOrderRoute
-import com.autobill.smartpos.feature.order.OrderDetailScreen
+import com.autobill.smartpos.feature.order.OrderDetailRoute
 import com.autobill.smartpos.feature.order.OrderRoute
 import com.autobill.smartpos.feature.table.TableRoute
 
@@ -127,14 +127,12 @@ fun AppNavHost(
             )
         }
 
-        // Order Detail — Phase 5.3 (stub with back navigation wired)
+        // Order Detail — Phase 5.3
         composable(
             route = Screen.OrderDetail.route,
             arguments = listOf(navArgument("orderId") { type = NavType.LongType }),
-        ) { backStackEntry ->
-            val orderId = backStackEntry.arguments?.getLong("orderId") ?: return@composable
-            OrderDetailScreen(
-                orderId = orderId,
+        ) {
+            OrderDetailRoute(
                 onBack = { navController.popBackStack() },
                 modifier = Modifier.fillMaxSize(),
             )
