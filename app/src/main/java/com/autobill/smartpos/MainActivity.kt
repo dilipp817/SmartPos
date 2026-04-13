@@ -45,9 +45,6 @@ class MainActivity : ComponentActivity() {
         // Tablet-first: always landscape
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
 
-        enableEdgeToEdge()
-
-        setContent {
             SmartPosTheme {
                 val mainViewModel: MainViewModel = hiltViewModel()
                 val sessionState by mainViewModel.sessionState.collectAsStateWithLifecycle()
