@@ -28,9 +28,11 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -88,6 +90,8 @@ fun OrderDetailScreen(
     onBack: () -> Unit,
     onRefresh: () -> Unit,
     onStatusUpdate: (OrderStatus) -> Unit,
+    // Billing
+    onBillingClick: () -> Unit,
     // Add Item
     onAddItemClick: () -> Unit,
     onDismissAddItemDialog: () -> Unit,
@@ -175,6 +179,7 @@ fun OrderDetailScreen(
                         onEditItem    = onEditItemClick,
                         onRemoveItem  = onRemoveItem,
                         onCancelOrder = onShowCancelDialog,
+                        onBillingClick = onBillingClick,
                     )
                 }
             }
@@ -335,6 +340,7 @@ private fun OrderDetailContent(
     onEditItem: (OrderItem) -> Unit,
     onRemoveItem: (Long) -> Unit,
     onCancelOrder: () -> Unit,
+    onBillingClick: () -> Unit,
 ) {
     val order = uiState.order ?: return
     LazyColumn(
@@ -387,6 +393,26 @@ private fun OrderDetailContent(
                     onEdit     = { if (!locked && !removing) onEditItem(item) },
                     onRemove   = { if (!locked && !removing) onRemoveItem(item.id) },
                 )
+            }
+        }
+
+        if (uiState.canBill) {
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick  = onBillingClick,
+                    shape    = RoundedCornerShape(8.dp),
+                    colors   = ButtonDefaults.buttonColors(containerColor = Color(0xFF1B5E20)),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(
+                        Icons.Default.Receipt,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Generate Bill", fontWeight = FontWeight.SemiBold)
+                }
             }
         }
 

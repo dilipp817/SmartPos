@@ -8,8 +8,8 @@ import com.autobill.smartpos.data.remote.CategoryApiService
 import com.autobill.smartpos.data.remote.FoodApiService
 import com.autobill.smartpos.data.remote.OrderApiService
 import com.autobill.smartpos.data.remote.PaymentApiService
-
 import com.autobill.smartpos.data.remote.TableApiService
+import com.autobill.smartpos.data.remote.UnauthorizedInterceptor
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
@@ -39,11 +39,16 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(authInterceptor: AuthInterceptor): OkHttpClient {
+    fun provideOkHttpClient(
+        authInterceptor: AuthInterceptor,
+        unauthorizedInterceptor: UnauthorizedInterceptor,
+    ): OkHttpClient {
         val builder = OkHttpClient.Builder()
 
         // Auth interceptor — attaches Bearer token to every request
         builder.addInterceptor(authInterceptor)
+        // Unauthorized interceptor — clears session and triggers re-login on 401
+        builder.addInterceptor(unauthorizedInterceptor)
 
         if (BuildConfig.DEBUG) {
             // Add logging interceptor for debug builds

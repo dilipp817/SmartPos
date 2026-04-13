@@ -130,3 +130,25 @@ class DeleteTableUseCase @Inject constructor(
     ): Result<Unit> = repository.deleteTable(restaurantId, tableId)
 }
 
+/**
+ * Use case: Mark a table as AVAILABLE after a successful payment.
+ *
+ * Always call this after [ProcessPaymentUseCase] returns SUCCESS — the backend
+ * does NOT free the table automatically.
+ *
+ * ⚠️ Best-effort call — a failure here must NOT block the payment success UI.
+ *    The caller should catch [Exception] and log, not surface it to the user.
+ */
+class FreeTableUseCase @Inject constructor(
+    private val repository: TableRepository,
+) {
+    suspend operator fun invoke(
+        restaurantId: Long,
+        tableId: Long,
+    ): Result<Table> = repository.updateTableStatus(
+        restaurantId = restaurantId,
+        tableId      = tableId,
+        newStatus    = TableStatus.AVAILABLE,
+    )
+}
+

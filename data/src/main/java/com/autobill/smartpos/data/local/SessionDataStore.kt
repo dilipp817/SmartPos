@@ -23,42 +23,64 @@ private val Context.sessionDataStore: DataStore<Preferences> by preferencesDataS
 )
 
 /**
- * DataStore-backed session storage.
- * Persists token + restaurantId across app restarts.
- * restaurantId is THE critical field for multi-outlet support — never hardcode it.
+ * Session storage split across two backends:
+ *
+ *  ┌─────────────────────────────────────────────────────────────────┐
+ *  │  Plain DataStore  (non-sensitive session metadata)              │
+ *  │  userId, username, email, role, restaurantId, expiresIn,        │
+ *  │  deviceId, deviceType                                           │
+ *  ├─────────────────────────────────────────────────────────────────┤
+ *  │  SecureTokenStorage  (JWT only)                                 │
+ *  │  AES-256-GCM via Android Keystore — never touches DataStore     │
+ *  └─────────────────────────────────────────────────────────────────┘
+ *
+ *  The JWT is the one value that grants API access. Everything else is
+ *  non-sensitive display/routing metadata.
+ *
+ *  Session liveness: driven by USER_ID in DataStore AND a non-null token
+ *  from SecureTokenStorage. Both must exist for [observeUser] to emit a
+ *  non-null User — so logout (which clears both) is atomic.
  */
 @Singleton
 class SessionDataStore @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val secureTokenStorage: SecureTokenStorage,
 ) {
     private val dataStore: DataStore<Preferences> = context.sessionDataStore
 
     private object Keys {
-        val TOKEN = stringPreferencesKey("token")
-        val USER_ID = longPreferencesKey("user_id")
-        val USERNAME = stringPreferencesKey("username")
-        val EMAIL = stringPreferencesKey("email")
-        val ROLE = stringPreferencesKey("role")
+        // TOKEN intentionally absent — stored in SecureTokenStorage instead
+        val USER_ID     = longPreferencesKey("user_id")
+        val USERNAME    = stringPreferencesKey("username")
+        val EMAIL       = stringPreferencesKey("email")
+        val ROLE        = stringPreferencesKey("role")
         val RESTAURANT_ID = longPreferencesKey("restaurant_id")
-        val EXPIRES_IN = longPreferencesKey("expires_in")
-        val DEVICE_ID = stringPreferencesKey("device_id")
+        val EXPIRES_IN  = longPreferencesKey("expires_in")
+        val DEVICE_ID   = stringPreferencesKey("device_id")
         val DEVICE_TYPE = stringPreferencesKey("device_type")
     }
 
-    /** Observe the active session (null = logged out). */
+    /**
+     * Observe the active session (null = logged out).
+     *
+     * USER_ID is the DataStore sentinel. When it is present we also check that
+     * a token exists in SecureTokenStorage. If the token was wiped independently
+     * (Keystore corruption recovery) the flow returns null, keeping the app safe.
+     */
     fun observeUser(): Flow<User?> = dataStore.data
         .catch { e ->
             if (e is IOException) emit(emptyPreferences()) else throw e
         }
         .map { prefs ->
-            val token = prefs[Keys.TOKEN] ?: return@map null
             val userId = prefs[Keys.USER_ID] ?: return@map null
+            // Cross-check: JWT must also exist — both cleared on logout / corruption
+            val token = secureTokenStorage.getToken() ?: return@map null
             User(
                 id = userId,
                 username = prefs[Keys.USERNAME] ?: "",
                 email = prefs[Keys.EMAIL] ?: "",
                 role = prefs[Keys.ROLE] ?: "",
-                restaurantId = prefs[Keys.RESTAURANT_ID],  // null = super_admin
+                restaurantId = prefs[Keys.RESTAURANT_ID],   // null = super_admin
                 token = token,
                 expiresIn = prefs[Keys.EXPIRES_IN] ?: 0L,
                 deviceId = prefs[Keys.DEVICE_ID],
@@ -68,14 +90,16 @@ class SessionDataStore @Inject constructor(
 
     /** Persist the full user session after login. */
     suspend fun saveUser(user: User) {
+        // 1. Write the JWT to encrypted storage first (most critical)
+        secureTokenStorage.saveToken(user.token)
+
+        // 2. Write non-sensitive metadata to plain DataStore
         dataStore.edit { prefs ->
-            prefs[Keys.TOKEN] = user.token
-            prefs[Keys.USER_ID] = user.id
+            prefs[Keys.USER_ID]  = user.id
             prefs[Keys.USERNAME] = user.username
-            prefs[Keys.EMAIL] = user.email
-            prefs[Keys.ROLE] = user.role
+            prefs[Keys.EMAIL]    = user.email
+            prefs[Keys.ROLE]     = user.role
             prefs[Keys.EXPIRES_IN] = user.expiresIn
-            // Use local vals for smart-cast — cross-module public properties cannot be cast directly
             val restaurantId = user.restaurantId
             if (restaurantId != null) prefs[Keys.RESTAURANT_ID] = restaurantId
             else prefs.remove(Keys.RESTAURANT_ID)
@@ -88,23 +112,23 @@ class SessionDataStore @Inject constructor(
         }
     }
 
-    /** Clear the session on logout. */
+    /** Clear the session on logout — both stores, atomically. */
     suspend fun clearUser() {
+        // Clear JWT first so any in-flight request sees an invalid session immediately
+        secureTokenStorage.clearToken()
         dataStore.edit { it.clear() }
     }
 
     /**
-     * Return the stored JWT token synchronously (for OkHttp interceptor via runBlocking).
-     * Returns null if no session exists.
+     * Return the stored JWT token (for OkHttp interceptor — synchronous, no runBlocking needed).
+     * Delegates entirely to SecureTokenStorage — DataStore is not involved.
+     * Returns null if no session exists or if the Keystore was corrupted.
      */
-    suspend fun getToken(): String? = dataStore.data
-        .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
-        .firstOrNull()
-        ?.get(Keys.TOKEN)
+    fun getToken(): String? = secureTokenStorage.getToken()
 
     /**
      * Return the stored restaurantId.
-     * Always use this value for restaurant-scoped API calls — never hardcode it.
+     * Always use this for restaurant-scoped API calls — never hardcode it.
      */
     suspend fun getRestaurantId(): Long? = dataStore.data
         .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }

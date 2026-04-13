@@ -11,10 +11,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
  * Navigation entry point for the Order Detail screen.
  *
  * [onBack] — called when the user taps Back or after the order is successfully cancelled.
+ * [onBillingClick] — navigate to the billing screen with (orderId, tableId).
  */
 @Composable
 fun OrderDetailRoute(
     onBack: () -> Unit,
+    onBillingClick: (orderId: Long, tableId: Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val viewModel: OrderDetailViewModel = hiltViewModel()
@@ -34,6 +36,10 @@ fun OrderDetailRoute(
         onBack                          = onBack,
         onRefresh                       = viewModel::refresh,
         onStatusUpdate                  = viewModel::updateStatus,
+        // Billing
+        onBillingClick                  = {
+            uiState.order?.let { order -> onBillingClick(order.id, order.tableId) }
+        },
         // Add Item
         onAddItemClick                  = viewModel::showAddItemDialog,
         onDismissAddItemDialog          = viewModel::dismissAddItemDialog,

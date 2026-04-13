@@ -249,24 +249,24 @@ feature/order/
 
 ---
 
-## 🧾 Phase 6: Billing & Payment (Week 4)
+## ✅ Phase 6: Billing & Payment (Week 4) — COMPLETED
 
 > Core POS flow: Generate Bill → Process Payment → Free Table
 
-### 6.1 Generate Bill
+### 6.1 Generate Bill ✅
 
 > ⚠️ **NEVER calculate tax on the app.** Always use `generate-bill`.
 > Backend auto-computes: `subtotal`, `cgstAmount` (9%), `sgstAmount` (9%), `taxAmount` (18%), `totalAmount`.
 
-- [ ] `POST /restaurants/{restaurantId}/orders/{orderId}/generate-bill?discount=0.00`
+- [x] `POST /restaurants/{restaurantId}/orders/{orderId}/generate-bill?discount=0.00`
   - `discount` is optional (default 0) — absolute rupee amount e.g. `?discount=50.00`
   - Returns `409 CONFLICT` if a bill already exists for this order
   - `billNumber` auto-generated: `BILL-{restaurantId}-{yyyyMMdd}-{seq}`
-- [ ] Display: `subtotal` + `cgst (9%)` + `sgst (9%)` − `discount` = `totalAmount`
+- [x] Display: `subtotal` + `cgst (9%)` + `sgst (9%)` − `discount` = `totalAmount`
 
-### 6.2 Bill Detail & Status
-- [ ] `GET /bills/{id}` — view full bill with items
-- [ ] `GET /bills/number/{billNumber}` — fetch by bill number
+### 6.2 Bill Detail & Status ✅
+- [x] `GET /bills/{id}` — view full bill with items
+- [x] `GET /bills/number/{billNumber}` — fetch by bill number
 
 | Bill Status | Meaning |
 |-------------|---------|
@@ -277,15 +277,15 @@ feature/order/
 
 > ⚠️ Never set `PAID` manually — the backend does it automatically when payment succeeds.
 
-- [ ] `PATCH /bills/{id}/cancel` — cancel bill (only when `ISSUED`)
+- [x] `PATCH /bills/{id}/cancel` — cancel bill (only when `ISSUED`)
 
-### 6.3 Payment Screen
+### 6.3 Payment Screen ✅
 
 > Payment is created as `PENDING`. Confirm it with `/process`.
 > Use `referenceNumber` for idempotency — retrying with the same `referenceNumber` after a
 > network drop returns the existing payment if it already succeeded. **No double charge.**
 
-- [ ] `POST /payments`
+- [x] `POST /payments`
   ```json
   {
     "billId": 1,
@@ -299,14 +299,14 @@ feature/order/
   ```
   - Methods: `CASH` | `CARD` | `UPI` | `WALLET`
   - For `CASH`: display `changeAmount` (amount returned to customer — server-managed)
-- [ ] `PATCH /payments/{id}/process` — confirm SUCCESS → bill auto-set to `PAID`
-- [ ] `PATCH /payments/{id}/status { "status": "SUCCESS" }` — full lifecycle control
-- [ ] After payment confirmed: `PATCH /tables/{tableId}/status?newStatus=AVAILABLE`
+- [x] `PATCH /payments/{id}/process` — confirm SUCCESS → bill auto-set to `PAID`
+- [x] `PATCH /payments/{id}/status { "status": "SUCCESS" }` — full lifecycle control
+- [x] After payment confirmed: `PATCH /tables/{tableId}/status?newStatus=AVAILABLE`
 
-### 6.4 Payment History & Refund
-- [ ] `GET /payments/bill/{billId}` — all payments for a bill
-- [ ] `GET /payments/order/{orderId}` — all payments for an order
-- [ ] `PATCH /payments/{id}/refund` — refund (`SUCCESS` → `REFUNDED`)
+### 6.4 Payment History & Refund ✅
+- [x] `GET /payments/bill/{billId}` — all payments for a bill
+- [x] `GET /payments/order/{orderId}` — all payments for an order
+- [x] `PATCH /payments/{id}/refund` — refund (`SUCCESS` → `REFUNDED`)
 
 **Payment Status Flow:**
 ```
@@ -315,17 +315,27 @@ PENDING → FAILED    (declined / error)
 SUCCESS → REFUNDED  (refund issued)
 ```
 
-**Files to create:**
+**Files created:**
 ```
-feature/billing/
-  BillViewModel.kt
-  BillingScreen.kt
-  PaymentScreen.kt
-  BillSummaryCard.kt
-  BillingRoute.kt
+domain/repository/BillRepository.kt
+domain/repository/PaymentRepository.kt
+domain/usecase/BillUseCases.kt
+domain/usecase/PaymentUseCases.kt
+domain/usecase/FreeTableUseCase  (added to TableUseCases.kt)
+data/mapper/BillMappers.kt
+data/mapper/PaymentMappers.kt
+data/repository/BillRepositoryImpl.kt
+data/repository/PaymentRepositoryImpl.kt
+feature/billing/build.gradle.kts
+feature/billing/BillingUiState.kt
+feature/billing/PaymentUiState.kt
+feature/billing/BillingViewModel.kt
+feature/billing/PaymentViewModel.kt
+feature/billing/BillSummaryCard.kt
+feature/billing/BillingScreen.kt
+feature/billing/PaymentScreen.kt
+feature/billing/BillingRoute.kt
 ```
-
-**Time Estimate**: 4–5 days
 
 ---
 
@@ -471,7 +481,7 @@ feature/billing/
 | W1 | 3 | Authentication & Session | 🔄 IN PROGRESS |
 | W2 | 4 | Table Management | ✅ DONE |
 | W3 | 5 | Order Flow + KDS | ✅ DONE (5.1 ✅ 5.2 ✅ 5.3 ✅ 5.4 ✅) |
-| W4 | 6 | Billing & Payment | TODO |
+| W4 | 6 | Billing & Payment | ✅ DONE |
 | W5 | 7 | Restaurant & Category Management | TODO |
 | W6 | 8 | Reports & Analytics | TODO |
 | W7+ | 9 | Advanced (Real-time, Offline, Admin) | TODO |
@@ -557,4 +567,4 @@ A: It doesn't happen automatically. After payment succeeds, explicitly call `PAT
 
 ---
 
-**Current focus: Phase 3 — Authentication & Session Management 🚀**
+**Current focus: Phase 7 — Restaurant & Category Management 🚀**

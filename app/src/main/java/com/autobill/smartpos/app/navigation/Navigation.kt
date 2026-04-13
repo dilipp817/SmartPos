@@ -21,7 +21,38 @@ sealed class Screen(val route: String) {
     }
     object KitchenDisplay : Screen("kitchen_display")
     object Search : Screen("search")
+
+    /**
+     * Drawer-accessible billing overview (Phase 7 will add a full bills-history list here).
+     * For now shows a helper message directing the user to generate bills from Order Detail.
+     * Has NO nav args — safe to navigate from the drawer without an orderId.
+     */
     object Billing : Screen("billing")
+
+    /**
+     * Order-specific bill generation screen.
+     * Navigate here from Order Detail → "Generate Bill".
+     * Requires [orderId] and [tableId] so the table can be freed after payment.
+     */
+    object OrderBilling : Screen("order_billing/{orderId}/{tableId}") {
+        fun createRoute(orderId: Long, tableId: Long) = "order_billing/$orderId/$tableId"
+    }
+
+    /**
+     * Payment screen.
+     * [totalAmount] and [remainingAmount] are passed as String because
+     * NavType does not support Double — PaymentViewModel parses them back.
+     */
+    object Payment : Screen("payment/{billId}/{orderId}/{tableId}/{totalAmount}/{remainingAmount}") {
+        fun createRoute(
+            billId: Long,
+            orderId: Long,
+            tableId: Long,
+            totalAmount: Double,
+            remainingAmount: Double,
+        ) = "payment/$billId/$orderId/$tableId/$totalAmount/$remainingAmount"
+    }
+
     object Settings : Screen("settings")
 }
 

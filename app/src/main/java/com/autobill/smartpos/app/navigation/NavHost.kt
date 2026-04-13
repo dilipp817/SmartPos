@@ -1,15 +1,26 @@
 package com.autobill.smartpos.app.navigation
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PermanentDrawerSheet
+import androidx.compose.material3.PermanentNavigationDrawer
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.autobill.smartpos.auth.LoginScreen
+import com.autobill.smartpos.feature.billing.BillingRoute
+import com.autobill.smartpos.feature.billing.PaymentRoute
 import com.autobill.smartpos.feature.food.FoodDetailRoute
 import com.autobill.smartpos.feature.food.HomeRoute
 import com.autobill.smartpos.feature.order.CreateOrderRoute
@@ -21,17 +32,27 @@ import com.autobill.smartpos.feature.table.TableRoute
 /**
  * Application navigation graph.
  *
- * [startDestination] is set by [MainActivity] based on the resolved session state:
+ * Structure:
+ *  ┌──────────────────────────────────────────────────────────────────────┐
+ *  │  AppNavHost                                                          │
+ *  │  ┌────────────────────┐  ┌───────────────────────────────────────┐  │
+ *  │  │ PermanentDrawer    │  │  AppNavGraph  (NavHost)               │  │
+ *  │  │  (authenticated    │  │  login / food / table / order /       │  │
+ *  │  │   routes only)     │  │  kitchen / billing / settings …       │  │
+ *  │  └────────────────────┘  └───────────────────────────────────────┘  │
+ *  └──────────────────────────────────────────────────────────────────────┘
+ *
+ * The [PermanentNavigationDrawer] is the M3 recommendation for large
+ * landscape screens — always visible, never overlays content.
+ * It is only shown for authenticated routes; the Login screen gets full
+ * width with no navigation chrome.
+ *
+ * [startDestination] is set by [com.autobill.smartpos.MainActivity] based on the resolved session:
  *  - Session exists  → [Screen.FoodList]
  *  - No session      → [Screen.Login]
  *
- * [MainActivity] uses `key(isLoggedIn)` to recreate this NavHost when the auth
- * state flips, which fully resets the back-stack and prevents navigating past
- * the Login screen after logout.
- *
- * [onLogout] is called by any screen that has a logout action; it clears the
- * session in [MainViewModel], which causes [MainActivity] to recreate [AppNavHost]
- * with [Screen.Login] as the new start destination.
+ * [com.autobill.smartpos.MainActivity] uses key(isLoggedIn) to recreate [AppNavHost] when auth
+ * state flips, fully resetting the back-stack.
  */
 @Composable
 fun AppNavHost(
@@ -39,6 +60,65 @@ fun AppNavHost(
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
+) {
+    // currentBackStackEntryAsState() is null for one frame before the first
+    // destination is pushed. Fall back to startDestination so the drawer
+    // does not flicker in/out on initial composition.
+    val currentEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = currentEntry?.destination?.route ?: startDestination
+    val isAuthenticated = currentRoute != Screen.Login.route
+
+    if (isAuthenticated) {
+        PermanentNavigationDrawer(
+            drawerContent = {
+                // 240 dp is the Material 3 standard drawer width.
+                // On a 10" landscape tablet (~1280 dp wide) this leaves
+                // ~1040 dp for content — ideal for a POS layout.
+                PermanentDrawerSheet(drawerContainerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerLow) {
+                    AppDrawerContent(
+                        currentRoute = currentRoute,
+                        onNavigate = { route ->
+                            navController.navigate(route) {
+                                launchSingleTop = true
+                                restoreState = true
+                                // Pop back to the authenticated root so
+                                // drawer taps never build a deep back-stack.
+                                popUpTo(navController.graph.startDestinationId) {
+                                    saveState = true
+                                }
+                            }
+                        },
+                        onLogout = onLogout,
+                    )
+                }
+            },
+            modifier = modifier.fillMaxSize(),
+        ) {
+            AppNavGraph(
+                navController = navController,
+                startDestination = startDestination,
+                onLogout = onLogout,
+            )
+        }
+    } else {
+        // Login screen — full width, no drawer chrome
+        AppNavGraph(
+            navController = navController,
+            startDestination = startDestination,
+            onLogout = onLogout,
+            modifier = modifier.fillMaxSize(),
+        )
+    }
+}
+
+// ── Private nav graph ─────────────────────────────────────────────────────────
+
+@Composable
+private fun AppNavGraph(
+    navController: NavHostController,
+    startDestination: String,
+    onLogout: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     NavHost(
         navController = navController,
@@ -102,7 +182,7 @@ fun AppNavHost(
             arguments = listOf(navArgument("tableId") { type = NavType.LongType }),
         ) {
             CreateOrderRoute(
-                onOrderCreated = { orderId ->
+                onOrderCreated = { _ ->
                     // Navigate to Order List after placing an order; clear back-stack up to FoodList
                     navController.navigate(Screen.OrderList.route) {
                         popUpTo(Screen.FoodList.route) { inclusive = false }
@@ -146,6 +226,9 @@ fun AppNavHost(
         ) {
             OrderDetailRoute(
                 onBack = { navController.popBackStack() },
+                onBillingClick = { orderId, tableId ->
+                    navController.navigate(Screen.OrderBilling.createRoute(orderId, tableId))
+                },
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -155,9 +238,63 @@ fun AppNavHost(
             // TODO: SearchRoute()
         }
 
-        // Billing / Checkout Screen
+        // Billing overview — accessible from the drawer.
+        // Full bills history will be added in Phase 7.
+        // Actual bill generation is accessed from Order Detail → "Generate Bill".
         composable(route = Screen.Billing.route) {
-            // TODO: BillingRoute(onBack = { navController.popBackStack() }, onLogout = onLogout)
+            androidx.compose.foundation.layout.Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                androidx.compose.material3.Text(
+                    text = "To generate a bill, open an order\nand tap \"Generate Bill\".",
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(32.dp),
+                )
+            }
+        }
+
+        // Order-specific bill generation — Phase 6.1 / 6.2
+        composable(
+            route = Screen.OrderBilling.route,
+            arguments = listOf(
+                navArgument("orderId") { type = NavType.LongType },
+                navArgument("tableId") { type = NavType.LongType },
+            ),
+        ) {
+            BillingRoute(
+                onBack = { navController.popBackStack() },
+                onNavigateToPayment = { billId, orderId, tableId, totalAmount, remainingAmount ->
+                    navController.navigate(
+                        Screen.Payment.createRoute(billId, orderId, tableId, totalAmount, remainingAmount)
+                    )
+                },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        // Payment — Phase 6.3
+        composable(
+            route = Screen.Payment.route,
+            arguments = listOf(
+                navArgument("billId")          { type = NavType.LongType },
+                navArgument("orderId")         { type = NavType.LongType },
+                navArgument("tableId")         { type = NavType.LongType },
+                navArgument("totalAmount")     { type = NavType.StringType },
+                navArgument("remainingAmount") { type = NavType.StringType },
+            ),
+        ) {
+            PaymentRoute(
+                onBack = { navController.popBackStack() },
+                onPaymentSuccess = {
+                    // Payment confirmed → go back to Order List, clear billing back-stack
+                    navController.navigate(Screen.OrderList.route) {
+                        popUpTo(Screen.FoodList.route) { inclusive = false }
+                    }
+                },
+                modifier = Modifier.fillMaxSize(),
+            )
         }
 
         // Settings Screen
