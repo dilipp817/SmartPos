@@ -8,6 +8,7 @@ import com.autobill.smartpos.data.remote.CategoryApiService
 import com.autobill.smartpos.data.remote.FoodApiService
 import com.autobill.smartpos.data.remote.OrderApiService
 import com.autobill.smartpos.data.remote.PaymentApiService
+import com.autobill.smartpos.data.remote.RestaurantApiService
 import com.autobill.smartpos.data.remote.TableApiService
 import com.autobill.smartpos.data.remote.UnauthorizedInterceptor
 import com.squareup.moshi.Moshi
@@ -131,5 +132,11 @@ object NetworkModule {
     @Singleton
     fun provideCategoryApiService(retrofit: Retrofit): CategoryApiService {
         return retrofit.create(CategoryApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideRestaurantApiService(retrofit: Retrofit): RestaurantApiService {
+        return retrofit.create(RestaurantApiService::class.java)
     }
 }

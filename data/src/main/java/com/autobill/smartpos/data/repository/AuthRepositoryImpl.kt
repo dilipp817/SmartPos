@@ -1,6 +1,7 @@
 package com.autobill.smartpos.data.repository
 
 import com.autobill.smartpos.data.di.IoDispatcher
+import com.autobill.smartpos.data.local.RestaurantDataStore
 import com.autobill.smartpos.data.local.SessionDataStore
 import com.autobill.smartpos.data.remote.AuthApiService
 import com.autobill.smartpos.data.remote.dto.LoginRequestDto
@@ -24,6 +25,7 @@ import javax.inject.Singleton
 class AuthRepositoryImpl @Inject constructor(
     private val authApiService: AuthApiService,
     private val sessionDataStore: SessionDataStore,
+    private val restaurantDataStore: RestaurantDataStore,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : AuthRepository {
 
@@ -106,7 +108,10 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun saveSession(user: User) = sessionDataStore.saveUser(user)
 
-    override suspend fun clearSession() = sessionDataStore.clearUser()
+    override suspend fun clearSession() {
+        sessionDataStore.clearUser()
+        restaurantDataStore.clearRestaurant()   // remove stale restaurant data on logout
+    }
 
     override suspend fun isLoggedIn(): Boolean = sessionDataStore.getToken() != null
 
