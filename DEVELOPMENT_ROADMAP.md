@@ -363,12 +363,33 @@ data/repository/RestaurantRepositoryImpl.kt  (network-first + cache-fallback)
 - `AuthRepositoryImpl.clearSession()` now also clears `RestaurantDataStore`
 - `MainViewModel` calls `GetRestaurantUseCase` on every cold app start (after session recovery)
 
-### 7.2 Category Management
-- [ ] `GET /categories?restaurantId={id}` — list (already used in food filter)
-- [ ] `POST /categories?restaurantId={id}` — create category
-- [ ] `PUT /categories/{id}` — update category
-- [ ] `DELETE /categories/{id}` — delete category
-- [ ] `GET /categories/{id}/foods` — foods in a category (paginated)
+### 7.2 Category Management ✅
+- [x] `GET /categories?restaurantId={id}` — list (already used in food filter)
+- [x] `POST /categories?restaurantId={id}` — create category (🔴 admin only — server enforces 403)
+- [x] `PUT /categories/{id}` — update category (🔴 admin only)
+- [x] `DELETE /categories/{id}` — delete category (🔴 admin only)
+- [x] `GET /categories/{id}/foods` — foods in a category (paginated)
+
+**Files created:**
+```
+domain/model/Category.kt
+domain/repository/CategoryRepository.kt
+domain/usecase/CategoryUseCases.kt    (GetCategoriesUseCase, ObserveCategoriesUseCase,
+                                       GetCategoryByIdUseCase, GetFoodsByCategoryUseCase,
+                                       CreateCategoryUseCase, UpdateCategoryUseCase, DeleteCategoryUseCase)
+data/mapper/CategoryMappers.kt
+data/repository/CategoryRepositoryImpl.kt  (in-memory cache; sorted by displayOrder then name;
+                                             write ops refresh cache on success)
+```
+**Already existed (no changes needed):**
+```
+data/remote/CategoryApiService.kt     (all 6 endpoints already defined)
+data/remote/dto/CategoryDto.kt        (CategoryDto + CreateCategoryRequest)
+data/di/NetworkModule.kt              (provideCategoryApiService already present)
+```
+**Wired:**
+- `RepositoryModule` binds `CategoryRepository → CategoryRepositoryImpl`
+- Admin-only mutations gated by `RolePermissions.canManageMenu` (enforced server-side with 403)
 
 ### 7.3 Settings Screen
 - [ ] User profile display (username, email, role — from session)
