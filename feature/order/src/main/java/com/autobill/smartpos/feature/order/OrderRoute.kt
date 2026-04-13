@@ -10,11 +10,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
  * Navigation entry point for the Order List screen.
  *
  * [onOrderClick]        — called with orderId when user taps a card; navigates to OrderDetail.
+ * [onKdsClick]          — navigates to the Kitchen Display Screen.
  * [onBack]              — pops back to the previous screen.
  */
 @Composable
 fun OrderRoute(
     onOrderClick: (Long) -> Unit,
+    onKdsClick: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -25,6 +27,7 @@ fun OrderRoute(
         uiState = uiState,
         modifier = modifier,
         onOrderClick = onOrderClick,
+        onKdsClick = onKdsClick,
         onBack = onBack,
         onFilterSelect = viewModel::selectFilter,
         onRefresh = viewModel::refresh,

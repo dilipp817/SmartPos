@@ -13,6 +13,7 @@ import com.autobill.smartpos.auth.LoginScreen
 import com.autobill.smartpos.feature.food.FoodDetailRoute
 import com.autobill.smartpos.feature.food.HomeRoute
 import com.autobill.smartpos.feature.order.CreateOrderRoute
+import com.autobill.smartpos.feature.order.KitchenDisplayRoute
 import com.autobill.smartpos.feature.order.OrderDetailRoute
 import com.autobill.smartpos.feature.order.OrderRoute
 import com.autobill.smartpos.feature.table.TableRoute
@@ -122,7 +123,18 @@ fun AppNavHost(
                 onOrderClick = { orderId ->
                     navController.navigate(Screen.OrderDetail.createRoute(orderId))
                 },
+                onKdsClick = {
+                    navController.navigate(Screen.KitchenDisplay.route)
+                },
                 onBack = { navController.popBackStack() },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        // Kitchen Display Screen (KDS) — Phase 5.4
+        composable(route = Screen.KitchenDisplay.route) {
+            KitchenDisplayRoute(
+                onBack   = { navController.popBackStack() },
                 modifier = Modifier.fillMaxSize(),
             )
         }
