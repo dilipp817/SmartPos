@@ -337,6 +337,38 @@ class OrderRepositoryImpl @Inject constructor(
         }
     }
 
+    // ── Phase 8 — Reports & Analytics ────────────────────────────────────────
+
+    override suspend fun getOrdersByDateRange(
+        restaurantId: Long,
+        startDate: String,
+        endDate: String,
+    ): Result<List<Order>> = withContext(ioDispatcher) {
+        try {
+            val response = apiService.getOrdersByDateRange(restaurantId, startDate, endDate)
+            val dto = checkNotNull(response.data) { response.message ?: "Failed to fetch orders for date range" }
+            val orders = dto.orders.map { it.toDomain() }
+            // Cache the fetched orders so they are available offline
+            orderDao.upsertOrders(dto.orders.map { it.toEntity() })
+            dto.orders.forEach { orderDto ->
+                orderDao.upsertItems(orderDto.items.map { it.toEntity(orderDto.id) })
+            }
+            Result.Success(orders)
+        } catch (e: Exception) {
+            // Fallback: read from Room cache using lexicographic ISO-8601 comparison
+            val cachedEntities = orderDao.getOrdersByDateRange(restaurantId, startDate, endDate)
+            if (cachedEntities.isNotEmpty()) {
+                val orders = cachedEntities.map { entity ->
+                    val items = orderDao.getItemsForOrder(entity.id)
+                    entity.toDomain(items)
+                }
+                Result.Success(orders)
+            } else {
+                Result.Failure(e)
+            }
+        }
+    }
+
     /** Extracts a human-readable lock reason from a 400 response body (best-effort). */
     private fun getLockedItemReason(e: HttpException): String =
         try { e.response()?.errorBody()?.string() ?: "locked" } catch (_: Exception) { "locked" }

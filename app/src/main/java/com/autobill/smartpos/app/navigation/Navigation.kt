@@ -54,6 +54,14 @@ sealed class Screen(val route: String) {
     }
 
     object Settings : Screen("settings")
+
+    // ── Phase 8 — Reports & Analytics ────────────────────────────────────────
+
+    /** Daily sales report with date-range picker and top-selling items. */
+    object SalesReport : Screen("sales_report")
+
+    /** Filterable order history for a selected date range (DELIVERED / CANCELLED / ALL). */
+    object OrderHistory : Screen("order_history")
 }
 
 /**
