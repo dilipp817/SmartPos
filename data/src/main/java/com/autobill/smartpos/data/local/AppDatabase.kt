@@ -6,12 +6,14 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.autobill.smartpos.data.local.dao.FoodDao
 import com.autobill.smartpos.data.local.dao.OrderDao
+import com.autobill.smartpos.data.local.dao.PendingOrderDao
 import com.autobill.smartpos.data.local.dao.TableDao
 import com.autobill.smartpos.data.local.entity.BillEntity
 import com.autobill.smartpos.data.local.entity.FoodEntity
 import com.autobill.smartpos.data.local.entity.OrderEntity
 import com.autobill.smartpos.data.local.entity.OrderItemEntity
 import com.autobill.smartpos.data.local.entity.PaymentEntity
+import com.autobill.smartpos.data.local.entity.PendingOrderEntity
 import com.autobill.smartpos.data.local.entity.RestaurantEntity
 import com.autobill.smartpos.data.local.entity.TableEntity
 
@@ -32,6 +34,7 @@ import com.autobill.smartpos.data.local.entity.TableEntity
  *        (BACKEND_ALIGNMENT.md Q1 — April 12, 2026; always null in v1, used in v2)
  *  v8 → added preparationTime, allergens, calories columns to foods table
  *        (backendapi.md §7 — April 12, 2026)
+ *  v9 → added pending_orders table for Phase 9.2 offline queue (April 14, 2026)
  */
 @Database(
     entities = [
@@ -42,14 +45,16 @@ import com.autobill.smartpos.data.local.entity.TableEntity
         OrderItemEntity::class,
         BillEntity::class,
         PaymentEntity::class,
+        PendingOrderEntity::class,
     ],
-    version = 8,
+    version = 9,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun foodDao(): FoodDao
     abstract fun tableDao(): TableDao
     abstract fun orderDao(): OrderDao
+    abstract fun pendingOrderDao(): PendingOrderDao
 
     companion object {
 
@@ -289,6 +294,33 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE `foods` ADD COLUMN `preparationTime` INTEGER DEFAULT NULL")
                 db.execSQL("ALTER TABLE `foods` ADD COLUMN `allergens`       TEXT    DEFAULT NULL")
                 db.execSQL("ALTER TABLE `foods` ADD COLUMN `calories`        INTEGER DEFAULT NULL")
+            }
+        }
+
+        /**
+         * Migration 8 → 9  (Phase 9.2 — Offline Mode, April 14, 2026)
+         * Adds pending_orders table for the offline order queue.
+         * Each row is a serialised createOrder payload waiting to be synced.
+         */
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `pending_orders` (
+                        `id`            INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        `restaurantId`  INTEGER NOT NULL,
+                        `tableId`       INTEGER NOT NULL,
+                        `orderType`     TEXT    NOT NULL,
+                        `notes`         TEXT,
+                        `itemsJson`     TEXT    NOT NULL,
+                        `status`        TEXT    NOT NULL DEFAULT 'PENDING',
+                        `failureReason` TEXT,
+                        `createdAt`     INTEGER NOT NULL
+                    )
+                    """.trimIndent(),
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_pending_orders_status`    ON `pending_orders` (`status`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_pending_orders_createdAt` ON `pending_orders` (`createdAt`)")
             }
         }
     }

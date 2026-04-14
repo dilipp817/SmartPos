@@ -1,10 +1,12 @@
 package com.autobill.smartpos.app.navigation
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PermanentDrawerSheet
 import androidx.compose.material3.PermanentNavigationDrawer
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -32,31 +34,6 @@ import com.autobill.smartpos.feature.reports.SalesReportRoute
 import com.autobill.smartpos.feature.table.TableRoute
 import com.autobill.smartpos.settings.SettingsRoute
 
-/**
- * Application navigation graph.
- *
- * Structure:
- *  ┌──────────────────────────────────────────────────────────────────────┐
- *  │  AppNavHost                                                          │
- *  │  ┌────────────────────┐  ┌───────────────────────────────────────┐  │
- *  │  │ PermanentDrawer    │  │  AppNavGraph  (NavHost)               │  │
- *  │  │  (authenticated    │  │  login / food / table / order /       │  │
- *  │  │   routes only)     │  │  kitchen / billing / settings …       │  │
- *  │  └────────────────────┘  └───────────────────────────────────────┘  │
- *  └──────────────────────────────────────────────────────────────────────┘
- *
- * The [PermanentNavigationDrawer] is the M3 recommendation for large
- * landscape screens — always visible, never overlays content.
- * It is only shown for authenticated routes; the Login screen gets full
- * width with no navigation chrome.
- *
- * [startDestination] is set by [com.autobill.smartpos.MainActivity] based on the resolved session:
- *  - Session exists  → [Screen.FoodList]
- *  - No session      → [Screen.Login]
- *
- * [com.autobill.smartpos.MainActivity] uses key(isLoggedIn) to recreate [AppNavHost] when auth
- * state flips, fully resetting the back-stack.
- */
 @Composable
 fun AppNavHost(
     startDestination: String,
@@ -77,7 +54,7 @@ fun AppNavHost(
                 // 240 dp is the Material 3 standard drawer width.
                 // On a 10" landscape tablet (~1280 dp wide) this leaves
                 // ~1040 dp for content — ideal for a POS layout.
-                PermanentDrawerSheet(drawerContainerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerLow) {
+                PermanentDrawerSheet(drawerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
                     AppDrawerContent(
                         currentRoute = currentRoute,
                         onNavigate = { route ->
@@ -131,7 +108,7 @@ private fun AppNavGraph(
 
         // ── Auth ────────────────────────────────────────────────────────────
 
-        composable(route = Screen.Login.route) {
+        composable(route = Screen.Login.route) { _ ->
             LoginScreen(
                 onLoginSuccess = {
                     navController.navigate(Screen.FoodList.route) {
@@ -143,13 +120,12 @@ private fun AppNavGraph(
 
         // ── Main App ────────────────────────────────────────────────────────
 
-        composable(route = Screen.FoodList.route) {
+        composable(route = Screen.FoodList.route) { _ ->
             HomeRoute(
                 onFoodClick = { foodId ->
                     navController.navigate(Screen.FoodDetail.createRoute(foodId))
                 },
                 onCheckoutClick = {
-                    // Cart → Select Table → Create Order (Phase 5)
                     navController.navigate(Screen.TableList.route)
                 },
                 onLogout = onLogout,
@@ -161,7 +137,7 @@ private fun AppNavGraph(
         composable(
             route = Screen.FoodDetail.route,
             arguments = listOf(navArgument("foodId") { type = NavType.LongType }),
-        ) {
+        ) { _ ->
             FoodDetailRoute(
                 onBack = { navController.popBackStack() },
                 modifier = Modifier.fillMaxSize(),
@@ -169,7 +145,7 @@ private fun AppNavGraph(
         }
 
         // Table List / Selection Screen — user selects an available table before creating an order
-        composable(route = Screen.TableList.route) {
+        composable(route = Screen.TableList.route) { _ ->
             TableRoute(
                 onTableSelected = { tableId ->
                     navController.navigate(Screen.CreateOrder.createRoute(tableId))
@@ -183,7 +159,7 @@ private fun AppNavGraph(
         composable(
             route = Screen.CreateOrder.route,
             arguments = listOf(navArgument("tableId") { type = NavType.LongType }),
-        ) {
+        ) { _ ->
             CreateOrderRoute(
                 onOrderCreated = { _ ->
                     // Navigate to Order List after placing an order; clear back-stack up to FoodList
@@ -196,12 +172,16 @@ private fun AppNavGraph(
                     // Pop back to TableList so user can pick a different table
                     navController.popBackStack(Screen.TableList.route, inclusive = false)
                 },
+                onOrderQueued = {
+                    // Order saved offline — go back to TableList (Phase 9.2)
+                    navController.popBackStack(Screen.TableList.route, inclusive = false)
+                },
                 modifier = Modifier.fillMaxSize(),
             )
         }
 
         // Order List Screen — entry point for staff to monitor all orders
-        composable(route = Screen.OrderList.route) {
+        composable(route = Screen.OrderList.route) { _ ->
             OrderRoute(
                 onOrderClick = { orderId ->
                     navController.navigate(Screen.OrderDetail.createRoute(orderId))
@@ -215,7 +195,7 @@ private fun AppNavGraph(
         }
 
         // Kitchen Display Screen (KDS) — Phase 5.4
-        composable(route = Screen.KitchenDisplay.route) {
+        composable(route = Screen.KitchenDisplay.route) { _ ->
             KitchenDisplayRoute(
                 onBack   = { navController.popBackStack() },
                 modifier = Modifier.fillMaxSize(),
@@ -226,7 +206,7 @@ private fun AppNavGraph(
         composable(
             route = Screen.OrderDetail.route,
             arguments = listOf(navArgument("orderId") { type = NavType.LongType }),
-        ) {
+        ) { _ ->
             OrderDetailRoute(
                 onBack = { navController.popBackStack() },
                 onBillingClick = { orderId, tableId ->
@@ -237,19 +217,19 @@ private fun AppNavGraph(
         }
 
         // Search Screen
-        composable(route = Screen.Search.route) {
+        composable(route = Screen.Search.route) { _ ->
             // TODO: SearchRoute()
         }
 
         // Billing overview — accessible from the drawer.
         // Full bills history will be added in Phase 7.
         // Actual bill generation is accessed from Order Detail → "Generate Bill".
-        composable(route = Screen.Billing.route) {
-            androidx.compose.foundation.layout.Box(
+        composable(route = Screen.Billing.route) { _ ->
+            Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center,
             ) {
-                androidx.compose.material3.Text(
+                Text(
                     text = "To generate a bill, open an order\nand tap \"Generate Bill\".",
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
@@ -265,7 +245,7 @@ private fun AppNavGraph(
                 navArgument("orderId") { type = NavType.LongType },
                 navArgument("tableId") { type = NavType.LongType },
             ),
-        ) {
+        ) { _ ->
             BillingRoute(
                 onBack = { navController.popBackStack() },
                 onNavigateToPayment = { billId, orderId, tableId, totalAmount, remainingAmount ->
@@ -287,7 +267,7 @@ private fun AppNavGraph(
                 navArgument("totalAmount")     { type = NavType.StringType },
                 navArgument("remainingAmount") { type = NavType.StringType },
             ),
-        ) {
+        ) { _ ->
             PaymentRoute(
                 onBack = { navController.popBackStack() },
                 onPaymentSuccess = {
@@ -301,7 +281,7 @@ private fun AppNavGraph(
         }
 
         // Settings Screen — Phase 7.3
-        composable(route = Screen.Settings.route) {
+        composable(route = Screen.Settings.route) { _ ->
             SettingsRoute(
                 onBack   = { navController.popBackStack() },
                 modifier = Modifier.fillMaxSize(),
@@ -311,12 +291,12 @@ private fun AppNavGraph(
         // ── Phase 8 — Reports & Analytics ────────────────────────────────────
 
         // Sales Report Screen — date range picker + metrics + top items
-        composable(route = Screen.SalesReport.route) {
+        composable(route = Screen.SalesReport.route) { _ ->
             SalesReportRoute(modifier = Modifier.fillMaxSize())
         }
 
         // Order History Screen — date range picker + status filter + order cards
-        composable(route = Screen.OrderHistory.route) {
+        composable(route = Screen.OrderHistory.route) { _ ->
             OrderHistoryRoute(modifier = Modifier.fillMaxSize())
         }
     }

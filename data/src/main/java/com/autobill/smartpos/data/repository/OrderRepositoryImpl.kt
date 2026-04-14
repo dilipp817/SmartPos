@@ -10,10 +10,13 @@ import com.autobill.smartpos.data.remote.dto.OrderItemRequestDto
 import com.autobill.smartpos.data.remote.dto.UpdateOrderItemRequest
 import com.autobill.smartpos.data.remote.dto.UpdateOrderStatusRequest
 import com.autobill.smartpos.domain.common.HttpConflictException
+import com.autobill.smartpos.domain.common.OfflineQueuedException
 import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.model.Order
 import com.autobill.smartpos.domain.model.OrderStatus
 import com.autobill.smartpos.domain.model.OrderType
+import com.autobill.smartpos.domain.repository.ConnectivityRepository
+import com.autobill.smartpos.domain.repository.OfflineQueueRepository
 import com.autobill.smartpos.domain.repository.OrderLineItem
 import com.autobill.smartpos.domain.repository.OrderRepository
 import kotlinx.coroutines.CoroutineDispatcher
@@ -27,24 +30,28 @@ import javax.inject.Singleton
  *
  * Phase 5.1 scope: createOrder only.
  * Additional methods (getOrder, updateStatus, etc.) added in Phase 5.2 / 5.3.
+ * Phase 9.2: createOrder now checks connectivity — queues offline if no network.
  */
 @Singleton
 class OrderRepositoryImpl @Inject constructor(
     private val apiService: OrderApiService,
     private val orderDao: OrderDao,
+    private val connectivityRepository: ConnectivityRepository,
+    private val offlineQueueRepository: OfflineQueueRepository,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : OrderRepository {
 
     /**
      * POST /restaurants/{restaurantId}/orders
      *
-     * On success:
-     *  - Caches the order header + items in Room.
-     *  - Returns the full [Order] domain object.
+     * Offline path (Phase 9.2):
+     *  - If no network → persist payload to [pending_orders] + schedule [SyncWorker]
+     *  - Returns [Result.Failure(OfflineQueuedException)] so the ViewModel shows a
+     *    "queued" confirmation instead of an error.
      *
-     * On 409 CONFLICT:
-     *  - The table was occupied between the user selecting it and submitting.
-     *  - Propagated as [Result.Failure] — caller shows "re-select table" prompt.
+     * Online path:
+     *  - Caches the order header + items in Room on success.
+     *  - 409 CONFLICT → table was occupied → propagated as [HttpConflictException].
      */
     override suspend fun createOrder(
         restaurantId: Long,
@@ -53,6 +60,20 @@ class OrderRepositoryImpl @Inject constructor(
         orderType: OrderType,
         notes: String?,
     ): Result<Order> = withContext(ioDispatcher) {
+        // ── Offline path ──────────────────────────────────────────────────
+        if (!connectivityRepository.isCurrentlyOnline()) {
+            val queueId = offlineQueueRepository.enqueue(
+                restaurantId = restaurantId,
+                tableId      = tableId,
+                cartItems    = cartItems,
+                orderType    = orderType,
+                notes        = notes,
+            )
+            offlineQueueRepository.scheduleSyncIfNeeded()
+            return@withContext Result.Failure(OfflineQueuedException(queueId))
+        }
+
+        // ── Online path ───────────────────────────────────────────────────
         try {
             val request = CreateOrderRequest(
                 tableId   = tableId,
@@ -76,7 +97,6 @@ class OrderRepositoryImpl @Inject constructor(
 
             Result.Success(dto.toDomain())
         } catch (e: HttpException) {
-            // Map 409 to domain-level exception so feature modules don't need Retrofit
             if (e.code() == 409) {
                 Result.Failure(HttpConflictException("Table is already occupied. Please select a different table."))
             } else {

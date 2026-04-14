@@ -476,10 +476,22 @@ feature/reports/OrderHistoryRoute.kt
   - `OrderViewModel` — connection state observed; `OrderListScreen` shows animated amber banner when not CONNECTED
   - `TableViewModel` — `observeRealTimeEvents()` replaces table in-place on every `TABLE_UPDATED` event
 
-### 9.2 Offline Mode
-- Queue order creation when offline
-- Sync queue when connection restored
-- Conflict resolution using `version` field (optimistic locking already in domain models)
+### ✅ 9.2 Offline Mode (COMPLETED — April 14, 2026)
+- [x] **ConnectivityMonitor** (`data/device/`) — `ConnectivityManager.NetworkCallback` → `StateFlow<Boolean>`; registered for process lifetime
+- [x] **ConnectivityRepository** (domain interface) + **ConnectivityRepositoryImpl** (data) — exposes `observeIsOnline(): Flow<Boolean>` + `isCurrentlyOnline(): Boolean`
+- [x] **PendingOrderEntity** + **PendingOrderDao** (`pending_orders` table) — queued payload with status `PENDING` → `SYNCING` → deleted (success) | `FAILED` (409)
+- [x] **OfflineQueueRepository** (domain interface) + **OfflineQueueRepositoryImpl** (data) — `enqueue()` serialises cart to JSON, `scheduleSyncIfNeeded()` schedules WorkManager job
+- [x] **SyncWorker** (`@HiltWorker`, WorkManager) — drains queue on `CONNECTED` constraint; 409 → marks `FAILED`; transient error → `Result.retry()`
+- [x] **DB migration 8 → 9** — adds `pending_orders` table
+- [x] **`OrderRepositoryImpl.createOrder()`** — offline path: enqueues + schedules + returns `OfflineQueuedException`; online path unchanged
+- [x] **`OfflineQueuedException`** added to `domain/common/Result.kt`
+- [x] **`CreateOrderViewModel`** — observes connectivity (`isOffline` banner), catches `OfflineQueuedException` → clears cart → `orderQueued = true`
+- [x] **`CreateOrderScreen`** — animated amber offline banner when `isOffline`
+- [x] **`CreateOrderRoute`** — `onOrderQueued` callback; navigates back to TableList on queue confirmation
+- [x] **`MainViewModel`** — observes connectivity; re-schedules sync on every offline → online transition
+- [x] **`SmartPosApp`** — implements `Configuration.Provider` with `HiltWorkerFactory` for on-demand WorkManager init
+- [x] **Manifest** — `ACCESS_NETWORK_STATE` permission + WorkManager default initialiser removed
+- [x] **Conflict resolution** — 409 on sync → `FAILED` with reason "Table occupied"; `version` field on cached orders prevents stale-cache overwrites
 
 ### 9.3 Admin Dashboard
 - User / staff management
@@ -658,4 +670,4 @@ A: It doesn't happen automatically. After payment succeeds, explicitly call `PAT
 
 ---
 
-**Current focus: Phase 9.2 — Offline Mode (Queue, Sync, Conflict Resolution) 🚀**
+**Current focus: Phase 9.3 — Admin Dashboard 🚀**

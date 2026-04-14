@@ -14,12 +14,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
  * [onOrderCreated]  — navigates to Order Detail once the order is successfully submitted.
  * [onBack]          — pops back to the Table List.
  * [onReselectTable] — same as [onBack]; called when a 409 conflict clears the table selection.
+ * [onOrderQueued]   — called when the order was saved offline; navigate back + show confirmation.
  */
 @Composable
 fun CreateOrderRoute(
     onOrderCreated: (orderId: Long) -> Unit,
     onBack: () -> Unit,
     onReselectTable: () -> Unit,
+    onOrderQueued: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val viewModel: CreateOrderViewModel = hiltViewModel()
@@ -41,6 +43,14 @@ fun CreateOrderRoute(
         }
     }
 
+    // Offline queued → navigate back (Phase 9.2)
+    LaunchedEffect(uiState.orderQueued) {
+        if (uiState.orderQueued) {
+            viewModel.onOrderQueuedConsumed()
+            onOrderQueued()
+        }
+    }
+
     CreateOrderScreen(
         uiState           = uiState,
         onOrderTypeSelect = viewModel::selectOrderType,
@@ -51,4 +61,3 @@ fun CreateOrderRoute(
         modifier          = modifier,
     )
 }
-
