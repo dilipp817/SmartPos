@@ -7,6 +7,7 @@ import com.autobill.smartpos.data.repository.CategoryRepositoryImpl
 import com.autobill.smartpos.data.repository.MockFoodRepository
 import com.autobill.smartpos.data.repository.OrderRepositoryImpl
 import com.autobill.smartpos.data.repository.PaymentRepositoryImpl
+import com.autobill.smartpos.data.repository.RealTimeRepositoryImpl
 import com.autobill.smartpos.data.repository.RestaurantRepositoryImpl
 import com.autobill.smartpos.data.repository.TableRepositoryImpl
 import com.autobill.smartpos.domain.repository.AuthRepository
@@ -16,6 +17,7 @@ import com.autobill.smartpos.domain.repository.CategoryRepository
 import com.autobill.smartpos.domain.repository.FoodRepository
 import com.autobill.smartpos.domain.repository.OrderRepository
 import com.autobill.smartpos.domain.repository.PaymentRepository
+import com.autobill.smartpos.domain.repository.RealTimeRepository
 import com.autobill.smartpos.domain.repository.RestaurantRepository
 import com.autobill.smartpos.domain.repository.TableRepository
 import dagger.Binds
@@ -77,4 +79,9 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindCategoryRepository(impl: CategoryRepositoryImpl): CategoryRepository
+
+    /** WebSocket real-time event pipeline — Phase 9.1 */
+    @Binds
+    @Singleton
+    abstract fun bindRealTimeRepository(impl: RealTimeRepositoryImpl): RealTimeRepository
 }

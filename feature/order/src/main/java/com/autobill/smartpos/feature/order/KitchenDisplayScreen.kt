@@ -1,5 +1,8 @@
 package com.autobill.smartpos.feature.order
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -54,6 +57,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.autobill.smartpos.domain.model.ConnectionState
 import com.autobill.smartpos.domain.model.ItemStatus
 import com.autobill.smartpos.domain.model.Order
 import com.autobill.smartpos.domain.model.OrderItem
@@ -95,6 +99,7 @@ fun KitchenDisplayScreen(
 
             // ── Top Bar ───────────────────────────────────────────────────
             KitchenTopBar(
+                connectionState = uiState.connectionState,
                 onBack    = onBack,
                 onRefresh = onRefresh,
             )
@@ -159,6 +164,7 @@ fun KitchenDisplayScreen(
 
 @Composable
 private fun KitchenTopBar(
+    connectionState: ConnectionState,
     onBack: () -> Unit,
     onRefresh: () -> Unit,
 ) {
@@ -189,20 +195,50 @@ private fun KitchenTopBar(
                 .padding(start = 4.dp),
         )
 
-        // Auto-refresh hint
-        Text(
-            text  = "Auto-refreshes every 30s",
-            style = MaterialTheme.typography.labelSmall,
-            color = Color(0xFF9E9E9E),
-        )
+        // ── ⚡ / ⚠ connection state badge ─────────────────────────────────
+        KitchenConnectionBadge(state = connectionState)
 
-        Spacer(modifier = Modifier.width(8.dp))
-
+        Spacer(modifier = Modifier.width(4.dp))
         IconButton(onClick = onRefresh) {
             Icon(
                 imageVector        = Icons.Default.Refresh,
                 contentDescription = "Refresh",
                 tint               = Color(0xFF757575),
+            )
+        }
+    }
+}
+
+// ── Connection State Badge ────────────────────────────────────────────────────
+
+/**
+ * Compact chip that shows ⚡ LIVE (green) when the WebSocket is CONNECTED,
+ * or ⚠ Reconnecting… (amber) when DISCONNECTED / RECONNECTING / CONNECTING.
+ * Fades smoothly between the two states.
+ */
+@Composable
+private fun KitchenConnectionBadge(state: ConnectionState) {
+    val isLive = state == ConnectionState.CONNECTED
+    AnimatedVisibility(
+        visible = true,
+        enter   = fadeIn(),
+        exit    = fadeOut(),
+    ) {
+        val bgColor   = if (isLive) Color(0xFF1B5E20) else Color(0xFFE65100)
+        val textColor = Color.White
+        val label     = if (isLive) "⚡ LIVE" else "⚠ Reconnecting…"
+
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(50))
+                .background(bgColor)
+                .padding(horizontal = 10.dp, vertical = 4.dp),
+        ) {
+            Text(
+                text  = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = textColor,
+                fontWeight = FontWeight.SemiBold,
             )
         }
     }

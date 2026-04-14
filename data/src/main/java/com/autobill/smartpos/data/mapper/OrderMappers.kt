@@ -110,3 +110,35 @@ fun OrderEntity.toDomain(items: List<OrderItemEntity> = emptyList()): Order = Or
     version      = version,
 )
 
+// ── Domain → Entity (used by WebSocket cache writes in Phase 9.1) ────────────
+
+fun Order.toEntity(): OrderEntity = OrderEntity(
+    id          = id,
+    orderNumber = orderNumber,
+    restaurantId = restaurantId,
+    tableId     = tableId,
+    tableNumber = tableNumber,
+    orderType   = orderType.value,
+    status      = status.value,
+    subtotal    = subtotal,
+    totalAmount = totalAmount,
+    notes       = notes,
+    createdAt   = createdAt,
+    updatedAt   = updatedAt,
+    version     = version,
+    customerId  = customerId,
+)
+
+fun OrderItem.toEntity(orderId: Long): OrderItemEntity = OrderItemEntity(
+    id              = id,
+    orderId         = orderId,
+    foodId          = foodId,
+    foodName        = foodName,
+    quantity        = quantity,
+    unitPrice       = unitPrice,
+    subtotal        = subtotal,
+    itemStatus      = itemStatus.value,
+    specialRequests = specialRequests,
+    createdAt       = createdAt,
+)
+

@@ -1,5 +1,6 @@
 package com.autobill.smartpos.feature.order
 
+import com.autobill.smartpos.domain.model.ConnectionState
 import com.autobill.smartpos.domain.model.Order
 import com.autobill.smartpos.domain.model.OrderStatus
 
@@ -26,6 +27,8 @@ data class OrderUiState(
     val isRefreshing: Boolean = false,
     val errorMessage: String? = null,
     val canCancelOrders: Boolean = false,
+    /** Phase 9.1: drives the live/reconnecting banner in OrderListScreen. */
+    val connectionState: ConnectionState = ConnectionState.DISCONNECTED,
 )
 
 /**

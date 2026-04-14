@@ -39,15 +39,15 @@ fun TableEntity.toDomain(): Table = Table(
 
 // Table DTO to Entity
 fun TableDto.toEntity(): TableEntity = TableEntity(
-    id = id,
-    tableNumber = tableNumber,
-    floor = floor,
-    capacity = capacity,
-    status = status,
+    id             = id,
+    tableNumber    = tableNumber,
+    floor          = floor,
+    capacity       = capacity,
+    status         = status,
     currentOrderId = currentOrderId,
     lastOccupiedAt = lastOccupiedAt,
-    restaurantId = restaurantId,
-    createdAt = createdAt,
+    restaurantId   = restaurantId,
+    createdAt      = createdAt,
     updatedAt = updatedAt,
 )
 
