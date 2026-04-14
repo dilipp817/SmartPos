@@ -27,6 +27,8 @@ import com.autobill.smartpos.feature.order.CreateOrderRoute
 import com.autobill.smartpos.feature.order.KitchenDisplayRoute
 import com.autobill.smartpos.feature.order.OrderDetailRoute
 import com.autobill.smartpos.feature.order.OrderRoute
+import com.autobill.smartpos.feature.reports.OrderHistoryRoute
+import com.autobill.smartpos.feature.reports.SalesReportRoute
 import com.autobill.smartpos.feature.table.TableRoute
 import com.autobill.smartpos.settings.SettingsRoute
 
@@ -304,6 +306,18 @@ private fun AppNavGraph(
                 onBack   = { navController.popBackStack() },
                 modifier = Modifier.fillMaxSize(),
             )
+        }
+
+        // ── Phase 8 — Reports & Analytics ────────────────────────────────────
+
+        // Sales Report Screen — date range picker + metrics + top items
+        composable(route = Screen.SalesReport.route) {
+            SalesReportRoute(modifier = Modifier.fillMaxSize())
+        }
+
+        // Order History Screen — date range picker + status filter + order cards
+        composable(route = Screen.OrderHistory.route) {
+            OrderHistoryRoute(modifier = Modifier.fillMaxSize())
         }
     }
 }

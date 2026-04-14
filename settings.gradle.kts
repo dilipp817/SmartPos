@@ -30,4 +30,5 @@ include(":feature:food")
 include(":feature:table")
 include(":feature:order")
 include(":feature:billing")
+include(":feature:reports")
 

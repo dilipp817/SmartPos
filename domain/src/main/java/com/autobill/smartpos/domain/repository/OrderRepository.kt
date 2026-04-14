@@ -89,6 +89,20 @@ interface OrderRepository {
     /** DELETE /restaurants/{restaurantId}/orders/{orderId} — cancel entire order */
     suspend fun cancelOrder(restaurantId: Long, orderId: Long): Result<Order>
 
+    // ── Phase 8 — Reports & Analytics ────────────────────────────────────────
+
+    /**
+     * GET /restaurants/{restaurantId}/orders/range?start_date=…&end_date=…
+     *
+     * Both params must be ISO-8601 datetime strings e.g. "2026-04-13T00:00:00".
+     * Falls back to the local Room cache if the network is unavailable.
+     */
+    suspend fun getOrdersByDateRange(
+        restaurantId: Long,
+        startDate: String,
+        endDate: String,
+    ): Result<List<Order>>
+
     // ── Phase 5.4 — KDS item status update ───────────────────────────────────
 
     /**

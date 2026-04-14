@@ -4,6 +4,8 @@ import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.model.Order
 import com.autobill.smartpos.domain.model.OrderStatus
 import com.autobill.smartpos.domain.model.OrderType
+import com.autobill.smartpos.domain.model.SalesReport
+import com.autobill.smartpos.domain.model.TopSellingItem
 import com.autobill.smartpos.domain.repository.OrderLineItem
 import com.autobill.smartpos.domain.repository.OrderRepository
 import javax.inject.Inject
@@ -188,3 +190,74 @@ class UpdateItemStatusUseCase @Inject constructor(
     ): Result<Order> = repository.updateItemStatus(restaurantId, orderId, itemId, newStatus)
 }
 
+// ── Phase 8 — Reports & Analytics ────────────────────────────────────────────
+
+/** Use case: Fetch orders within a date range (for reports / history). */
+class GetOrdersByDateRangeUseCase @Inject constructor(
+    private val repository: OrderRepository,
+) {
+    suspend operator fun invoke(
+        restaurantId: Long,
+        startDate: String,
+        endDate: String,
+    ): Result<List<Order>> = repository.getOrdersByDateRange(restaurantId, startDate, endDate)
+}
+
+/**
+ * Use case: Compute a [SalesReport] from the raw orders returned by the date-range endpoint.
+ *
+ * Revenue metrics (totalRevenue, averageOrderValue) are based on DELIVERED orders only —
+ * they represent confirmed, paid transactions.
+ * [SalesReport.orderCount] includes all non-CANCELLED orders so staff can see volume.
+ * Top-10 selling items are ranked by quantity across ALL orders in the period.
+ */
+class GetSalesReportUseCase @Inject constructor(
+    private val getOrdersByDateRangeUseCase: GetOrdersByDateRangeUseCase,
+) {
+    suspend operator fun invoke(
+        restaurantId: Long,
+        startDate: String,
+        endDate: String,
+    ): Result<SalesReport> {
+        return when (val result = getOrdersByDateRangeUseCase(restaurantId, startDate, endDate)) {
+            is Result.Success -> {
+                val orders         = result.data
+                val delivered      = orders.filter { it.status == OrderStatus.DELIVERED }
+                val active         = orders.filter { it.status != OrderStatus.CANCELLED }
+                val totalRevenue   = delivered.sumOf { it.totalAmount }
+                val deliveredCount = delivered.size
+                val orderCount     = active.size
+                val avgOrderValue  = if (deliveredCount > 0) totalRevenue / deliveredCount else 0.0
+
+                val topItems = orders
+                    .flatMap { it.items }
+                    .groupBy { it.foodId }
+                    .map { (foodId, items) ->
+                        TopSellingItem(
+                            foodId       = foodId,
+                            foodName     = items.first().foodName,
+                            quantitySold = items.sumOf { it.quantity },
+                            revenue      = items.sumOf { it.subtotal },
+                        )
+                    }
+                    .sortedByDescending { it.quantitySold }
+                    .take(10)
+
+                Result.Success(
+                    SalesReport(
+                        startDate         = startDate,
+                        endDate           = endDate,
+                        totalRevenue      = totalRevenue,
+                        orderCount        = orderCount,
+                        deliveredCount    = deliveredCount,
+                        averageOrderValue = avgOrderValue,
+                        topSellingItems   = topItems,
+                        orders            = orders,
+                    )
+                )
+            }
+            is Result.Failure -> Result.Failure(result.exception)
+            Result.Loading    -> Result.Loading
+        }
+    }
+}

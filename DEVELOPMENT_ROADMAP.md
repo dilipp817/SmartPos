@@ -416,19 +416,45 @@ app/settings/SettingsRoute.kt
 
 ---
 
-## 📊 Phase 8: Reports & Analytics (Week 6)
+## ✅ Phase 8: Reports & Analytics (Week 6) — COMPLETED
 
-### 8.1 Daily Sales Report
-- [ ] `GET /restaurants/{restaurantId}/orders/range?startDate=...&endDate=...`
-- [ ] Total revenue, order count, average order value
-- [ ] Top-selling food items
+### 8.1 Daily Sales Report ✅
+- [x] `GET /restaurants/{restaurantId}/orders/range?start_date=...&end_date=...`
+- [x] Total revenue (DELIVERED orders), order count, average order value
+- [x] Top-selling food items (ranked by quantity, top 10)
+- [x] Date range picker (start + end date, default = today)
+- [x] Refresh button
 
-### 8.2 Order History
-- [ ] Date range picker
-- [ ] Filter by status (`DELIVERED`, `CANCELLED`)
-- [ ] Bill summary per order
+### 8.2 Order History ✅
+- [x] Date range picker (default = today)
+- [x] Filter chips: All | Delivered | Cancelled (client-side, no re-fetch)
+- [x] Bill summary per order: subtotal, tax, total, status badge
+- [x] Pull-to-refresh
 
-**Time Estimate**: 3–4 days
+**Files created:**
+```
+domain/model/SalesReport.kt                     (SalesReport + TopSellingItem data classes)
+domain/repository/OrderRepository.kt            (+ getOrdersByDateRange)
+domain/usecase/OrderUseCases.kt                 (+ GetOrdersByDateRangeUseCase, GetSalesReportUseCase)
+data/local/dao/OrderDao.kt                      (+ getOrdersByDateRange ISO-8601 range query)
+data/repository/OrderRepositoryImpl.kt          (+ getOrdersByDateRange impl + cache fallback with items)
+feature/reports/build.gradle.kts
+feature/reports/src/main/AndroidManifest.xml
+feature/reports/SalesReportUiState.kt           (+ date helpers: todayStartMs, toIsoDateString, toDisplayDate)
+feature/reports/SalesReportViewModel.kt
+feature/reports/SalesReportScreen.kt            (DatePickerDialog, 3 metric cards, top-items table)
+feature/reports/SalesReportRoute.kt
+feature/reports/OrderHistoryUiState.kt          (OrderHistoryFilter enum + applyFilter ext fn)
+feature/reports/OrderHistoryViewModel.kt
+feature/reports/OrderHistoryScreen.kt           (DatePickerDialog, FilterChip row, PullToRefreshBox)
+feature/reports/OrderHistoryRoute.kt
+```
+**Wired:**
+- `settings.gradle.kts`: `include(":feature:reports")`
+- `app/build.gradle.kts`: `implementation(project(":feature:reports"))`
+- `Navigation.kt`: `Screen.SalesReport` + `Screen.OrderHistory`
+- `NavHost.kt`: two new `composable()` entries
+- `AppDrawerContent.kt`: "Reports" drawer item (BarChart icon); active on both report routes
 
 ---
 
@@ -536,8 +562,8 @@ app/settings/SettingsRoute.kt
 | W2 | 4 | Table Management | ✅ DONE |
 | W3 | 5 | Order Flow + KDS | ✅ DONE (5.1 ✅ 5.2 ✅ 5.3 ✅ 5.4 ✅) |
 | W4 | 6 | Billing & Payment | ✅ DONE |
-| W5 | 7 | Restaurant & Category Management | TODO |
-| W6 | 8 | Reports & Analytics | TODO |
+| W5 | 7 | Restaurant & Category Management | ✅ DONE |
+| W6 | 8 | Reports & Analytics | ✅ DONE |
 | W7+ | 9 | Advanced (Real-time, Offline, Admin) | TODO |
 
 **Total Estimated Timeline**: 7 weeks to full MVP
@@ -621,4 +647,4 @@ A: It doesn't happen automatically. After payment succeeds, explicitly call `PAT
 
 ---
 
-**Current focus: Phase 7 — Restaurant & Category Management 🚀**
+**Current focus: Phase 9 — Advanced Features (Real-time, Offline, Admin) 🚀**

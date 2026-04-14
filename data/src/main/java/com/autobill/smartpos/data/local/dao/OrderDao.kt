@@ -33,6 +33,14 @@ interface OrderDao {
     @Query("SELECT * FROM orders WHERE restaurantId = :restaurantId AND (orderNumber LIKE '%' || :query || '%' OR tableNumber LIKE '%' || :query || '%') ORDER BY createdAt DESC")
     suspend fun searchOrders(restaurantId: Long, query: String): List<OrderEntity>
 
+    /** ISO-8601 lexicographic comparison is safe for "yyyy-MM-dd'T'HH:mm:ss" strings. */
+    @Query("SELECT * FROM orders WHERE restaurantId = :restaurantId AND createdAt >= :startDate AND createdAt <= :endDate ORDER BY createdAt DESC")
+    suspend fun getOrdersByDateRange(
+        restaurantId: Long,
+        startDate: String,
+        endDate: String,
+    ): List<OrderEntity>
+
     @Query("DELETE FROM orders WHERE id = :orderId")
     suspend fun deleteOrderById(orderId: Long)
 

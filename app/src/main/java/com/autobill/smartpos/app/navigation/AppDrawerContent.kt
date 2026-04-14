@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Kitchen
 import androidx.compose.material.icons.filled.RestaurantMenu
@@ -96,6 +97,12 @@ private val drawerNavItems = listOf(
         label = "Settings",
         navigateTo = Screen.Settings.route,
         activeRoutes = setOf(Screen.Settings.route),
+    ),
+    DrawerNavItem(
+        icon = Icons.Default.BarChart,
+        label = "Reports",
+        navigateTo = Screen.SalesReport.route,
+        activeRoutes = setOf(Screen.SalesReport.route, Screen.OrderHistory.route),
     ),
 )
 
