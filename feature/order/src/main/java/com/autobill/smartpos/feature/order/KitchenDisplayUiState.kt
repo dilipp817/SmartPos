@@ -1,12 +1,14 @@
 package com.autobill.smartpos.feature.order
 
+import com.autobill.smartpos.domain.model.ConnectionState
 import com.autobill.smartpos.domain.model.ItemStatus
 import com.autobill.smartpos.domain.model.Order
 
 /**
  * UI state for the Kitchen Display Screen.
  *
- * [orders]           — active orders fetched from GET /orders/active; grouped in UI by table
+ * [orders]           — active orders; primary source: WebSocket events (Phase 9.1)
+ * [connectionState]  — Phase 9.1: drives ⚡/⚠ badge in KDS header
  * [isLoading]        — skeleton shown while first fetch is in-flight
  * [isRefreshing]     — pull-to-refresh spinner (orders already visible)
  * [errorMessage]     — one-shot: non-null when a fetch or mutation failed
@@ -16,6 +18,7 @@ import com.autobill.smartpos.domain.model.Order
  */
 data class KitchenDisplayUiState(
     val orders: List<Order> = emptyList(),
+    val connectionState: ConnectionState = ConnectionState.DISCONNECTED,
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
     val errorMessage: String? = null,

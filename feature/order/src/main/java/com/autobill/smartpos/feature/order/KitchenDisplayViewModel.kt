@@ -3,9 +3,13 @@ package com.autobill.smartpos.feature.order
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.autobill.smartpos.domain.common.Result
+import com.autobill.smartpos.domain.model.ConnectionState
 import com.autobill.smartpos.domain.model.ItemStatus
+import com.autobill.smartpos.domain.model.RealTimeEvent
 import com.autobill.smartpos.domain.usecase.GetActiveOrdersUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
+import com.autobill.smartpos.domain.usecase.ObserveConnectionStateUseCase
+import com.autobill.smartpos.domain.usecase.ObserveOrderEventsUseCase
 import com.autobill.smartpos.domain.usecase.UpdateItemStatusUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -13,6 +17,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -20,32 +26,32 @@ import javax.inject.Inject
 /**
  * ViewModel for the Kitchen Display Screen.
  *
- * Responsibilities:
- *  - Fetch all active orders (not DELIVERED / CANCELLED) via [GetActiveOrdersUseCase]
- *  - Auto-refresh every 30 seconds so the kitchen always sees the latest state
- *  - Update individual item status (PENDING → IN_PROGRESS → READY → SERVED | CANCELLED)
- *    via [UpdateItemStatusUseCase]
- *  - Track which items have an in-flight PATCH (per-row spinner in [updatingItemIds])
- *  - Filter display by [KitchenDisplayFilter] (All Active / Pending / In Progress / Ready)
- *
- * Auto-refresh is cancelled when the ViewModel is cleared (screen leaves composition).
+ * Phase 9.1 upgrade:
+ *  - Primary data source: WebSocket ORDER_ITEM_UPDATED / ORDER_UPDATED events.
+ *    On each event, the matching order is swapped in-place — no full reload needed.
+ *  - Fallback: 60 s polling (doubled from 30 s) used ONLY when WebSocket is
+ *    DISCONNECTED or RECONNECTING. Cancelled as soon as the socket reconnects.
+ *  - Connection state badge exposed via [KitchenDisplayUiState.connectionState]
+ *    so the KDS header can show a ⚡ / ⚠ indicator.
  */
 @HiltViewModel
 class KitchenDisplayViewModel @Inject constructor(
     private val getActiveOrdersUseCase: GetActiveOrdersUseCase,
     private val updateItemStatusUseCase: UpdateItemStatusUseCase,
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
+    private val observeOrderEventsUseCase: ObserveOrderEventsUseCase,
+    private val observeConnectionStateUseCase: ObserveConnectionStateUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(KitchenDisplayUiState())
     val uiState: StateFlow<KitchenDisplayUiState> = _uiState.asStateFlow()
 
     private var restaurantId: Long? = null
-    private var autoRefreshJob: Job? = null
+    private var pollingJob: Job? = null
 
     companion object {
-        /** Kitchen Display auto-refresh interval — 30 seconds. */
-        private const val AUTO_REFRESH_INTERVAL_MS = 30_000L
+        /** Fallback polling interval when WebSocket is unavailable — 60 s. */
+        private const val POLLING_INTERVAL_MS = 60_000L
     }
 
     init {
@@ -61,11 +67,80 @@ class KitchenDisplayViewModel @Inject constructor(
                 return@launch
             }
             loadOrders()
-            startAutoRefresh()
+            observeWebSocketEvents()
+            observeConnectionState()
         }
     }
 
-    // ── Fetch ────────────────────────────────────────────────────────────────
+    // ── Real-time event observation ───────────────────────────────────────────
+
+    private fun observeWebSocketEvents() {
+        observeOrderEventsUseCase()
+            .onEach { event ->
+                when (event) {
+                    is RealTimeEvent.OrderItemUpdated,
+                    is RealTimeEvent.OrderUpdated -> {
+                        val updatedOrder = when (event) {
+                            is RealTimeEvent.OrderItemUpdated -> event.order
+                            is RealTimeEvent.OrderUpdated     -> event.order
+                            else                              -> return@onEach
+                        }
+                        _uiState.update { state ->
+                            val exists = state.orders.any { it.id == updatedOrder.id }
+                            val newList = if (exists) {
+                                state.orders.map { if (it.id == updatedOrder.id) updatedOrder else it }
+                            } else {
+                                state.orders + updatedOrder
+                            }
+                            state.copy(orders = newList.filter { o ->
+                                o.status != com.autobill.smartpos.domain.model.OrderStatus.DELIVERED &&
+                                o.status != com.autobill.smartpos.domain.model.OrderStatus.CANCELLED
+                            })
+                        }
+                    }
+                    is RealTimeEvent.OrderCreated -> {
+                        _uiState.update { state ->
+                            state.copy(orders = listOf(event.order) + state.orders)
+                        }
+                    }
+                    else -> Unit
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun observeConnectionState() {
+        observeConnectionStateUseCase()
+            .onEach { state ->
+                _uiState.update { it.copy(connectionState = state) }
+                when (state) {
+                    ConnectionState.CONNECTED    -> stopPolling()   // WS active — no need to poll
+                    ConnectionState.DISCONNECTED,
+                    ConnectionState.RECONNECTING -> startPollingFallback()
+                    ConnectionState.CONNECTING   -> Unit
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    // ── Polling fallback ──────────────────────────────────────────────────────
+
+    private fun startPollingFallback() {
+        if (pollingJob?.isActive == true) return   // already polling
+        pollingJob = viewModelScope.launch {
+            while (true) {
+                delay(POLLING_INTERVAL_MS)
+                loadOrders()
+            }
+        }
+    }
+
+    private fun stopPolling() {
+        pollingJob?.cancel()
+        pollingJob = null
+    }
+
+    // ── Manual refresh ────────────────────────────────────────────────────────
 
     /** Manual pull-to-refresh — keeps existing orders visible while re-fetching. */
     fun refresh() {
@@ -129,7 +204,7 @@ class KitchenDisplayViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        autoRefreshJob?.cancel()
+        stopPolling()
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
@@ -141,31 +216,9 @@ class KitchenDisplayViewModel @Inject constructor(
                 it.copy(orders = result.data, isLoading = false, errorMessage = null)
             }
             is Result.Failure -> _uiState.update {
-                it.copy(
-                    isLoading    = false,
-                    errorMessage = result.exception.message ?: "Failed to load orders.",
-                )
+                it.copy(isLoading = false, errorMessage = result.exception.message ?: "Failed to load orders.")
             }
             Result.Loading -> Unit
-        }
-    }
-
-    /**
-     * Silently refreshes orders every [AUTO_REFRESH_INTERVAL_MS].
-     * Does not set [isRefreshing] — no spinner for background ticks.
-     * Cancelled automatically when the ViewModel is cleared.
-     */
-    private fun startAutoRefresh() {
-        autoRefreshJob?.cancel()
-        autoRefreshJob = viewModelScope.launch {
-            while (true) {
-                delay(AUTO_REFRESH_INTERVAL_MS)
-                val rid = restaurantId ?: break
-                when (val result = getActiveOrdersUseCase(rid)) {
-                    is Result.Success -> _uiState.update { it.copy(orders = result.data) }
-                    else              -> Unit  // silent — don't interrupt kitchen on auto-refresh error
-                }
-            }
         }
     }
 }

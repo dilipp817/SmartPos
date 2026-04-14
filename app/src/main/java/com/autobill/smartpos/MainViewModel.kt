@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.autobill.smartpos.data.local.AppPrefsDataStore
 import com.autobill.smartpos.domain.model.User
+import com.autobill.smartpos.domain.usecase.ConnectRealTimeUseCase
+import com.autobill.smartpos.domain.usecase.DisconnectRealTimeUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantUseCase
 import com.autobill.smartpos.domain.usecase.LogoutUseCase
@@ -41,6 +43,8 @@ class MainViewModel @Inject constructor(
     private val logoutUseCase: LogoutUseCase,
     private val getRestaurantUseCase: GetRestaurantUseCase,
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
+    private val connectRealTimeUseCase: ConnectRealTimeUseCase,
+    private val disconnectRealTimeUseCase: DisconnectRealTimeUseCase,
     appPrefsDataStore: AppPrefsDataStore,
 ) : ViewModel() {
 
@@ -86,6 +90,9 @@ class MainViewModel @Inject constructor(
             // Load restaurant details in the background so settings and name are available
             // immediately when any screen opens. Non-blocking — navigation already resolved above.
             loadRestaurantDetails()
+            // Connect WebSocket after session is confirmed
+            val restaurantId = getRestaurantIdUseCase()
+            if (restaurantId != null) connectRealTimeUseCase(restaurantId)
         }
     }
 
@@ -99,6 +106,8 @@ class MainViewModel @Inject constructor(
     }
 
     fun logout() {
+        // Disconnect WebSocket before clearing session
+        disconnectRealTimeUseCase()
         viewModelScope.launch { logoutUseCase() }
     }
 }
@@ -111,4 +120,3 @@ sealed interface SessionResult {
     /** Recovery complete. [user] is null when logged out, non-null when logged in. */
     data class Resolved(val user: User?) : SessionResult
 }
-

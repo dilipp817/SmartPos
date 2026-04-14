@@ -7,10 +7,12 @@ import com.autobill.smartpos.domain.common.HttpConflictException
 import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.model.OrderItem
 import com.autobill.smartpos.domain.model.OrderStatus
+import com.autobill.smartpos.domain.model.RealTimeEvent
 import com.autobill.smartpos.domain.usecase.AddItemToOrderUseCase
 import com.autobill.smartpos.domain.usecase.CancelOrderUseCase
 import com.autobill.smartpos.domain.usecase.GetOrderByIdUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
+import com.autobill.smartpos.domain.usecase.ObserveOrderEventsUseCase
 import com.autobill.smartpos.domain.usecase.ObserveRolePermissionsUseCase
 import com.autobill.smartpos.domain.usecase.RemoveItemFromOrderUseCase
 import com.autobill.smartpos.domain.usecase.SearchFoodsUseCase
@@ -18,7 +20,6 @@ import com.autobill.smartpos.domain.usecase.UpdateOrderItemUseCase
 import com.autobill.smartpos.domain.usecase.UpdateOrderStatusUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,7 +37,7 @@ import javax.inject.Inject
  *  - Fetch full order (with items) via [GetOrderByIdUseCase]
  *  - Update order status with optimistic UI update + rollback on failure
  *  - Add / edit / remove items (PENDING or HOLD orders only)
- *  - Cancel order (role-gated via [canCancelOrders])
+ *  - Cancel order (role-gated via canCancelOrders in OrderDetailUiState)
  *  - Handle 409 CONFLICT: re-fetch fresh order → retry once → conflict message if still failing
  *  - Expose role permissions from [ObserveRolePermissionsUseCase]
  *
@@ -53,7 +54,8 @@ class OrderDetailViewModel @Inject constructor(
     private val cancelOrderUseCase: CancelOrderUseCase,
     private val searchFoodsUseCase: SearchFoodsUseCase,
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
-    private val observeRolePermissionsUseCase: ObserveRolePermissionsUseCase,
+    observeRolePermissionsUseCase: ObserveRolePermissionsUseCase,
+    private val observeOrderEventsUseCase: ObserveOrderEventsUseCase,
 ) : ViewModel() {
 
     private val orderId: Long = checkNotNull(savedStateHandle["orderId"]) {
@@ -73,6 +75,9 @@ class OrderDetailViewModel @Inject constructor(
             }
             .launchIn(viewModelScope)
 
+        // Phase 9.1: keep the detail screen in sync with KDS item-status changes
+        observeRealTimeEvents()
+
         viewModelScope.launch {
             restaurantId = getRestaurantIdUseCase()
             if (restaurantId == null) {
@@ -86,6 +91,42 @@ class OrderDetailViewModel @Inject constructor(
             }
             loadOrder()
         }
+    }
+
+    // ── Phase 9.1: Real-time order updates ───────────────────────────────────
+
+    /**
+     * Subscribes to WebSocket ORDER_UPDATED and ORDER_ITEM_UPDATED events.
+     *
+     * The update is applied in-place only when:
+     *  - The event is for THIS order (matched by [orderId])
+     *  - No local mutation (add/edit/remove item or status update) is in-flight
+     *    — avoids overwriting optimistic state mid-operation.
+     *
+     * This keeps the detail screen live when a kitchen display marks items
+     * READY or another device changes the order status.
+     */
+    private fun observeRealTimeEvents() {
+        observeOrderEventsUseCase()
+            .onEach { event ->
+                val updatedOrder = when (event) {
+                    is RealTimeEvent.OrderUpdated     -> event.order
+                    is RealTimeEvent.OrderItemUpdated -> event.order
+                    else                              -> return@onEach
+                }
+                if (updatedOrder.id != orderId) return@onEach
+
+                val state = _uiState.value
+                val mutationInFlight = state.isUpdatingStatus ||
+                    state.isAddingItem  ||
+                    state.isEditingItem ||
+                    state.removingItemIds.isNotEmpty() ||
+                    state.isCancelling
+                if (mutationInFlight) return@onEach
+
+                _uiState.update { it.copy(order = updatedOrder) }
+            }
+            .launchIn(viewModelScope)
     }
 
     // ── Fetch ────────────────────────────────────────────────────────────────
@@ -106,7 +147,7 @@ class OrderDetailViewModel @Inject constructor(
      *
      * Optimistically updates the displayed status, then confirms with the server.
      * On 409 → calls [loadOrder] (gets fresh version) → retries once.
-     * If the retry also 409s → rolls back + sets [conflictMessage].
+     * If the retry also 409s → rolls back + sets conflictMessage in OrderDetailUiState.
      */
     fun updateStatus(newStatus: OrderStatus) {
         val rid = restaurantId ?: return
@@ -411,7 +452,7 @@ class OrderDetailViewModel @Inject constructor(
 
     /**
      * Fetches the order from the network (network-first, Room fallback).
-     * Shared by [init], [refresh], and the 409 retry helper.
+     * Shared by the init block, [refresh], and the 409 retry helper.
      */
     private suspend fun loadOrder() {
         val rid = restaurantId ?: return
@@ -430,13 +471,13 @@ class OrderDetailViewModel @Inject constructor(
     }
 
     /**
-     * 409 retry helper — mirrors the pattern from [TableRepositoryImpl.updateTableStatus].
+     * 409 retry helper — same optimistic-lock pattern used in TableRepositoryImpl.
      *
      * Strategy:
      *  1. Execute [operation].
      *  2. If result is [HttpConflictException] → re-fetch the order (gets fresh version).
      *  3. Retry [operation] once.
-     *  4. If still 409 → return the failure and let the caller show [conflictMessage].
+     *  4. If still 409 → return the failure and set conflictMessage in OrderDetailUiState.
      */
     private suspend fun <T> withConflictRetry(
         operation: suspend () -> Result<T>,

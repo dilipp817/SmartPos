@@ -26,6 +26,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -47,6 +48,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import com.autobill.smartpos.domain.model.ConnectionState
 import com.autobill.smartpos.domain.model.Order
 import com.autobill.smartpos.ui.components.badges.CountBadge
 
@@ -97,6 +99,30 @@ fun OrderListScreen(
                 onQueryChange = onSearchQueryChange,
                 onClose = { onSearchActiveToggle(false) },
             )
+        }
+
+        // ── Phase 9.1: connection banner ──────────────────────────────────
+        AnimatedVisibility(
+            visible = uiState.connectionState != ConnectionState.CONNECTED,
+            enter   = expandVertically(),
+            exit    = shrinkVertically(),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFFFF3E0))
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                verticalAlignment     = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(text = "⚠", style = MaterialTheme.typography.labelMedium)
+                Text(
+                    text  = "Live updates paused — reconnecting…",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color(0xFFE65100),
+                    fontWeight = FontWeight.Medium,
+                )
+            }
         }
 
         HorizontalDivider(color = Color(0xFFE0E0E0))
@@ -181,9 +207,9 @@ private fun OrderListHeader(
         }
 
         // KDS navigation button
-        androidx.compose.material3.TextButton(
+        TextButton(
             onClick = onKdsClick,
-            colors  = androidx.compose.material3.ButtonDefaults.textButtonColors(
+            colors  = ButtonDefaults.textButtonColors(
                 contentColor = Color(0xFFE33E3E),
             ),
         ) {

@@ -33,6 +33,10 @@ interface TableDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(tables: List<TableEntity>)
 
+    /** Insert or replace a single table — used by WebSocket TABLE_UPDATED events. */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertTable(table: TableEntity)
+
     /** Optimistically update status in cache — called immediately before/after PATCH. */
     @Query("UPDATE tables SET status = :newStatus WHERE id = :tableId")
     suspend fun updateTableStatusLocally(tableId: Long, newStatus: String)

@@ -4,11 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.model.OrderStatus
+import com.autobill.smartpos.domain.model.RealTimeEvent
 import com.autobill.smartpos.domain.usecase.GetActiveOrdersUseCase
 import com.autobill.smartpos.domain.usecase.GetAllOrdersUseCase
 import com.autobill.smartpos.domain.usecase.GetOrdersByStatusUseCase
 import com.autobill.smartpos.domain.usecase.GetPendingOrdersCountUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
+import com.autobill.smartpos.domain.usecase.ObserveConnectionStateUseCase
+import com.autobill.smartpos.domain.usecase.ObserveOrderEventsUseCase
 import com.autobill.smartpos.domain.usecase.ObserveRolePermissionsUseCase
 import com.autobill.smartpos.domain.usecase.SearchOrdersUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -44,6 +47,8 @@ class OrderViewModel @Inject constructor(
     private val searchOrdersUseCase: SearchOrdersUseCase,
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
     private val observeRolePermissionsUseCase: ObserveRolePermissionsUseCase,
+    private val observeOrderEventsUseCase: ObserveOrderEventsUseCase,
+    private val observeConnectionStateUseCase: ObserveConnectionStateUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OrderUiState())
@@ -62,6 +67,13 @@ class OrderViewModel @Inject constructor(
             }
             .launchIn(viewModelScope)
 
+        // Phase 9.1: track WebSocket state for the connection banner in OrderListScreen
+        observeConnectionStateUseCase()
+            .onEach { state ->
+                _uiState.update { it.copy(connectionState = state) }
+            }
+            .launchIn(viewModelScope)
+
         viewModelScope.launch {
             restaurantId = getRestaurantIdUseCase()
             if (restaurantId == null) {
@@ -74,7 +86,48 @@ class OrderViewModel @Inject constructor(
                 return@launch
             }
             loadAll()
+            observeRealTimeEvents()
         }
+    }
+
+    // ── Phase 9.1: Real-time event handling ──────────────────────────────────
+
+    /**
+     * Subscribes to WebSocket order events.
+     *  - ORDER_CREATED  → prepend to current list (pending count +1)
+     *  - ORDER_UPDATED  → replace matching order in-place; if not in list, reload
+     * Search mode is deliberately left stale — live search results refresh on next keystroke.
+     */
+    private fun observeRealTimeEvents() {
+        observeOrderEventsUseCase()
+            .onEach { event ->
+                if (_uiState.value.isSearchActive) return@onEach  // don't disturb search mode
+                when (event) {
+                    is RealTimeEvent.OrderCreated -> {
+                        _uiState.update { state ->
+                            state.copy(
+                                orders       = listOf(event.order) + state.orders,
+                                pendingCount = state.pendingCount + 1,
+                            )
+                        }
+                    }
+                    is RealTimeEvent.OrderUpdated, is RealTimeEvent.OrderItemUpdated -> {
+                        val updated = if (event is RealTimeEvent.OrderUpdated) event.order
+                                      else (event as RealTimeEvent.OrderItemUpdated).order
+                        val exists = _uiState.value.orders.any { it.id == updated.id }
+                        if (exists) {
+                            _uiState.update { state ->
+                                state.copy(orders = state.orders.map { if (it.id == updated.id) updated else it })
+                            }
+                        } else {
+                            // Order not in current filter view — quietly refresh
+                            viewModelScope.launch { loadOrders() }
+                        }
+                    }
+                    else -> Unit
+                }
+            }
+            .launchIn(viewModelScope)
     }
 
     // ── Filter / Search ──────────────────────────────────────────────────────
@@ -147,10 +200,8 @@ class OrderViewModel @Inject constructor(
     // ── Private helpers ──────────────────────────────────────────────────────
 
     /**
-     * Fetches the order list and pending count concurrently.
-     * Matches the [TableViewModel.loadAll] structured-concurrency pattern:
-     *  - Both jobs are [async] children of [viewModelScope].
-     *  - [isRefreshing] is reset only after both complete.
+     * Fetches the order list and pending count concurrently using async/await.
+     * Both jobs run in parallel; isRefreshing is reset only after both complete.
      */
     private suspend fun loadAll(refreshing: Boolean = false) {
         val rid = restaurantId ?: return
@@ -168,7 +219,7 @@ class OrderViewModel @Inject constructor(
 
     private suspend fun loadOrders() {
         val rid = restaurantId ?: return
-        val result = when (val filter = _uiState.value.selectedFilter) {
+        val result = when (_uiState.value.selectedFilter) {
             OrderFilter.ALL         -> getAllOrdersUseCase(rid)
             OrderFilter.ACTIVE      -> getActiveOrdersUseCase(rid)
             // Inline the status mapping — eliminates the need for a force-unwrap (!!)

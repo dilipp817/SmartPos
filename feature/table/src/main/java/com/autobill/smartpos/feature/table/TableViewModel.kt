@@ -13,6 +13,7 @@ import com.autobill.smartpos.domain.usecase.GetOccupiedTablesUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
 import com.autobill.smartpos.domain.usecase.GetTablesUseCase
 import com.autobill.smartpos.domain.usecase.ObserveRolePermissionsUseCase
+import com.autobill.smartpos.domain.usecase.ObserveTableEventsUseCase
 import com.autobill.smartpos.domain.usecase.UpdateTableStatusUseCase
 import com.autobill.smartpos.domain.usecase.UpdateTableUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -49,16 +50,15 @@ class TableViewModel @Inject constructor(
     private val createTableUseCase: CreateTableUseCase,
     private val updateTableUseCase: UpdateTableUseCase,
     private val deleteTableUseCase: DeleteTableUseCase,
+    private val observeTableEventsUseCase: ObserveTableEventsUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TableUiState())
     val uiState: StateFlow<TableUiState> = _uiState.asStateFlow()
 
-    /** Cached restaurantId — sourced from session, never hardcoded. */
     private var restaurantId: Long? = null
 
     init {
-        // Observe role permissions so FAB / card overflow react to session changes
         observeRolePermissionsUseCase()
             .onEach { perms ->
                 _uiState.update { it.copy(canManageTables = perms.canManageTables) }
@@ -77,7 +77,44 @@ class TableViewModel @Inject constructor(
                 return@launch
             }
             loadAll()
+            observeRealTimeEvents()
         }
+    }
+
+    // ── Phase 9.1: Real-time table updates ───────────────────────────────────
+
+    /**
+     * Subscribes to WebSocket TABLE_UPDATED events.
+     * On each event, the matching table is replaced in-place in the current list.
+     * If the updated table is no longer visible under the active filter (e.g. it became
+     * OCCUPIED while viewing AVAILABLE), it is quietly removed from the displayed list
+     * and the available-count badge is refreshed.
+     */
+    private fun observeRealTimeEvents() {
+        observeTableEventsUseCase()
+            .onEach { event ->
+                val updated = event.table
+                val rid = restaurantId ?: return@onEach
+                _uiState.update { state ->
+                    val filter = state.selectedFilter
+                    val stillVisible = when (filter) {
+                        TableFilter.ALL       -> true
+                        TableFilter.AVAILABLE -> updated.status == com.autobill.smartpos.domain.model.TableStatus.AVAILABLE
+                        TableFilter.OCCUPIED  -> updated.status == com.autobill.smartpos.domain.model.TableStatus.OCCUPIED
+                    }
+                    val newList = if (stillVisible) {
+                        val exists = state.tables.any { it.id == updated.id }
+                        if (exists) state.tables.map { if (it.id == updated.id) updated else it }
+                        else state.tables + updated
+                    } else {
+                        state.tables.filter { it.id != updated.id }
+                    }
+                    state.copy(tables = newList)
+                }
+                // Refresh badge count whenever table status changes
+                refreshAvailableCount(rid)
+            }
+            .launchIn(viewModelScope)
     }
 
     /** Switch filter tab and reload immediately. */

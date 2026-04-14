@@ -458,12 +458,23 @@ feature/reports/OrderHistoryRoute.kt
 
 ---
 
-## 🚀 Phase 9: Advanced Features (Week 7+)
+## ✅ Phase 9: Advanced Features (Week 7+)
 
-### 9.1 Real-Time Features
-- WebSocket integration for live table & order status
-- Push notifications for order status changes
-- Real-time KDS updates across kitchen displays
+### ✅ 9.1 Real-Time Features (COMPLETED — April 14, 2026)
+- [x] WebSocket integration for live table & order status
+  - `SmartPosWebSocketManager` — OkHttp WS, Bearer auth, exponential back-off (1 s → 30 s cap), 30 s PING keepalive
+  - `RealTimeRepositoryImpl` — Room-cached events + notification triggers on every inbound message
+  - `ConnectRealTimeUseCase` / `DisconnectRealTimeUseCase` — lifecycle managed by `MainViewModel`
+- [x] Push notifications for order status changes
+  - 3 notification channels: **New Orders** (HIGH), **Items Ready** (DEFAULT), **Order Status** (DEFAULT)
+  - `SmartPosNotificationManager` — branded `ic_notification` POS-receipt icon
+  - Runtime `POST_NOTIFICATIONS` permission request on Android 13+ in `MainActivity`
+- [x] Real-time KDS updates across kitchen displays
+  - `KitchenDisplayViewModel` — WS primary + 60 s polling fallback when socket is unavailable
+  - `KitchenDisplayScreen` — `KitchenConnectionBadge`: ⚡ **LIVE** (green) / ⚠ **Reconnecting…** (amber)
+  - `OrderDetailViewModel` — `observeRealTimeEvents()` keeps item statuses live; mutation-safe guard prevents optimistic-state overwrite
+  - `OrderViewModel` — connection state observed; `OrderListScreen` shows animated amber banner when not CONNECTED
+  - `TableViewModel` — `observeRealTimeEvents()` replaces table in-place on every `TABLE_UPDATED` event
 
 ### 9.2 Offline Mode
 - Queue order creation when offline
@@ -647,4 +658,4 @@ A: It doesn't happen automatically. After payment succeeds, explicitly call `PAT
 
 ---
 
-**Current focus: Phase 9 — Advanced Features (Real-time, Offline, Admin) 🚀**
+**Current focus: Phase 9.2 — Offline Mode (Queue, Sync, Conflict Resolution) 🚀**

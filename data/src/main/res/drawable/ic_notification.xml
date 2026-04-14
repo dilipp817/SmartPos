@@ -1,0 +1,53 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="@android:color/white">
+
+    <!--
+        SmartPos notification icon — monochrome POS / receipt ticket.
+        Rendered white by the system tint; must be fully opaque (no alpha gradients).
+
+        Shape: rounded receipt with a dashed tear line near the top,
+               three content lines, and a barcode strip at the bottom.
+    -->
+
+    <!-- Receipt body -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="
+            M5,2 L19,2 Q20,2 20,3 L20,21 Q20,22 19,22 L5,22 Q4,22 4,21 L4,3 Q4,2 5,2 Z
+        " />
+
+    <!-- Tear / perforation line near top (cutout via XOR — use white body + dark line) -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF212121"
+        android:strokeWidth="1"
+        android:strokeLineCap="round"
+        android:pathData="M5.5,6.5 L18.5,6.5"
+        android:strokeLineJoin="round" />
+
+    <!-- Title line -->
+    <path
+        android:fillColor="#FF212121"
+        android:pathData="M7,9 L17,9 Q17.5,9 17.5,9.5 L17.5,10.5 Q17.5,11 17,11 L7,11 Q6.5,11 6.5,10.5 L6.5,9.5 Q6.5,9 7,9 Z" />
+
+    <!-- Content line 1 -->
+    <path
+        android:fillColor="#FF212121"
+        android:pathData="M7,12.5 L14,12.5 Q14.5,12.5 14.5,13 L14.5,13.8 Q14.5,14.3 14,14.3 L7,14.3 Q6.5,14.3 6.5,13.8 L6.5,13 Q6.5,12.5 7,12.5 Z" />
+
+    <!-- Content line 2 (shorter) -->
+    <path
+        android:fillColor="#FF212121"
+        android:pathData="M7,15.5 L12,15.5 Q12.5,15.5 12.5,16 L12.5,16.8 Q12.5,17.3 12,17.3 L7,17.3 Q6.5,17.3 6.5,16.8 L6.5,16 Q6.5,15.5 7,15.5 Z" />
+
+    <!-- Barcode strip -->
+    <path
+        android:fillColor="#FF212121"
+        android:pathData="M6.5,18.5 L17.5,18.5 L17.5,20 L6.5,20 Z" />
+
+</vector>
+
