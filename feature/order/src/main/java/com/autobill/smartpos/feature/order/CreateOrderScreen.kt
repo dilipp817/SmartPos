@@ -1,5 +1,8 @@
 package com.autobill.smartpos.feature.order
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -89,15 +92,39 @@ fun CreateOrderScreen(
         OrderHeader(onBack = onBack)
         HorizontalDivider(color = Color(0xFFE0E0E0))
 
+        // ── Phase 9.2: Offline banner ─────────────────────────────────────
+        AnimatedVisibility(
+            visible = uiState.isOffline,
+            enter   = expandVertically(),
+            exit    = shrinkVertically(),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFFFF3E0))
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                verticalAlignment     = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(text = "⚠", style = MaterialTheme.typography.labelMedium)
+                Text(
+                    text       = "Offline — order will be queued and sent when connection restores",
+                    style      = MaterialTheme.typography.labelMedium,
+                    color      = Color(0xFFE65100),
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+        }
+
         // ── Body ─────────────────────────────────────────────────────────────
         when {
             uiState.isTableLoading -> CenteredLoading("Loading table details…")
             uiState.tableConflict  -> TableConflictBanner(onReselectTable = onReselectTable)
             else -> OrderBody(
-                uiState          = uiState,
+                uiState           = uiState,
                 onOrderTypeSelect = onOrderTypeSelect,
-                onNotesChange    = onNotesChange,
-                onPlaceOrder     = onPlaceOrder,
+                onNotesChange     = onNotesChange,
+                onPlaceOrder      = onPlaceOrder,
             )
         }
     }

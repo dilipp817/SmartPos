@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.autobill.smartpos.domain.common.HttpConflictException
+import com.autobill.smartpos.domain.common.OfflineQueuedException
 import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.model.OrderType
 import com.autobill.smartpos.domain.repository.OrderLineItem
@@ -12,6 +13,7 @@ import com.autobill.smartpos.domain.usecase.CreateOrderUseCase
 import com.autobill.smartpos.domain.usecase.GetCartUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
 import com.autobill.smartpos.domain.usecase.GetTableByIdUseCase
+import com.autobill.smartpos.domain.usecase.ObserveConnectivityUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,13 +27,9 @@ import javax.inject.Inject
 /**
  * ViewModel for the Create Order confirmation screen.
  *
- * Receives [tableId] via [SavedStateHandle] (nav arg).
- *
- * Responsibilities:
- *  1. Fetch table details from cache ([GetTableByIdUseCase]).
- *  2. Observe local cart ([GetCartUseCase]).
- *  3. On [placeOrder] → POST /orders → clear cart → emit [CreateOrderUiState.orderCreated].
- *  4. On 409 → set [CreateOrderUiState.tableConflict] so the Route navigates back to TableList.
+ * Phase 9.2 additions:
+ *  - Observes [ObserveConnectivityUseCase] → drives [CreateOrderUiState.isOffline] banner.
+ *  - On [placeOrder] offline → [CreateOrderUiState.orderQueued] triggers "queued" state.
  */
 @HiltViewModel
 class CreateOrderViewModel @Inject constructor(
@@ -41,6 +39,7 @@ class CreateOrderViewModel @Inject constructor(
     private val getCartUseCase: GetCartUseCase,
     private val createOrderUseCase: CreateOrderUseCase,
     private val clearCartUseCase: ClearCartUseCase,
+    private val observeConnectivityUseCase: ObserveConnectivityUseCase,
 ) : ViewModel() {
 
     private val tableId: Long = checkNotNull(savedStateHandle["tableId"]) {
@@ -53,9 +52,14 @@ class CreateOrderViewModel @Inject constructor(
     private var restaurantId: Long? = null
 
     init {
-        // Observe cart items live — so quantity changes on HomeScreen are reflected here
+        // Observe cart items live
         getCartUseCase()
             .onEach { items -> _uiState.update { it.copy(cartItems = items) } }
+            .launchIn(viewModelScope)
+
+        // Phase 9.2: observe connectivity for the offline banner
+        observeConnectivityUseCase()
+            .onEach { isOnline -> _uiState.update { it.copy(isOffline = !isOnline) } }
             .launchIn(viewModelScope)
 
         viewModelScope.launch {
@@ -84,11 +88,13 @@ class CreateOrderViewModel @Inject constructor(
     }
 
     /**
-     * POST /restaurants/{restaurantId}/orders
+     * POST /restaurants/{restaurantId}/orders  (online)
+     * or  → offline queue                      (offline)
      *
-     * On success  → [ClearCartUseCase] then set [CreateOrderUiState.orderCreated].
-     * On 409      → set [tableConflict] = true (user must go back and pick a new table).
-     * Other error → show [errorMessage] inline.
+     * On success     → [ClearCartUseCase] then [CreateOrderUiState.orderCreated].
+     * On queued      → [ClearCartUseCase] then [CreateOrderUiState.orderQueued].
+     * On 409         → [tableConflict] = true.
+     * Other error    → [errorMessage] inline.
      */
     fun placeOrder() {
         val rid = restaurantId ?: return
@@ -113,15 +119,26 @@ class CreateOrderViewModel @Inject constructor(
                     _uiState.update { it.copy(isSubmitting = false, orderCreated = result.data.id) }
                 }
                 is Result.Failure -> {
-                    val isConflict = result.exception is HttpConflictException
-                    _uiState.update {
-                        it.copy(
-                            isSubmitting  = false,
-                            tableConflict = isConflict,
-                            errorMessage  = if (isConflict) null
-                                           else result.exception.message
-                                               ?: "Failed to place order. Please try again.",
-                        )
+                    when (result.exception) {
+                        is OfflineQueuedException -> {
+                            // Order saved locally — clear cart and show "queued" state
+                            clearCartUseCase()
+                            _uiState.update { it.copy(isSubmitting = false, orderQueued = true) }
+                        }
+                        is HttpConflictException -> {
+                            _uiState.update {
+                                it.copy(isSubmitting = false, tableConflict = true)
+                            }
+                        }
+                        else -> {
+                            _uiState.update {
+                                it.copy(
+                                    isSubmitting = false,
+                                    errorMessage = result.exception.message
+                                        ?: "Failed to place order. Please try again.",
+                                )
+                            }
+                        }
                     }
                 }
                 Result.Loading -> Unit
@@ -137,6 +154,11 @@ class CreateOrderViewModel @Inject constructor(
     /** Consume the tableConflict event after navigation back to TableList. */
     fun onTableConflictConsumed() {
         _uiState.update { it.copy(tableConflict = false) }
+    }
+
+    /** Consume the orderQueued event — called by Route before navigating back. */
+    fun onOrderQueuedConsumed() {
+        _uiState.update { it.copy(orderQueued = false) }
     }
 
     // ── Private ──────────────────────────────────────────────────────────────
@@ -157,6 +179,8 @@ class CreateOrderViewModel @Inject constructor(
         }
     }
 }
+
+
 
 
 

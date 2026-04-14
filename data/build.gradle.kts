@@ -53,6 +53,11 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.security.crypto)
 
+    // WorkManager + Hilt-Work for SyncWorker (Phase 9.2 — offline sync)
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
+
     // Hilt dependency injection
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

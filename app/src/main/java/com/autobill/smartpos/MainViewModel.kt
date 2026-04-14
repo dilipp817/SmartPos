@@ -9,13 +9,17 @@ import com.autobill.smartpos.domain.usecase.DisconnectRealTimeUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantUseCase
 import com.autobill.smartpos.domain.usecase.LogoutUseCase
+import com.autobill.smartpos.domain.usecase.ObserveConnectivityUseCase
 import com.autobill.smartpos.domain.usecase.ObserveSessionUseCase
 import com.autobill.smartpos.domain.usecase.RecoverSessionUseCase
+import com.autobill.smartpos.domain.usecase.ScheduleSyncUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -45,6 +49,8 @@ class MainViewModel @Inject constructor(
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
     private val connectRealTimeUseCase: ConnectRealTimeUseCase,
     private val disconnectRealTimeUseCase: DisconnectRealTimeUseCase,
+    private val observeConnectivityUseCase: ObserveConnectivityUseCase,
+    private val scheduleSyncUseCase: ScheduleSyncUseCase,
     appPrefsDataStore: AppPrefsDataStore,
 ) : ViewModel() {
 
@@ -94,6 +100,18 @@ class MainViewModel @Inject constructor(
             val restaurantId = getRestaurantIdUseCase()
             if (restaurantId != null) connectRealTimeUseCase(restaurantId)
         }
+
+        // Phase 9.2: re-schedule offline queue sync whenever connectivity is restored.
+        // Uses KEEP policy so this is safe to call on every transition from offline → online.
+        var wasOnline = true
+        observeConnectivityUseCase()
+            .onEach { isOnline ->
+                if (isOnline && !wasOnline) {
+                    scheduleSyncUseCase()
+                }
+                wasOnline = isOnline
+            }
+            .launchIn(viewModelScope)
     }
 
     /**

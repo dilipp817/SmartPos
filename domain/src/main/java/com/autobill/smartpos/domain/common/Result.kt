@@ -50,5 +50,18 @@ fun <T> Result<T>.isFailure(): Boolean = this is Result.Failure
  *  - Bill already exists for this order
  */
 class HttpConflictException(message: String = "Resource conflict (HTTP 409)") : Exception(message)
+
+/**
+ * Typed exception signalling that the order was saved to the local offline queue instead of
+ * being sent to the server — because there was no network connectivity at call time.
+ *
+ * This is a recoverable, non-error condition.  The ViewModel catches it and shows a
+ * "queued — will sync when online" confirmation instead of an error banner.
+ *
+ * [queueId] is the Room row-id of the newly created [PendingOrderEntity].
+ * The [SyncWorker] will pick it up once connectivity is restored.
+ */
+class OfflineQueuedException(val queueId: Long) :
+    Exception("No internet — order #$queueId queued for sync")
 fun <T> Result<T>.isLoading(): Boolean = this is Result.Loading
 

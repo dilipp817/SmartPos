@@ -4,7 +4,9 @@ import com.autobill.smartpos.data.repository.AuthRepositoryImpl
 import com.autobill.smartpos.data.repository.BillRepositoryImpl
 import com.autobill.smartpos.data.repository.CartRepositoryImpl
 import com.autobill.smartpos.data.repository.CategoryRepositoryImpl
+import com.autobill.smartpos.data.repository.ConnectivityRepositoryImpl
 import com.autobill.smartpos.data.repository.MockFoodRepository
+import com.autobill.smartpos.data.repository.OfflineQueueRepositoryImpl
 import com.autobill.smartpos.data.repository.OrderRepositoryImpl
 import com.autobill.smartpos.data.repository.PaymentRepositoryImpl
 import com.autobill.smartpos.data.repository.RealTimeRepositoryImpl
@@ -14,7 +16,9 @@ import com.autobill.smartpos.domain.repository.AuthRepository
 import com.autobill.smartpos.domain.repository.BillRepository
 import com.autobill.smartpos.domain.repository.CartRepository
 import com.autobill.smartpos.domain.repository.CategoryRepository
+import com.autobill.smartpos.domain.repository.ConnectivityRepository
 import com.autobill.smartpos.domain.repository.FoodRepository
+import com.autobill.smartpos.domain.repository.OfflineQueueRepository
 import com.autobill.smartpos.domain.repository.OrderRepository
 import com.autobill.smartpos.domain.repository.PaymentRepository
 import com.autobill.smartpos.domain.repository.RealTimeRepository
@@ -84,4 +88,14 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindRealTimeRepository(impl: RealTimeRepositoryImpl): RealTimeRepository
+
+    /** Internet connectivity state — Phase 9.2 */
+    @Binds
+    @Singleton
+    abstract fun bindConnectivityRepository(impl: ConnectivityRepositoryImpl): ConnectivityRepository
+
+    /** Offline order queue — Phase 9.2 */
+    @Binds
+    @Singleton
+    abstract fun bindOfflineQueueRepository(impl: OfflineQueueRepositoryImpl): OfflineQueueRepository
 }
