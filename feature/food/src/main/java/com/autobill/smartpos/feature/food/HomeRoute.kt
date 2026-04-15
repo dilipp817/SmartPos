@@ -34,20 +34,24 @@ fun HomeRoute(
     onLogout: () -> Unit = {},
     onNavigateToMenuManagement: () -> Unit = {},
 ) {
-    // Get ViewModel instance
+    // Get ViewModel instances — FoodViewModel owns food/pagination, CartViewModel owns cart
     val viewModel: FoodViewModel = hiltViewModel()
+    val cartViewModel: CartViewModel = hiltViewModel()
 
-    // Observe paginated state
+    // Observe food state
     val paginatedState by viewModel.paginatedFoodsState.collectAsStateWithLifecycle()
     val isLoadingMore by viewModel.isLoadingMore.collectAsStateWithLifecycle()
-    val cartItems by viewModel.cartItems.collectAsStateWithLifecycle()
     val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val selectedCategory by viewModel.selectedCategory.collectAsStateWithLifecycle()
     val sortOption by viewModel.sortOption.collectAsStateWithLifecycle()
     val rolePermissions by viewModel.rolePermissions.collectAsStateWithLifecycle()
-    // Real categories from backend — used to populate filter chips
     val categories by viewModel.categories.collectAsStateWithLifecycle()
+    val sessionUser by viewModel.sessionUser.collectAsStateWithLifecycle()
+
+    // Observe cart state — all sourced from CartViewModel
+    val cartItems by cartViewModel.cartItems.collectAsStateWithLifecycle()
+    val cartTotals by cartViewModel.cartTotals.collectAsStateWithLifecycle()
 
     // Sort dialog state
     var showSortDialog by remember { mutableStateOf(false) }
@@ -55,13 +59,17 @@ fun HomeRoute(
     // Logout confirmation dialog state — prevents accidental logout on POS counters
     var showLogoutDialog by remember { mutableStateOf(false) }
 
+    // Generated once per composition entry — prevents a new value on every recomposition.
+    // TODO(invoice-number): Replace with a server-assigned invoice number from POST /orders.
+    val invoiceNumber = remember { "INV-${System.currentTimeMillis() % 100000}" }
+
     // Helper function to get current date/time
     fun getCurrentDateTime(): String {
         val dateFormat = SimpleDateFormat("EEE MMM dd, yyyy | hh:mm a", Locale.US)
         return dateFormat.format(Date())
     }
 
-    // Build CartSummaryData directly from CartItem list (no food-list lookup needed)
+    // Build CartSummaryData — reads pre-computed totals from CartViewModel (no math here)
     fun buildCartSummary(): CartSummaryData {
         val cartItemsUI = cartItems.map { item ->
             CartItemUI(
@@ -73,29 +81,23 @@ fun HomeRoute(
                 imageUrl = item.imageUrl,
             )
         }
-        val subtotal = cartItems.sumOf { it.subtotal }
-        // ⚠️ Local estimate for cart preview UX only.
-        // The real bill (with exact CGST/SGST breakdown) is computed server-side via
-        // POST /orders/{id}/generate-bill in Phase 6 — never use this value for actual billing.
-        val tax = subtotal * 0.18
-        val total = subtotal + tax
         return CartSummaryData(
             invoice = InvoiceData(
-                invoiceNumber = "INV-${System.currentTimeMillis() % 100000}",
+                invoiceNumber = invoiceNumber,
                 tableNumber = "T-01",
                 dateTime = getCurrentDateTime(),
                 onChangeInvoice = {},
             ),
             items = cartItemsUI,
-            itemCount = cartItems.sumOf { it.quantity },
-            subtotal = "₹${String.format(Locale.US, "%.2f", subtotal)}",
-            tax = "₹${String.format(Locale.US, "%.2f", tax)}",
+            itemCount = cartTotals.itemCount,
+            subtotal = "₹${String.format(Locale.US, "%.2f", cartTotals.subtotal)}",
+            tax = "₹${String.format(Locale.US, "%.2f", cartTotals.tax)}",
             discount = "₹0.00",
-            total = "₹${String.format(Locale.US, "%.2f", total)}",
-            onQuantityIncrease = { foodId -> viewModel.increaseQuantity(foodId) },
-            onQuantityDecrease = { foodId -> viewModel.decreaseQuantity(foodId) },
+            total = "₹${String.format(Locale.US, "%.2f", cartTotals.total)}",
+            onQuantityIncrease = { foodId -> foodId.toLongOrNull()?.let { cartViewModel.increaseQuantity(it) } },
+            onQuantityDecrease = { foodId -> foodId.toLongOrNull()?.let { cartViewModel.decreaseQuantity(it) } },
             onAcceptPayment = onCheckoutClick,
-            onClear = { viewModel.clearCart() },
+            onClear = { cartViewModel.clearCart() },
             onReset = { viewModel.resetFilters() },
             onPrint = {},
             // Discount is applied at bill-generation time in BillingScreen (POST /generate-bill?discount=X).
@@ -107,7 +109,9 @@ fun HomeRoute(
 
     fun buildHeader() = HeaderData(
         appTitle = "SmartPos",
-        businessName = "Best Business Pvt Ltd",
+        // TODO(restaurant-name): Replace with restaurant profile name once
+        //  GET /restaurant/{id} is available in the backend API contract.
+        businessName = sessionUser?.username ?: "SmartPos",
         selectedTab = selectedTab,
         onTabChange = { tab -> viewModel.switchTab(tab) },
         onProfileClick = { showLogoutDialog = true },
@@ -144,7 +148,7 @@ fun HomeRoute(
                 searchFilter = buildSearchFilter(),
                 foodGrid = FoodGridData(
                     items = pagination.data.map { food ->
-                        val qty = viewModel.getCartQuantity(food.id)
+                        val qty = cartViewModel.getCartQuantity(food.id)
                         FoodItemUI(
                             id = food.id.toString(),
                             name = food.name,
@@ -163,9 +167,13 @@ fun HomeRoute(
                     canLoadMore = pagination.hasMore,
                     onLoadMore = { viewModel.loadNextPage() },
                     onFoodClick = { idStr -> onFoodClick(idStr.toLong()) },
-                    onFoodAdd = { foodId -> viewModel.addToCart(foodId) },
-                    onFoodIncrease = { foodId -> viewModel.increaseQuantity(foodId) },
-                    onFoodDecrease = { foodId -> viewModel.decreaseQuantity(foodId) },
+                    // Resolve the full Food domain object before passing to CartViewModel
+                    // so CartViewModel stays independent of food-list state.
+                    onFoodAdd = { foodId ->
+                        viewModel.getFoodById(foodId)?.let { cartViewModel.addToCart(it) }
+                    },
+                    onFoodIncrease = { foodId -> foodId.toLongOrNull()?.let { cartViewModel.increaseQuantity(it) } },
+                    onFoodDecrease = { foodId -> foodId.toLongOrNull()?.let { cartViewModel.decreaseQuantity(it) } },
                 ),
                 cartSummary = buildCartSummary(),
             )

@@ -43,8 +43,10 @@ class FoodRepositoryImpl @Inject constructor(
                 limit = 100,
             ).data?.data.orEmpty()
             foodDao.deleteAll()
-            foodDao.upsertAll(items.map { it.toEntity() })
-            Result.Success(items.map { it.toEntity().toDomain() })
+            // Pass restaurantId explicitly — list DTOs don't include restaurant_id in the
+            // response body, so the default (0L) would corrupt every cached entity.
+            foodDao.upsertAll(items.map { it.toEntity(restaurantId) })
+            Result.Success(items.map { it.toEntity(restaurantId).toDomain() })
         } catch (e: Exception) {
             val cached = foodDao.getAllFoods()
             if (cached.isNotEmpty()) Result.Success(cached.map { it.toDomain() })

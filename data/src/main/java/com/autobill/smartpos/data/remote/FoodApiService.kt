@@ -44,30 +44,6 @@ interface FoodApiService {
         @Query("category_id") categoryId: Long? = null,  // filter by category (backendapi.md §7)
     ): ApiResponse<PagedDataDto<FoodListItemDto>>
 
-    /**
-     * ⚠️ NOT in backendapi.md — do NOT use this function.
-     *
-     * GET /api/v1/foods (no sub-path) is not documented. The documented endpoints are:
-     *  - GET /foods/restaurant/{id}   → getFoodsByRestaurant() above  (primary menu load)
-     *  - GET /foods/search            → searchFoods() below           (search/filter)
-     *
-     * Additionally, the `search` query param name here is WRONG — the documented search
-     * endpoint uses `q`, not `search`. Calling this will likely return an unfiltered list
-     * or a 404 depending on the backend routing.
-     *
-     * Use getFoodsByRestaurant() or searchFoods() instead.
-     */
-    @GET("foods")
-    suspend fun getFoods(
-        @Query("restaurant_id") restaurantId: Long? = null,
-        @Query("category_id") categoryId: Long? = null,
-        @Query("search") search: String? = null,
-        @Query("is_vegetarian") isVegetarian: Boolean? = null,
-        @Query("is_spicy") isSpicy: Boolean? = null,
-        @Query("sort") sort: String? = null,
-        @Query("offset") offset: Int = 0,
-        @Query("limit") limit: Int = 20,
-    ): ApiResponse<PagedDataDto<FoodListItemDto>>
 
     /**
      * Search foods.
