@@ -7,12 +7,14 @@ import com.autobill.smartpos.domain.common.PaginationResult
 import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.common.UiState
 import com.autobill.smartpos.domain.model.CartItem
+import com.autobill.smartpos.domain.model.Category
 import com.autobill.smartpos.domain.model.Food
 import com.autobill.smartpos.domain.model.RolePermissions
 import com.autobill.smartpos.domain.usecase.AddToCartUseCase
 import com.autobill.smartpos.domain.usecase.ClearCartUseCase
 import com.autobill.smartpos.domain.usecase.DecreaseCartQuantityUseCase
 import com.autobill.smartpos.domain.usecase.GetCartUseCase
+import com.autobill.smartpos.domain.usecase.GetCategoriesUseCase
 import com.autobill.smartpos.domain.usecase.GetFoodsPaginatedUseCase
 import com.autobill.smartpos.domain.usecase.GetFoodsUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
@@ -40,6 +42,7 @@ class FoodViewModel @Inject constructor(
     private val getFoodsUseCase: GetFoodsUseCase,
     private val getFoodsPaginatedUseCase: GetFoodsPaginatedUseCase,
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
+    private val getCategoriesUseCase: GetCategoriesUseCase,
     private val observeRolePermissionsUseCase: ObserveRolePermissionsUseCase,
     // Cart use cases
     private val getCartUseCase: GetCartUseCase,
@@ -98,14 +101,14 @@ class FoodViewModel @Inject constructor(
     private val _sortOption = MutableStateFlow<String?>(null)
     val sortOption: StateFlow<String?> = _sortOption.asStateFlow()
 
+    // ========== CATEGORIES STATE ==========
+
+    private val _categories = MutableStateFlow<List<Category>>(emptyList())
+    val categories: StateFlow<List<Category>> = _categories.asStateFlow()
+
     init {
         viewModelScope.launch {
-            // Load restaurantId from session before any API calls — NEVER hardcode this value.
             restaurantId = getRestaurantIdUseCase()
-
-            // Defensive guard: restaurantId is null only for super_admin accounts.
-            // This POS app targets counter tablets — super_admin should never log in here.
-            // Surface a clear error rather than letting it fail silently deep in the repository.
             if (restaurantId == null) {
                 _paginatedFoodsState.value = UiState.Error(
                     "No restaurant assigned to this account. " +
@@ -113,8 +116,12 @@ class FoodViewModel @Inject constructor(
                 )
                 return@launch
             }
-
             loadFirstPage()
+            // Load categories for the filter chips
+            when (val result = getCategoriesUseCase(restaurantId!!)) {
+                is Result.Success -> _categories.value = result.data
+                else -> Unit   // non-fatal — filter chips simply stay hidden
+            }
         }
     }
 
@@ -194,8 +201,8 @@ class FoodViewModel @Inject constructor(
                 restaurantId = restaurantId,
                 offset = 0,
                 limit = 20,
-                // category = _selectedCategory.value, // TODO: Uncomment when backend ready
-                // sort = _sortOption.value,
+                category = _selectedCategory.value,
+                // sort not supported by GET /foods/restaurant/{id} — use search endpoint if needed
             )
             handlePaginationResult(result, append = false)
         }

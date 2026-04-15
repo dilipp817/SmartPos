@@ -126,6 +126,9 @@ private fun AppNavGraph(
                     navController.navigate(Screen.TableList.route)
                 },
                 onLogout = onLogout,
+                onNavigateToMenuManagement = {
+                    navController.navigate(Screen.MenuManagement.route)
+                },
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -213,10 +216,7 @@ private fun AppNavGraph(
             )
         }
 
-        // Search Screen
-        composable(route = Screen.Search.route) { _ ->
-            // TODO: SearchRoute()
-        }
+        // Search is embedded in the Food List screen via SearchFilterPanel — no separate route needed.
 
         // Billing overview — accessible from the drawer.
         // Full bills history will be added in Phase 7.

@@ -5,7 +5,7 @@ import com.autobill.smartpos.data.repository.BillRepositoryImpl
 import com.autobill.smartpos.data.repository.CartRepositoryImpl
 import com.autobill.smartpos.data.repository.CategoryRepositoryImpl
 import com.autobill.smartpos.data.repository.ConnectivityRepositoryImpl
-import com.autobill.smartpos.data.repository.MockFoodRepository
+import com.autobill.smartpos.data.repository.FoodRepositoryImpl
 import com.autobill.smartpos.data.repository.OfflineQueueRepositoryImpl
 import com.autobill.smartpos.data.repository.OrderRepositoryImpl
 import com.autobill.smartpos.data.repository.PaymentRepositoryImpl
@@ -41,13 +41,10 @@ abstract class RepositoryModule {
     @Singleton
     abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
 
-    /**
-     * Food data source.
-     * TODO: Switch to FoodRepositoryImpl when backend staging is deployed.
-     */
+    /** Food data — network-first with Room cache fallback. */
     @Binds
     @Singleton
-    abstract fun bindFoodRepository(impl: MockFoodRepository): FoodRepository
+    abstract fun bindFoodRepository(impl: FoodRepositoryImpl): FoodRepository
 
     /** In-memory cart — session-scoped, no backend required */
     @Binds
