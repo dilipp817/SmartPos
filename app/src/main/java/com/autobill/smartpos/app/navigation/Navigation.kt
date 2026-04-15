@@ -62,6 +62,23 @@ sealed class Screen(val route: String) {
 
     /** Filterable order history for a selected date range (DELIVERED / CANCELLED / ALL). */
     object OrderHistory : Screen("order_history")
+
+    // ── Phase 9.3 — Admin Dashboard ───────────────────────────────────────────
+
+    /** Admin overview: live stats + quick actions. Visible to admin / manager / super_admin. */
+    object AdminDashboard : Screen("admin_dashboard")
+
+    /** CRUD interface for food menu items (admin only). */
+    object MenuManagement : Screen("menu_management")
+
+    /** Restaurant settings editor (tax rate, tips, print). */
+    object AdminSettings : Screen("admin_settings")
+
+    /** Current session user profile + role guide (admin / manager). */
+    object StaffManagement : Screen("staff_management")
+
+    /** Food availability toggle — inventory tracking (admin / manager). */
+    object InventoryManagement : Screen("inventory_management")
 }
 
 /**

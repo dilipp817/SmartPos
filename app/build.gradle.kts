@@ -56,6 +56,7 @@ dependencies {
     implementation(project(":feature:order"))
     implementation(project(":feature:billing"))
     implementation(project(":feature:reports"))
+    implementation(project(":feature:admin"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

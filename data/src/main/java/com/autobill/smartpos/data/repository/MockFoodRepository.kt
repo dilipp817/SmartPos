@@ -99,7 +99,7 @@ class MockFoodRepository @Inject constructor() : FoodRepository {
 
     override suspend fun searchFoodsPaginated(
         query: String,
-        restaurantId: Long?,  // ignored by mock — real impl will filter by this
+        restaurantId: Long?,
         offset: Int,
         limit: Int,
     ): PaginationResult<Food> {
@@ -118,4 +118,21 @@ class MockFoodRepository @Inject constructor() : FoodRepository {
             )
         )
     }
+
+    // ── Admin mutations — mock implementations (no-op / stub) ─────────────────
+
+    override suspend fun createFood(
+        restaurantId: Long, name: String, price: Double, description: String?,
+        imageUrl: String?, categoryId: Long?, isVegetarian: Boolean, isSpicy: Boolean,
+        preparationTime: Int?, allergens: String?, calories: Int?,
+    ): Result<Food> = Result.Failure(Exception("Menu management requires a live backend connection."))
+
+    override suspend fun updateFood(
+        foodId: Long, restaurantId: Long, name: String, price: Double, description: String?,
+        imageUrl: String?, categoryId: Long?, isVegetarian: Boolean, isSpicy: Boolean,
+        isAvailable: Boolean, preparationTime: Int?, allergens: String?, calories: Int?,
+    ): Result<Food> = Result.Failure(Exception("Menu management requires a live backend connection."))
+
+    override suspend fun deleteFood(foodId: Long): Result<Unit> =
+        Result.Failure(Exception("Menu management requires a live backend connection."))
 }

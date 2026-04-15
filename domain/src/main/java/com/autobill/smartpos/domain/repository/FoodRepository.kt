@@ -45,20 +45,58 @@ interface FoodRepository {
      */
     suspend fun searchFoods(query: String, restaurantId: Long? = null): Result<List<Food>>
 
-    /**
-     * Searches foods with pagination support.
-     *
-     * @param query Search query string
-     * @param restaurantId Outlet scope — from login session. NEVER hardcode.
-     * @param offset Starting position in results
-     * @param limit Number of items per page
-     * @return PaginationResult with search results and pagination metadata
-     */
+    /** Searches foods with pagination support. */
     suspend fun searchFoodsPaginated(
         query: String,
         restaurantId: Long? = null,
         offset: Int = 0,
         limit: Int = 20,
     ): PaginationResult<Food>
+
+    // ── Admin / menu-management mutations (admin role only) ──────────────────
+
+    /**
+     * Creates a new food item for the given restaurant.
+     * POST /foods/restaurant/{restaurantId}  — 403 for non-admin callers.
+     */
+    suspend fun createFood(
+        restaurantId: Long,
+        name: String,
+        price: Double,
+        description: String?,
+        imageUrl: String?,
+        categoryId: Long?,
+        isVegetarian: Boolean,
+        isSpicy: Boolean,
+        preparationTime: Int?,
+        allergens: String?,
+        calories: Int?,
+    ): Result<Food>
+
+    /**
+     * Updates an existing food item.
+     * PUT /foods/{id}  — 403 for non-admin callers.
+     */
+    suspend fun updateFood(
+        foodId: Long,
+        restaurantId: Long,
+        name: String,
+        price: Double,
+        description: String?,
+        imageUrl: String?,
+        categoryId: Long?,
+        isVegetarian: Boolean,
+        isSpicy: Boolean,
+        isAvailable: Boolean,
+        preparationTime: Int?,
+        allergens: String?,
+        calories: Int?,
+    ): Result<Food>
+
+    /**
+     * Deletes a food item.
+     * DELETE /foods/{id}  — 403 for non-admin callers.
+     */
+    suspend fun deleteFood(foodId: Long): Result<Unit>
 }
 

@@ -86,8 +86,6 @@ class MainActivity : ComponentActivity() {
 
                     // ── Resolved — navigate to Login or Home ────────────────
                     is SessionResult.Resolved -> {
-                        // key() recreates AppNavHost (and its PermanentNavigationDrawer)
-                        // whenever login state toggles, resetting the entire back-stack.
                         key(state.user != null) {
                             AppNavHost(
                                 startDestination = if (state.user != null) {
@@ -95,7 +93,12 @@ class MainActivity : ComponentActivity() {
                                 } else {
                                     Screen.Login.route
                                 },
-                                onLogout = mainViewModel::logout,
+                                onLogout       = mainViewModel::logout,
+                                canAccessAdmin = state.user?.let {
+                                    it.role == com.autobill.smartpos.domain.model.UserRole.ADMIN ||
+                                    it.role == com.autobill.smartpos.domain.model.UserRole.MANAGER ||
+                                    it.restaurantId == null // super_admin
+                                } ?: false,
                             )
                         }
                     }

@@ -33,17 +33,20 @@ import com.autobill.smartpos.feature.reports.OrderHistoryRoute
 import com.autobill.smartpos.feature.reports.SalesReportRoute
 import com.autobill.smartpos.feature.table.TableRoute
 import com.autobill.smartpos.settings.SettingsRoute
+import com.autobill.smartpos.feature.admin.AdminDashboardRoute
+import com.autobill.smartpos.feature.admin.menu.MenuManagementRoute
+import com.autobill.smartpos.feature.admin.settings.AdminSettingsRoute
+import com.autobill.smartpos.feature.admin.staff.StaffManagementRoute
+import com.autobill.smartpos.feature.admin.inventory.InventoryRoute
 
 @Composable
 fun AppNavHost(
     startDestination: String,
     onLogout: () -> Unit,
+    canAccessAdmin: Boolean = false,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
 ) {
-    // currentBackStackEntryAsState() is null for one frame before the first
-    // destination is pushed. Fall back to startDestination so the drawer
-    // does not flicker in/out on initial composition.
     val currentEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentEntry?.destination?.route ?: startDestination
     val isAuthenticated = currentRoute != Screen.Login.route
@@ -51,21 +54,15 @@ fun AppNavHost(
     if (isAuthenticated) {
         PermanentNavigationDrawer(
             drawerContent = {
-                // 240 dp is the Material 3 standard drawer width.
-                // On a 10" landscape tablet (~1280 dp wide) this leaves
-                // ~1040 dp for content — ideal for a POS layout.
                 PermanentDrawerSheet(drawerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
                     AppDrawerContent(
-                        currentRoute = currentRoute,
+                        currentRoute   = currentRoute,
+                        canAccessAdmin = canAccessAdmin,
                         onNavigate = { route ->
                             navController.navigate(route) {
                                 launchSingleTop = true
                                 restoreState = true
-                                // Pop back to the authenticated root so
-                                // drawer taps never build a deep back-stack.
-                                popUpTo(navController.graph.startDestinationId) {
-                                    saveState = true
-                                }
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
                             }
                         },
                         onLogout = onLogout,
@@ -75,9 +72,9 @@ fun AppNavHost(
             modifier = modifier.fillMaxSize(),
         ) {
             AppNavGraph(
-                navController = navController,
+                navController    = navController,
                 startDestination = startDestination,
-                onLogout = onLogout,
+                onLogout         = onLogout,
             )
         }
     } else {
@@ -298,6 +295,57 @@ private fun AppNavGraph(
         // Order History Screen — date range picker + status filter + order cards
         composable(route = Screen.OrderHistory.route) { _ ->
             OrderHistoryRoute(modifier = Modifier.fillMaxSize())
+        }
+
+        // ── Phase 9.3 — Admin Dashboard ───────────────────────────────────────
+
+        composable(route = Screen.AdminDashboard.route) { _ ->
+            AdminDashboardRoute(
+                onNavigateToMenuManagement = {
+                    navController.navigate(Screen.MenuManagement.route)
+                },
+                onNavigateToSettings = {
+                    navController.navigate(Screen.AdminSettings.route)
+                },
+                onNavigateToReports = {
+                    navController.navigate(Screen.SalesReport.route)
+                },
+                onNavigateToStaffManagement = {
+                    navController.navigate(Screen.StaffManagement.route)
+                },
+                onNavigateToInventory = {
+                    navController.navigate(Screen.InventoryManagement.route)
+                },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        composable(route = Screen.MenuManagement.route) { _ ->
+            MenuManagementRoute(
+                onBack   = { navController.popBackStack() },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        composable(route = Screen.AdminSettings.route) { _ ->
+            AdminSettingsRoute(
+                onBack   = { navController.popBackStack() },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        composable(route = Screen.StaffManagement.route) { _ ->
+            StaffManagementRoute(
+                onBack   = { navController.popBackStack() },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        composable(route = Screen.InventoryManagement.route) { _ ->
+            InventoryRoute(
+                onBack   = { navController.popBackStack() },
+                modifier = Modifier.fillMaxSize(),
+            )
         }
     }
 }

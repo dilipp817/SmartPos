@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Kitchen
 import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.TableBar
+import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -106,6 +107,22 @@ private val drawerNavItems = listOf(
     ),
 )
 
+// Admin-only items — rendered only when canAccessAdmin = true
+private val adminNavItems = listOf(
+    DrawerNavItem(
+        icon = Icons.Default.AdminPanelSettings,
+        label = "Admin",
+        navigateTo = Screen.AdminDashboard.route,
+        activeRoutes = setOf(
+            Screen.AdminDashboard.route,
+            Screen.MenuManagement.route,
+            Screen.AdminSettings.route,
+            Screen.StaffManagement.route,
+            Screen.InventoryManagement.route,
+        ),
+    ),
+)
+
 // ── UI ────────────────────────────────────────────────────────────────────────
 
 @Composable
@@ -113,6 +130,7 @@ fun AppDrawerContent(
     currentRoute: String?,
     onNavigate: (String) -> Unit,
     onLogout: () -> Unit,
+    canAccessAdmin: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -132,14 +150,14 @@ fun AppDrawerContent(
         HorizontalDivider(modifier = Modifier.padding(bottom = 8.dp))
 
         // ── Navigation items ──────────────────────────────────────────────
-        drawerNavItems.forEach { item ->
+        val allItems = if (canAccessAdmin) drawerNavItems + adminNavItems else drawerNavItems
+        allItems.forEach { item ->
             val selected = currentRoute in item.activeRoutes
             NavigationDrawerItem(
                 icon = { Icon(item.icon, contentDescription = item.label) },
                 label = { Text(item.label) },
                 selected = selected,
                 onClick = {
-                    // Don't re-navigate if already on this section
                     if (!selected) onNavigate(item.navigateTo)
                 },
                 modifier = Modifier.padding(horizontal = 12.dp),
