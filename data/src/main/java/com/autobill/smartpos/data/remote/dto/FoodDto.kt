@@ -99,3 +99,33 @@ data class CreateFoodRequest(
     @param:Json(name = "is_spicy")
     val isSpicy: Boolean = false,
 )
+
+// DTO: Update Food Request — PUT /api/v1/foods/{id}
+@JsonClass(generateAdapter = true)
+data class UpdateFoodRequest(
+    @param:Json(name = "name")
+    val name: String,
+    @param:Json(name = "price")
+    val price: Double,
+    @param:Json(name = "description")
+    val description: String? = null,
+    @param:Json(name = "image_url")
+    val imageUrl: String? = null,
+    @param:Json(name = "restaurant_id")
+    val restaurantId: Long,
+    @param:Json(name = "category_id")
+    val categoryId: Long? = null,
+    @param:Json(name = "is_vegetarian")
+    val isVegetarian: Boolean = false,
+    @param:Json(name = "is_spicy")
+    val isSpicy: Boolean = false,
+    @param:Json(name = "is_available")
+    val isAvailable: Boolean = true,
+    @param:Json(name = "preparation_time")
+    val preparationTime: Int? = null,
+    @param:Json(name = "allergens")
+    val allergens: String? = null,
+    @param:Json(name = "calories")
+    val calories: Int? = null,
+)
+

@@ -31,4 +31,5 @@ include(":feature:table")
 include(":feature:order")
 include(":feature:billing")
 include(":feature:reports")
+include(":feature:admin")
 

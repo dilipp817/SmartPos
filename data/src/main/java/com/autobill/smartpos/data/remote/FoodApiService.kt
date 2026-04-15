@@ -5,9 +5,12 @@ import com.autobill.smartpos.data.remote.dto.FoodListItemDto
 import com.autobill.smartpos.data.remote.dto.FoodResponseDto
 import com.autobill.smartpos.data.remote.dto.CreateFoodRequest
 import com.autobill.smartpos.data.remote.dto.PagedDataDto
+import com.autobill.smartpos.data.remote.dto.UpdateFoodRequest
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -100,4 +103,23 @@ interface FoodApiService {
         @Path("restaurantId") restaurantId: Long,
         @Body request: CreateFoodRequest,
     ): ApiResponse<FoodResponseDto>
+
+    /**
+     * Update food.
+     * PUT /api/v1/foods/{id}  — admin / manager only (server returns 403 otherwise)
+     */
+    @PUT("foods/{id}")
+    suspend fun updateFood(
+        @Path("id") foodId: Long,
+        @Body request: UpdateFoodRequest,
+    ): ApiResponse<FoodResponseDto>
+
+    /**
+     * Delete food.
+     * DELETE /api/v1/foods/{id}  — admin / manager only (server returns 403 otherwise)
+     */
+    @DELETE("foods/{id}")
+    suspend fun deleteFood(
+        @Path("id") foodId: Long,
+    ): ApiResponse<Unit?>
 }

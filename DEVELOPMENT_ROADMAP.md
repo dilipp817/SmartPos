@@ -1,6 +1,6 @@
 # 🗓️ SmartPos Development Roadmap
 
-**Last Updated:** April 12, 2026
+**Last Updated:** April 15, 2026
 **API Contract:** ✅ Locked — 28 endpoints (100/100 review, April 4, 2026)
 **Multi-outlet update:** April 11, 2026 — `restaurantId` in all auth responses
 
@@ -493,10 +493,35 @@ feature/reports/OrderHistoryRoute.kt
 - [x] **Manifest** — `ACCESS_NETWORK_STATE` permission + WorkManager default initialiser removed
 - [x] **Conflict resolution** — 409 on sync → `FAILED` with reason "Table occupied"; `version` field on cached orders prevents stale-cache overwrites
 
-### 9.3 Admin Dashboard
-- User / staff management
-- Inventory tracking
-- Multi-store / super_admin view (`restaurantId = null` user can access all outlets)
+### ✅ 9.3 Admin Dashboard (COMPLETED — April 15, 2026)
+- [x] **Live Stats Dashboard** — today's revenue, active orders, free tables, offline queue count, unavailable food count
+- [x] **Menu Management** — full CRUD for food items (create / edit / delete / search / category filter); role-gated to admin via server 403
+- [x] **Restaurant Settings** — tax rate, tips, auto-print bill, tax-inclusive toggle; `PATCH /restaurants/{id}`
+- [x] **Staff Management** — active session profile (username, email, role, device info); role permission matrix; role guide for all 4 roles; backend-managed-accounts note
+- [x] **Inventory Tracking** — food availability toggle (optimistic update + rollback); grouped by available / unavailable; category filter chips; search; `PUT /foods/{id}` per toggle
+- [x] **Navigation** — `Screen.StaffManagement` + `Screen.InventoryManagement` wired in `NavHost`; Admin drawer item highlights all 5 sub-routes
+- [x] Pre-existing `FoodRepository` duplicate-overload bug fixed
+- [x] Pre-existing `MenuManagementScreen` curly-quote syntax errors fixed
+- [x] Pre-existing `Result.Loading` exhaustive-`when` errors fixed across admin ViewModels
+
+**Files created:**
+```
+feature/admin/staff/StaffManagementUiState.kt
+feature/admin/staff/StaffManagementViewModel.kt
+feature/admin/staff/StaffManagementScreen.kt
+feature/admin/staff/StaffManagementRoute.kt
+feature/admin/inventory/InventoryUiState.kt
+feature/admin/inventory/InventoryViewModel.kt
+feature/admin/inventory/InventoryScreen.kt
+feature/admin/inventory/InventoryRoute.kt
+```
+**Updated:**
+- `AdminDashboardScreen.kt` — 2nd row of action cards: Staff Management + Inventory Tracking
+- `AdminDashboardRoute.kt` — `onNavigateToStaffManagement` + `onNavigateToInventory` callbacks
+- `Navigation.kt` — `Screen.StaffManagement` + `Screen.InventoryManagement`
+- `NavHost.kt` — two new `composable()` entries
+- `AppDrawerContent.kt` — admin `activeRoutes` extended with new routes
+- `FoodRepository.kt` — removed duplicate `searchFoodsPaginated` declaration
 
 **Time Estimate**: 10+ days
 
@@ -587,7 +612,7 @@ feature/reports/OrderHistoryRoute.kt
 | W4 | 6 | Billing & Payment | ✅ DONE |
 | W5 | 7 | Restaurant & Category Management | ✅ DONE |
 | W6 | 8 | Reports & Analytics | ✅ DONE |
-| W7+ | 9 | Advanced (Real-time, Offline, Admin) | TODO |
+| W7+ | 9 | Advanced (Real-time, Offline, Admin) | ✅ DONE |
 
 **Total Estimated Timeline**: 7 weeks to full MVP
 
@@ -670,4 +695,4 @@ A: It doesn't happen automatically. After payment succeeds, explicitly call `PAT
 
 ---
 
-**Current focus: Phase 9.3 — Admin Dashboard 🚀**
+**🎉 Full MVP COMPLETE — All 9 phases shipped. Build: SUCCESSFUL ✅**

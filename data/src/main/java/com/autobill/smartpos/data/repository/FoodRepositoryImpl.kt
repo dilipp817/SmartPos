@@ -6,6 +6,8 @@ import com.autobill.smartpos.data.local.dao.FoodDao
 import com.autobill.smartpos.data.mapper.toDomain
 import com.autobill.smartpos.data.mapper.toEntity
 import com.autobill.smartpos.data.remote.FoodApiService
+import com.autobill.smartpos.data.remote.dto.CreateFoodRequest
+import com.autobill.smartpos.data.remote.dto.UpdateFoodRequest
 import com.autobill.smartpos.domain.common.Pagination
 import com.autobill.smartpos.domain.common.PaginationResult
 import com.autobill.smartpos.domain.common.Result
@@ -155,6 +157,56 @@ class FoodRepositoryImpl @Inject constructor(
                 PaginationResult.Failure(e)
             }
         }
+    }
+
+    // ── Admin mutations ───────────────────────────────────────────────────────
+
+    override suspend fun createFood(
+        restaurantId: Long, name: String, price: Double, description: String?,
+        imageUrl: String?, categoryId: Long?, isVegetarian: Boolean, isSpicy: Boolean,
+        preparationTime: Int?, allergens: String?, calories: Int?,
+    ): Result<Food> = withContext(ioDispatcher) {
+        try {
+            val request = CreateFoodRequest(
+                name = name, price = price, description = description,
+                imageUrl = imageUrl, restaurantId = restaurantId,
+                categoryId = categoryId, isVegetarian = isVegetarian, isSpicy = isSpicy,
+            )
+            val food = apiService.createFood(restaurantId, request).data
+                ?: return@withContext Result.Failure(Exception("Empty response from server"))
+            val entity = food.toEntity()
+            foodDao.upsertAll(listOf(entity))
+            Result.Success(entity.toDomain())
+        } catch (e: Exception) { Result.Failure(e) }
+    }
+
+    override suspend fun updateFood(
+        foodId: Long, restaurantId: Long, name: String, price: Double, description: String?,
+        imageUrl: String?, categoryId: Long?, isVegetarian: Boolean, isSpicy: Boolean,
+        isAvailable: Boolean, preparationTime: Int?, allergens: String?, calories: Int?,
+    ): Result<Food> = withContext(ioDispatcher) {
+        try {
+            val request = UpdateFoodRequest(
+                name = name, price = price, description = description,
+                imageUrl = imageUrl, restaurantId = restaurantId, categoryId = categoryId,
+                isVegetarian = isVegetarian, isSpicy = isSpicy, isAvailable = isAvailable,
+                preparationTime = preparationTime, allergens = allergens, calories = calories,
+            )
+            val food = apiService.updateFood(foodId, request).data
+                ?: return@withContext Result.Failure(Exception("Empty response from server"))
+            val entity = food.toEntity()
+            foodDao.upsertAll(listOf(entity))
+            Result.Success(entity.toDomain())
+        } catch (e: Exception) { Result.Failure(e) }
+    }
+
+    override suspend fun deleteFood(foodId: Long): Result<Unit> = withContext(ioDispatcher) {
+        try {
+            apiService.deleteFood(foodId)
+            // Remove from local cache
+            foodDao.deleteById(foodId)
+            Result.Success(Unit)
+        } catch (e: Exception) { Result.Failure(e) }
     }
 }
 
