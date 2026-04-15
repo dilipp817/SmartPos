@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.autobill.smartpos.domain.common.UiState
+import com.autobill.smartpos.domain.model.Category
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -31,6 +32,7 @@ fun HomeRoute(
     onFoodClick: (Long) -> Unit = {},
     onCheckoutClick: () -> Unit = {},
     onLogout: () -> Unit = {},
+    onNavigateToMenuManagement: () -> Unit = {},
 ) {
     // Get ViewModel instance
     val viewModel: FoodViewModel = hiltViewModel()
@@ -38,16 +40,14 @@ fun HomeRoute(
     // Observe paginated state
     val paginatedState by viewModel.paginatedFoodsState.collectAsStateWithLifecycle()
     val isLoadingMore by viewModel.isLoadingMore.collectAsStateWithLifecycle()
-    
-    // ✅ Observe cart state
     val cartItems by viewModel.cartItems.collectAsStateWithLifecycle()
     val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val selectedCategory by viewModel.selectedCategory.collectAsStateWithLifecycle()
     val sortOption by viewModel.sortOption.collectAsStateWithLifecycle()
-
-    // ✅ Observe role permissions — drives show/hide of privileged controls
     val rolePermissions by viewModel.rolePermissions.collectAsStateWithLifecycle()
+    // Real categories from backend — used to populate filter chips
+    val categories by viewModel.categories.collectAsStateWithLifecycle()
 
     // Sort dialog state
     var showSortDialog by remember { mutableStateOf(false) }
@@ -98,8 +98,10 @@ fun HomeRoute(
             onClear = { viewModel.clearCart() },
             onReset = { viewModel.resetFilters() },
             onPrint = {},
-            canApplyDiscount = rolePermissions.canApplyDiscounts,
-            onApplyDiscountClick = { /* TODO: show discount input dialog — Phase 6 */ },
+            // Discount is applied at bill-generation time in BillingScreen (POST /generate-bill?discount=X).
+            // It does not apply at cart stage — hide the button for all roles here.
+            canApplyDiscount = false,
+            onApplyDiscountClick = {},
         )
     }
 
@@ -110,19 +112,12 @@ fun HomeRoute(
         onTabChange = { tab -> viewModel.switchTab(tab) },
         onProfileClick = { showLogoutDialog = true },
         canManageMenu = rolePermissions.canManageMenu,
-        onManageMenuClick = { /* TODO: navigate to Manage Menu — Phase 7 */ },
+        onManageMenuClick = onNavigateToMenuManagement,
     )
 
     fun buildSearchFilter() = SearchFilterData(
         searchQuery = searchQuery,
-        categories = listOf(
-            CategoryUI("all", "All", 0),
-            CategoryUI("MAIN COURSE", "Main Course", 5),
-            CategoryUI("PIZZA", "Pizza", 4),
-            CategoryUI("STARTERS", "Starters", 4),
-            CategoryUI("DESSERTS", "Desserts", 4),
-            CategoryUI("BEVERAGES", "Beverages", 4),
-        ),
+        categories = categories.map { CategoryUI(id = it.id.toString(), name = it.name) },
         selectedCategoryId = selectedCategory,
         sortOption = sortOption ?: "Sort by",
         onSearchChange = { viewModel.updateSearchQuery(it) },

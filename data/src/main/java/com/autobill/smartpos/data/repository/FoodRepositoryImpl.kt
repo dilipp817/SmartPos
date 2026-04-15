@@ -69,8 +69,9 @@ class FoodRepositoryImpl @Inject constructor(
             val page = if (limit > 0) offset / limit else 0
             val response = apiService.getFoodsByRestaurant(
                 restaurantId = effectiveRestaurantId,
-                page = page,
-                limit = limit,
+                page         = page,
+                limit        = limit,
+                categoryId   = category?.toLongOrNull(),  // String ID → Long for the API
             )
             val pagedData = response.data
             val items = pagedData?.data.orEmpty()

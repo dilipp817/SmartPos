@@ -696,3 +696,18 @@ A: It doesn't happen automatically. After payment succeeds, explicitly call `PAT
 ---
 
 **🎉 Full MVP COMPLETE — All 9 phases shipped. Build: SUCCESSFUL ✅**
+
+---
+
+## ✅ Pre-Completion Audit Fixes (April 15, 2026)
+
+Resolved all outstanding TODOs before declaring the project complete:
+
+| # | Issue | Fix |
+|---|-------|-----|
+| 1 | `MockFoodRepository` still wired — entire app ran on mock food data | `RepositoryModule` now binds `FoodRepositoryImpl` |
+| 2 | `onManageMenuClick` no-op in `HomeRoute` — Manage Menu button did nothing | Wired to `Screen.MenuManagement` via new `onNavigateToMenuManagement` callback |
+| 3 | `onApplyDiscountClick` no-op in `CartSummaryFooter` — wrong place in flow | Discount belongs at bill-generation time (already in `BillingScreen`); button hidden (`canApplyDiscount = false`) at cart stage |
+| 4 | `Screen.Search` dead route — empty stub, never navigated to | Removed from `Navigation.kt` and `NavHost.kt`; search lives in `SearchFilterPanel` on the food list |
+| 5 | Category filter chips hardcoded — tapping a chip never filtered foods | `FoodViewModel` now injects `GetCategoriesUseCase`, exposes `categories: StateFlow<List<Category>>`; `HomeRoute` maps real backend categories to `CategoryUI`; `FoodRepositoryImpl.getFoodsPaginated` passes `category?.toLongOrNull()` as `categoryId` to `GET /foods/restaurant/{id}` |
+

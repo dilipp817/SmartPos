@@ -20,7 +20,6 @@ sealed class Screen(val route: String) {
         fun createRoute(orderId: Long) = "order_detail/$orderId"
     }
     object KitchenDisplay : Screen("kitchen_display")
-    object Search : Screen("search")
 
     /**
      * Drawer-accessible billing overview (Phase 7 will add a full bills-history list here).
