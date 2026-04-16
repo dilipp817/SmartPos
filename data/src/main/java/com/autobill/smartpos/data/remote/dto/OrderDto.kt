@@ -17,6 +17,7 @@ data class OrderItemRequestDto(
 
 // DTO: Create Order Request
 // POST /api/v1/restaurants/{restaurantId}/orders
+// customerId removed — backend has no Customer entity (MOBILE_TEAM_RESPONSE.md Point 5, April 17, 2026)
 @JsonClass(generateAdapter = true)
 data class CreateOrderRequest(
     @param:Json(name = "table_id")
@@ -24,11 +25,9 @@ data class CreateOrderRequest(
     @param:Json(name = "items")
     val items: List<OrderItemRequestDto>,
     @param:Json(name = "order_type")
-    val orderType: String = "DINE_IN", // DINE_IN  TAKEAWAY  DELIVERY
+    val orderType: String = "DINE_IN", // DINE_IN  TAKEAWAY  (DELIVERY disabled — see MOBILE_TEAM_RESPONSE.md Point 1)
     @param:Json(name = "notes")
     val notes: String? = null,
-    @param:Json(name = "customer_id")
-    val customerId: Long? = null,   // always null in v1; send when customer linking ships in v2
 )
 
 // DTO: Order Item response
@@ -56,8 +55,8 @@ data class OrderItemDto(
 
 // DTO: Order response
 // Status values UPPERCASE: PENDING | IN_PROGRESS | COMPLETED | DELIVERED | CANCELLED | HOLD
-// OrderType UPPERCASE: DINE_IN | TAKEAWAY | DELIVERY (changed from OFFLINE/ONLINE — V19 migration)
-// customer_id: always null in v1; backend populates in v2 (Q1, BACKEND_ALIGNMENT.md)
+// OrderType UPPERCASE: DINE_IN | TAKEAWAY | DELIVERY (DELIVERY disabled on mobile — Point 1)
+// customerId removed — no backend support (MOBILE_TEAM_RESPONSE.md Point 5, April 17, 2026)
 @JsonClass(generateAdapter = true)
 data class OrderDto(
     @param:Json(name = "id")
@@ -82,8 +81,6 @@ data class OrderDto(
     val totalAmount: Double,
     @param:Json(name = "notes")
     val notes: String? = null,
-    @param:Json(name = "customer_id")
-    val customerId: Long? = null,   // always null in v1; populated in v2
     @param:Json(name = "created_at")
     val createdAt: String,
     @param:Json(name = "updated_at")

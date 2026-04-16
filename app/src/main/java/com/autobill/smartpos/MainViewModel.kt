@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.autobill.smartpos.data.local.AppPrefsDataStore
 import com.autobill.smartpos.domain.model.User
+import com.autobill.smartpos.domain.repository.AuthRepository
 import com.autobill.smartpos.domain.usecase.ConnectRealTimeUseCase
 import com.autobill.smartpos.domain.usecase.DisconnectRealTimeUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
@@ -14,9 +15,12 @@ import com.autobill.smartpos.domain.usecase.ObserveSessionUseCase
 import com.autobill.smartpos.domain.usecase.RecoverSessionUseCase
 import com.autobill.smartpos.domain.usecase.ScheduleSyncUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -51,6 +55,7 @@ class MainViewModel @Inject constructor(
     private val disconnectRealTimeUseCase: DisconnectRealTimeUseCase,
     private val observeConnectivityUseCase: ObserveConnectivityUseCase,
     private val scheduleSyncUseCase: ScheduleSyncUseCase,
+    private val authRepository: AuthRepository,
     appPrefsDataStore: AppPrefsDataStore,
 ) : ViewModel() {
 
@@ -87,6 +92,13 @@ class MainViewModel @Inject constructor(
         initialValue = SessionResult.Loading,
     )
 
+    /**
+     * Fires when a proactive token expiry check detects an expired/invalid token.
+     * Observed by [MainActivity] to show a "Session expired — please log in" dialog.
+     */
+    private val _sessionExpiredEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val sessionExpiredEvent: SharedFlow<Unit> = _sessionExpiredEvent.asSharedFlow()
+
     init {
         viewModelScope.launch {
             // Run recovery first — validate token, refresh restaurantId, or clear expired session.
@@ -121,6 +133,36 @@ class MainViewModel @Inject constructor(
     private suspend fun loadRestaurantDetails() {
         val restaurantId = getRestaurantIdUseCase() ?: return  // not logged in
         getRestaurantUseCase(restaurantId)                     // result cached in RestaurantDataStore
+    }
+
+    /**
+     * Called on every app foreground / onResume.
+     * If the stored token expires within the next 5 minutes, validates it proactively:
+     *  - 401 → clears the session and fires [sessionExpiredEvent]
+     *  - 200 → session still valid, nothing to do
+     *
+     * See MOBILE_TEAM_RESPONSE.md Point 2 — shipped April 17, 2026.
+     */
+    fun checkTokenExpiryOnForeground() {
+        viewModelScope.launch {
+            val token = authRepository.getToken() ?: return@launch  // not logged in — nothing to do
+            val expiresAt = authRepository.getExpiresAt()
+            if (expiresAt == 0L) return@launch  // no expiry stored (very old session) — skip
+
+            val nowSeconds = System.currentTimeMillis() / 1_000L
+            val EXPIRY_BUFFER_SECONDS = 5 * 60L   // 5 minutes
+
+            if (nowSeconds > expiresAt - EXPIRY_BUFFER_SECONDS) {
+                // Token is expired or expiring very soon — validate with the server
+                val result = authRepository.validateToken(token)
+                if (result.isFailure) {
+                    // Server returned 401 or network confirms expiry — force logout
+                    logoutUseCase()
+                    _sessionExpiredEvent.tryEmit(Unit)
+                }
+                // On success: server says it's still valid — continue normally
+            }
+        }
     }
 
     fun logout() {

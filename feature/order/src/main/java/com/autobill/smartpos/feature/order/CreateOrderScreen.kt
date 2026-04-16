@@ -352,13 +352,17 @@ private fun OrderTypeSelector(
             fontWeight = FontWeight.SemiBold,
             color = Color(0xFF424242),
         )
-        OrderType.entries.forEach { type ->
-            OrderTypeChip(
-                label = type.value.replace("_", " "),
-                isSelected = selected == type,
-                onClick = { onSelect(type) },
-            )
-        }
+        // DELIVERY is disabled — backend has no delivery fields (address, phone, rider ID).
+        // Both teams must design and ship it together. See MOBILE_TEAM_RESPONSE.md Point 1.
+        OrderType.entries
+            .filter { it != OrderType.DELIVERY }
+            .forEach { type ->
+                OrderTypeChip(
+                    label = type.value.replace("_", " "),
+                    isSelected = selected == type,
+                    onClick = { onSelect(type) },
+                )
+            }
     }
 }
 

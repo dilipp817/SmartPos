@@ -45,5 +45,5 @@ data class OrderEntity(
     val createdAt: String,
     val updatedAt: String,
     val version: Long,
-    val customerId: Long? = null,   // always null in v1; populated in v2 (Q1, BACKEND_ALIGNMENT.md)
+    // customerId removed — backend has no Customer entity (MOBILE_TEAM_RESPONSE.md Point 5, April 17, 2026)
 )

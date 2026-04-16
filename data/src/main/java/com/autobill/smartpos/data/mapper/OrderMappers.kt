@@ -38,7 +38,6 @@ fun OrderDto.toDomain(): Order = Order(
     subtotal    = subtotal,
     totalAmount = totalAmount,
     notes       = notes,
-    customerId  = customerId,
     createdAt   = createdAt,
     updatedAt   = updatedAt,
     version     = version,
@@ -60,7 +59,6 @@ fun OrderDto.toEntity(): OrderEntity = OrderEntity(
     createdAt   = createdAt,
     updatedAt   = updatedAt,
     version     = version,
-    customerId  = customerId,
 )
 
 // ── OrderItemDto → Entity ────────────────────────────────────────────────────
@@ -104,7 +102,6 @@ fun OrderEntity.toDomain(items: List<OrderItemEntity> = emptyList()): Order = Or
     subtotal     = subtotal,
     totalAmount  = totalAmount,
     notes        = notes,
-    customerId   = customerId,
     createdAt    = createdAt,
     updatedAt    = updatedAt,
     version      = version,
@@ -126,7 +123,6 @@ fun Order.toEntity(): OrderEntity = OrderEntity(
     createdAt   = createdAt,
     updatedAt   = updatedAt,
     version     = version,
-    customerId  = customerId,
 )
 
 fun OrderItem.toEntity(orderId: Long): OrderItemEntity = OrderItemEntity(
@@ -141,4 +137,3 @@ fun OrderItem.toEntity(orderId: Long): OrderItemEntity = OrderItemEntity(
     specialRequests = specialRequests,
     createdAt       = createdAt,
 )
-

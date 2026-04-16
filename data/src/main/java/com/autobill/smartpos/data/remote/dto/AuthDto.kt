@@ -44,6 +44,8 @@ data class LoginResponseDto(
     val token: String,
     @param:Json(name = "expires_in")
     val expiresIn: Long,
+    @param:Json(name = "expires_at")
+    val expiresAt: Long = 0L,   // absolute Unix epoch seconds — backend shipped April 17, 2026
     @param:Json(name = "device_id")
     val deviceId: String? = null,
     @param:Json(name = "device_type")

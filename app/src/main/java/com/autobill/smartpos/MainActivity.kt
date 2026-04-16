@@ -11,9 +11,16 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
@@ -68,7 +75,28 @@ class MainActivity : ComponentActivity() {
             val sessionState by mainViewModel.sessionState.collectAsStateWithLifecycle()
             val isDarkTheme  by mainViewModel.isDarkTheme.collectAsStateWithLifecycle()
 
+            // Show a dialog when the proactive expiry check detects an expired token.
+            var showSessionExpiredDialog by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) {
+                mainViewModel.sessionExpiredEvent.collect {
+                    showSessionExpiredDialog = true
+                }
+            }
+
             SmartPosTheme(darkTheme = isDarkTheme) {
+
+                if (showSessionExpiredDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showSessionExpiredDialog = false },
+                        title   = { Text("Session Expired") },
+                        text    = { Text("Your session has expired. Please log in again to continue.") },
+                        confirmButton = {
+                            TextButton(onClick = { showSessionExpiredDialog = false }) {
+                                Text("OK")
+                            }
+                        },
+                    )
+                }
 
                 when (val state = sessionState) {
 
@@ -105,5 +133,17 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    /**
+     * Called every time the app comes back to the foreground.
+     * Triggers a proactive token expiry check per MOBILE_TEAM_RESPONSE.md Point 2.
+     */
+    override fun onResume() {
+        super.onResume()
+        // The ViewModel is retrieved via the ViewModelStore — no Hilt needed here.
+        // hiltViewModel() is Compose-only; use ViewModelProvider directly.
+        val mainViewModel = androidx.lifecycle.ViewModelProvider(this)[MainViewModel::class.java]
+        mainViewModel.checkTokenExpiryOnForeground()
     }
 }
