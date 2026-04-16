@@ -230,6 +230,7 @@ class OrderViewModel @Inject constructor(
             OrderFilter.PENDING     -> getOrdersByStatusUseCase(rid, OrderStatus.PENDING)
             OrderFilter.IN_PROGRESS -> getOrdersByStatusUseCase(rid, OrderStatus.IN_PROGRESS)
             OrderFilter.COMPLETED   -> getOrdersByStatusUseCase(rid, OrderStatus.COMPLETED)
+            OrderFilter.HOLD        -> getOrdersByStatusUseCase(rid, OrderStatus.HOLD)
         }
         _uiState.update {
             when (result) {

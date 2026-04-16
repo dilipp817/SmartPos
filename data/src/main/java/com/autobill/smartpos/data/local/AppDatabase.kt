@@ -47,7 +47,7 @@ import com.autobill.smartpos.data.local.entity.TableEntity
         PaymentEntity::class,
         PendingOrderEntity::class,
     ],
-    version = 9,
+    version = 10,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -321,6 +321,46 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_pending_orders_status`    ON `pending_orders` (`status`)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_pending_orders_createdAt` ON `pending_orders` (`createdAt`)")
+            }
+        }
+
+        /**
+         * Migration 9 → 10  (MOBILE_GUIDE_REVIEW.md §1.1 — April 16, 2026)
+         * Recreates the restaurants table with the new schema:
+         *   Removed: name, phone, email, logoUrl, timezone, currency, taxRate, isActive
+         *   Added:   outletName, displayName, outletManager,
+         *            addressBuilding, addressStreet, addressLocation, addressZipCode
+         *
+         * The restaurants table is used only as a FK target; actual restaurant data is
+         * stored in DataStore Preferences (RestaurantDataStore), so existing rows can be
+         * safely dropped — they will be re-populated on next login/sync.
+         */
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Drop and recreate because SQLite does not support DROP COLUMN.
+                // Foreign-key children (tables, orders, bills, payments) reference
+                // restaurants(id) — we disable FK enforcement during the swap.
+                db.execSQL("PRAGMA foreign_keys = OFF")
+                db.execSQL("DROP TABLE IF EXISTS `restaurants`")
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `restaurants` (
+                        `id`               INTEGER NOT NULL,
+                        `outletName`       TEXT    NOT NULL,
+                        `displayName`      TEXT    NOT NULL,
+                        `outletManager`    TEXT    NOT NULL,
+                        `addressBuilding`  TEXT    NOT NULL,
+                        `addressStreet`    TEXT    NOT NULL,
+                        `addressLocation`  TEXT    NOT NULL,
+                        `addressZipCode`   TEXT    NOT NULL,
+                        `createdAt`        TEXT    NOT NULL,
+                        `updatedAt`        TEXT    NOT NULL,
+                        PRIMARY KEY(`id`)
+                    )
+                    """.trimIndent(),
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_restaurants_id` ON `restaurants` (`id`)")
+                db.execSQL("PRAGMA foreign_keys = ON")
             }
         }
     }

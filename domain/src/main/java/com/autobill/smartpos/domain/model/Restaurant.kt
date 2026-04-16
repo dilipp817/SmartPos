@@ -1,49 +1,58 @@
 package com.autobill.smartpos.domain.model
 
-/**
- * Restaurant-level feature flags and configuration returned by GET /restaurants/{id}.
- * These control app behaviour — e.g. show tip input only when [enableTips] is true.
- */
-data class RestaurantSettings(
-    /** Whether the tip UI is shown to staff on the payment screen. */
-    val enableTips: Boolean = false,
-    /** Default tip percentage pre-filled in the tip input (only relevant when [enableTips]=true). */
-    val defaultTipPercentage: Double = 0.0,
-    /** Whether the app should trigger a print job after a bill is generated. */
-    val autoPrintBill: Boolean = false,
-    /** If true, displayed prices already include tax — affects bill summary display. */
-    val taxInclusive: Boolean = false,
-)
+/** Nested address block returned by GET /restaurants/{id} */
+data class RestaurantAddress(
+    val building: String,
+    val street: String,
+    val location: String,
+    val zipCode: String,
+) {
+    /** Single-line display string */
+    val formatted: String
+        get() = buildString {
+            if (building.isNotBlank()) { append(building); append(", ") }
+            if (street.isNotBlank()) { append(street); append(", ") }
+            if (location.isNotBlank()) { append(location) }
+            if (zipCode.isNotBlank()) { append(" - "); append(zipCode) }
+        }.trimEnd(',', ' ')
+}
 
-/** Domain Model: Restaurant outlet details. */
+/**
+ * Domain Model: Restaurant outlet details.
+ *
+ * Field names match the backend GET /api/v1/restaurants/{id} response
+ * (MOBILE_GUIDE_REVIEW.md 1.1 — April 16, 2026).
+ *
+ * Fields removed in the new model (backend no longer returns them):
+ *   phone, email, logoUrl, timezone, currency, taxRate, isActive, settings
+ *
+ * These will be re-added after the joint meeting resolves Section 2.1 of the review.
+ */
 data class Restaurant(
     val id: Long,
-    val name: String,
-    val address: String,
-    val phone: String,
-    val email: String,
-    /** May be null if the restaurant has not uploaded a logo. */
-    val logoUrl: String?,
-    val timezone: String,
-    /** ISO 4217 currency code — e.g. "INR". */
-    val currency: String,
-    /** Combined tax rate percentage — e.g. 18.0 for 9% CGST + 9% SGST. */
-    val taxRate: Double,
-    val isActive: Boolean,
-    val settings: RestaurantSettings,
+    /** outlet_name — e.g. "Spice Garden" */
+    val outletName: String,
+    /** displayname — e.g. "Spice Garden — MG Road" */
+    val displayName: String,
+    /** outlet_manager */
+    val outletManager: String,
+    val address: RestaurantAddress,
     val createdAt: String,
     val updatedAt: String,
 )
 
 /**
- * Parameters that staff / managers can update via PATCH /restaurants/{id}.
- * Null fields are omitted from the request (partial update).
+ * Parameters for PATCH /api/v1/restaurants/{id}.
+ * All fields are nullable — only non-null values are sent in the request body.
+ *
+ * Editable until joint-decision fields (phone, email, taxRate) are confirmed (Section 2.1).
  */
 data class UpdateRestaurantSettingsRequest(
-    val taxRate: Double? = null,
-    val enableTips: Boolean? = null,
-    val defaultTipPercentage: Double? = null,
-    val autoPrintBill: Boolean? = null,
-    val taxInclusive: Boolean? = null,
+    val outletName: String? = null,
+    val displayName: String? = null,
+    val outletManager: String? = null,
+    val building: String? = null,
+    val street: String? = null,
+    val location: String? = null,
+    val zipCode: String? = null,
 )
-

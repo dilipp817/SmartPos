@@ -134,5 +134,16 @@ class SessionDataStore @Inject constructor(
         .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
         .firstOrNull()
         ?.get(Keys.RESTAURANT_ID)
+
+    /**
+     * Return the stored expiresIn value (seconds, from the original login response).
+     * Used when recovering a session via /auth/me — preserves the original expiry
+     * since /auth/me does not return expires_in.
+     * Returns 0 if no session exists.
+     */
+    suspend fun getExpiresIn(): Long = dataStore.data
+        .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
+        .firstOrNull()
+        ?.get(Keys.EXPIRES_IN) ?: 0L
 }
 

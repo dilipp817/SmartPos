@@ -178,11 +178,12 @@ fun BillingScreen(
                     else -> {
                         item {
                             GenerateBillForm(
-                                discountInput  = uiState.discountInput,
-                                discountError  = uiState.discountError,
-                                isGenerating   = uiState.isGenerating,
+                                discountInput    = uiState.discountInput,
+                                discountError    = uiState.discountError,
+                                isGenerating     = uiState.isGenerating,
+                                canApplyDiscounts = uiState.canApplyDiscounts,
                                 onDiscountChange = onDiscountChange,
-                                onGenerate     = onGenerateBill,
+                                onGenerate       = onGenerateBill,
                             )
                         }
                     }
@@ -246,6 +247,7 @@ private fun GenerateBillForm(
     discountInput: String,
     discountError: String?,
     isGenerating: Boolean,
+    canApplyDiscounts: Boolean,
     onDiscountChange: (String) -> Unit,
     onGenerate: () -> Unit,
 ) {
@@ -268,18 +270,22 @@ private fun GenerateBillForm(
             color = Color(0xFF757575),
         )
 
-        OutlinedTextField(
-            value         = discountInput,
-            onValueChange = onDiscountChange,
-            label         = { Text(stringResource(R.string.billing_field_discount)) },
-            placeholder   = { Text("0") },
-            isError       = discountError != null,
-            supportingText = discountError?.let { { Text(it, color = Color(0xFFB00020)) } },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            singleLine    = true,
-            enabled       = !isGenerating,
-            modifier      = Modifier.fillMaxWidth(),
-        )
+        // Discount input — hidden for staff role (backend review ❌ 2.6).
+        // Backend does not enforce role restriction on generate-bill; UI-side guard only.
+        if (canApplyDiscounts) {
+            OutlinedTextField(
+                value         = discountInput,
+                onValueChange = onDiscountChange,
+                label         = { Text(stringResource(R.string.billing_field_discount)) },
+                placeholder   = { Text("0") },
+                isError       = discountError != null,
+                supportingText = discountError?.let { { Text(it, color = Color(0xFFB00020)) } },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                singleLine    = true,
+                enabled       = !isGenerating,
+                modifier      = Modifier.fillMaxWidth(),
+            )
+        }
 
         Button(
             onClick  = onGenerate,
@@ -330,3 +336,4 @@ private fun BillingLoadingState() {
         }
     }
 }
+

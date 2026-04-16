@@ -10,7 +10,10 @@ import com.autobill.smartpos.domain.usecase.CancelBillUseCase
 import com.autobill.smartpos.domain.usecase.GenerateBillUseCase
 import com.autobill.smartpos.domain.usecase.GetBillByIdUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
+import com.autobill.smartpos.domain.usecase.ObserveRolePermissionsUseCase
 import com.autobill.smartpos.feature.billing.R
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,6 +43,7 @@ class BillingViewModel @Inject constructor(
     private val generateBillUseCase: GenerateBillUseCase,
     private val getBillByIdUseCase: GetBillByIdUseCase,
     private val cancelBillUseCase: CancelBillUseCase,
+    observeRolePermissionsUseCase: ObserveRolePermissionsUseCase,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -56,8 +60,18 @@ class BillingViewModel @Inject constructor(
     private var restaurantId: Long? = null
 
     init {
+        // Observe role permissions — update canApplyDiscounts whenever the session changes.
+        // Staff role cannot see or use the discount input (backend review ❌ 2.6).
+        observeRolePermissionsUseCase()
+            .onEach { perms ->
+                _uiState.update { it.copy(canApplyDiscounts = perms.canApplyDiscounts) }
+            }
+            .launchIn(viewModelScope)
+
         viewModelScope.launch {
-            val rid = restaurantId
+            // Bug fix: was reading the null field directly; must call the use case.
+            val rid = getRestaurantIdUseCase()
+            restaurantId = rid
             if (rid == null) {
                 _uiState.update {
                     it.copy(errorMessage = context.getString(R.string.error_session_expired))
@@ -81,7 +95,12 @@ class BillingViewModel @Inject constructor(
             _uiState.update { it.copy(errorMessage = context.getString(R.string.error_session_expired)) }
             return
         }
-        val discount = _uiState.value.discountInput.toDoubleOrNull() ?: 0.0
+        // Staff cannot apply discounts — force 0 regardless of any residual input.
+        val discount = if (!_uiState.value.canApplyDiscounts) {
+            0.0
+        } else {
+            _uiState.value.discountInput.toDoubleOrNull() ?: 0.0
+        }
         if (discount < 0) {
             _uiState.update { it.copy(discountError = context.getString(R.string.error_discount_negative)) }
             return

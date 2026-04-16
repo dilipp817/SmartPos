@@ -305,6 +305,7 @@ private fun OrderFilterRow(
                 OrderFilter.PENDING     -> stringResource(R.string.order_filter_pending)
                 OrderFilter.IN_PROGRESS -> stringResource(R.string.order_filter_in_progress)
                 OrderFilter.COMPLETED   -> stringResource(R.string.order_filter_completed)
+                OrderFilter.HOLD        -> stringResource(R.string.order_filter_hold)
             }
             FilterChip(
                 selected = selectedFilter == filter,
@@ -369,6 +370,7 @@ private fun OrderEmptyState(
                 OrderFilter.PENDING     -> stringResource(R.string.order_filter_pending)
                 OrderFilter.IN_PROGRESS -> stringResource(R.string.order_filter_in_progress)
                 OrderFilter.COMPLETED   -> stringResource(R.string.order_filter_completed)
+                OrderFilter.HOLD        -> stringResource(R.string.order_filter_hold)
             }
             stringResource(R.string.order_empty_filter, filterLabel.lowercase())
         }

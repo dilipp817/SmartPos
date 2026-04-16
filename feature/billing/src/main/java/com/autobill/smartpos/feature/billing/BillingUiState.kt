@@ -20,6 +20,10 @@ data class BillingUiState(
     val orderId: Long = 0L,
     val tableId: Long = 0L,
     val restaurantId: Long = 0L,
+    // Role-based permission — false for staff; drives discount field visibility.
+    // Backend confirmed: POST .../generate-bill has no server-side role restriction —
+    // this is a UI-only guard per backend review ❌ 2.6.
+    val canApplyDiscounts: Boolean = true,
     // Discount input
     val discountInput: String = "",
     val discountError: String? = null,

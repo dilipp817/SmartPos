@@ -17,6 +17,7 @@
     <string name="order_filter_pending">Pending</string>
     <string name="order_filter_in_progress">In Progress</string>
     <string name="order_filter_completed">Completed</string>
+    <string name="order_filter_hold">On Hold</string>
 
     <!-- ── Order Item Card ───────────────────────────────────────────────── -->
     <!-- %1$d = table number -->
