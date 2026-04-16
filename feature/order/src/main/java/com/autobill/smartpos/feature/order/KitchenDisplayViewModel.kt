@@ -1,6 +1,8 @@
 package com.autobill.smartpos.feature.order
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
+import com.autobill.smartpos.feature.order.R
 import androidx.lifecycle.viewModelScope
 import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.model.ConnectionState
@@ -12,6 +14,7 @@ import com.autobill.smartpos.domain.usecase.ObserveConnectionStateUseCase
 import com.autobill.smartpos.domain.usecase.ObserveOrderEventsUseCase
 import com.autobill.smartpos.domain.usecase.UpdateItemStatusUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,6 +39,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class KitchenDisplayViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val getActiveOrdersUseCase: GetActiveOrdersUseCase,
     private val updateItemStatusUseCase: UpdateItemStatusUseCase,
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
@@ -61,7 +65,7 @@ class KitchenDisplayViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading    = false,
-                        errorMessage = "No restaurant assigned to this account. Please log in again.",
+                        errorMessage = context.getString(R.string.error_no_restaurant_session),
                     )
                 }
                 return@launch
@@ -176,13 +180,13 @@ class KitchenDisplayViewModel @Inject constructor(
                     state.copy(
                         orders          = state.orders.map { if (it.id == orderId) result.data else it },
                         updatingItemIds = state.updatingItemIds - itemId,
-                        successMessage  = "Item marked as ${newStatus.value.replace("_", " ")}",
+                        successMessage  = context.getString(R.string.order_status_update_success, newStatus.value.replace("_", " ")),
                     )
                 }
                 is Result.Failure -> _uiState.update {
                     it.copy(
                         updatingItemIds = it.updatingItemIds - itemId,
-                        errorMessage    = result.exception.message ?: "Failed to update item status.",
+                        errorMessage    = result.exception.message ?: context.getString(R.string.error_update_item_status),
                     )
                 }
                 Result.Loading -> Unit
@@ -216,7 +220,7 @@ class KitchenDisplayViewModel @Inject constructor(
                 it.copy(orders = result.data, isLoading = false, errorMessage = null)
             }
             is Result.Failure -> _uiState.update {
-                it.copy(isLoading = false, errorMessage = result.exception.message ?: "Failed to load orders.")
+                it.copy(isLoading = false, errorMessage = result.exception.message ?: context.getString(R.string.error_kitchen_load_failed))
             }
             Result.Loading -> Unit
         }

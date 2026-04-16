@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ── Brand ─────────────────────────────────────────────────────────── -->
+    <string name="brand_name">SmartPos</string>
+
+    <!-- ── Header / Tabs ─────────────────────────────────────────────────── -->
+    <string name="offline_orders">Offline orders</string>
+    <string name="online_orders">Online orders</string>
+    <string name="manage_menu">Manage Menu</string>
+
+    <!-- ── Search &amp; Filter ────────────────────────────────────────────── -->
+    <string name="search_placeholder">Search</string>
+    <string name="all_category">All category</string>
+
+    <!-- ── Sort dialog ───────────────────────────────────────────────────── -->
+    <!-- Note: sort values like "price:asc" are API parameters, not UI strings -->
+    <string name="sort_by">Sort by</string>
+    <string name="sort_price_low_to_high">Price: Low to High</string>
+    <string name="sort_price_high_to_low">Price: High to Low</string>
+    <string name="sort_name_asc">Name: A to Z</string>
+    <string name="sort_name_desc">Name: Z to A</string>
+    <string name="close">Close</string>
+
+    <!-- ── Cart / Invoice ────────────────────────────────────────────────── -->
+    <!-- Shown before an order is submitted — the real number comes from POST /orders -->
+    <string name="new_sale">New Sale</string>
+    <!-- Placeholder table number until table-selection flow is implemented -->
+    <string name="cart_default_table_number">T-01</string>
+    <string name="invoice_number_label">Invoice No. %1$s</string>
+    <string name="table_number_label">Table No. %1$s</string>
+    <string name="change_invoice">Change Invoice</string>
+    <string name="subtotal">Subtotal</string>
+    <!-- Estimated tax shown pre-checkout; actual GST is computed server-side -->
+    <string name="est_gst">Est. GST (18%)</string>
+    <string name="discount">Discount</string>
+    <string name="apply_discount">Apply Discount</string>
+    <string name="total_amount">Total Amount</string>
+    <string name="accept_payment">Accept Payment</string>
+    <string name="clear">Clear</string>
+    <string name="reset">Reset</string>
+    <string name="print">Print</string>
+
+    <!-- ── Food detail ───────────────────────────────────────────────────── -->
+    <string name="description_label">Description</string>
+    <string name="currently_unavailable">Currently unavailable</string>
+    <string name="food_type_veg">VEG</string>
+    <string name="food_type_non_veg">NON-VEG</string>
+    <string name="spicy_label">SPICY</string>
+    <string name="add_to_cart">Add to Cart</string>
+    <!-- %1$d = quantity already in cart -->
+    <string name="add_more_in_cart">Add More  ·  %1$d in cart</string>
+
+    <!-- ── Food grid / list ──────────────────────────────────────────────── -->
+    <string name="loading_menu">Loading menu…</string>
+    <string name="no_foods_available">No foods available</string>
+    <string name="please_try_again">Please try again</string>
+
+    <!-- ── FoodScreen (legacy list) ──────────────────────────────────────── -->
+    <string name="foods">Foods</string>
+    <string name="loading_foods">Loading foods…</string>
+    <string name="loading_more">Loading more…</string>
+    <!-- %1$d = loaded count, %2$d = total count -->
+    <string name="loaded_x_of_y">Loaded %1$d of %2$d</string>
+    <!-- %1$d = food id -->
+    <string name="food_id_label">ID: %1$d</string>
+    <!-- %1$d = restaurant id -->
+    <string name="food_restaurant_label">Restaurant: %1$d</string>
+    <!-- %1$.2f = price -->
+    <string name="food_price_label">Price: Rs %1$.2f</string>
+
+    <!-- ── Logout dialog ─────────────────────────────────────────────────── -->
+    <string name="logout_dialog_title">Log out?</string>
+    <string name="logout_dialog_message">You will be returned to the login screen. Any unsaved cart items will be lost.</string>
+    <string name="logout_confirm">Log out</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- ── Common actions ────────────────────────────────────────────────── -->
+    <string name="retry">Retry</string>
+    <string name="go_back">Go Back</string>
+
+    <!-- ── Error messages ────────────────────────────────────────────────── -->
+    <string name="error_failed_to_load_foods">Failed to load foods</string>
+    <string name="error_failed_to_load_food_details">Failed to load food details</string>
+    <string name="error_no_restaurant_assigned">No restaurant assigned to this account. Please log in with a counter or manager account.</string>
+    <string name="error_load_food_details_title">Couldn\'t load food details</string>
+
+    <!-- ── Content descriptions (accessibility) ──────────────────────────── -->
+    <string name="cd_back">Back</string>
+    <string name="cd_increase">Increase</string>
+    <string name="cd_add_to_cart">Add to cart</string>
+    <string name="cd_profile">Profile</string>
+    <string name="cd_dropdown">Dropdown</string>
+    <string name="cd_search_icon">Search icon</string>
+    <string name="cd_selected">Selected</string>
+    <string name="cd_spicy">Spicy</string>
+
+</resources>
+

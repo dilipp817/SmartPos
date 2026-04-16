@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 
 /**
@@ -35,14 +36,14 @@ fun SortDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Sort by",
+                text = stringResource(R.string.sort_by),
                 style = MaterialTheme.typography.titleLarge,
             )
         },
         text = {
             Column {
                 SortOption(
-                    label = "Price: Low to High",
+                    label = stringResource(R.string.sort_price_low_to_high),
                     value = "price:asc",
                     isSelected = currentSort == "price:asc",
                     onSelected = onSortSelected,
@@ -50,7 +51,7 @@ fun SortDialog(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 SortOption(
-                    label = "Price: High to Low",
+                    label = stringResource(R.string.sort_price_high_to_low),
                     value = "price:desc",
                     isSelected = currentSort == "price:desc",
                     onSelected = onSortSelected,
@@ -58,7 +59,7 @@ fun SortDialog(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 SortOption(
-                    label = "Name: A to Z",
+                    label = stringResource(R.string.sort_name_asc),
                     value = "name:asc",
                     isSelected = currentSort == "name:asc",
                     onSelected = onSortSelected,
@@ -66,7 +67,7 @@ fun SortDialog(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 SortOption(
-                    label = "Name: Z to A",
+                    label = stringResource(R.string.sort_name_desc),
                     value = "name:desc",
                     isSelected = currentSort == "name:desc",
                     onSelected = onSortSelected,
@@ -75,7 +76,7 @@ fun SortDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Close")
+                Text(stringResource(R.string.close))
             }
         },
     )
@@ -108,10 +109,9 @@ private fun SortOption(
             Spacer(modifier = Modifier.width(8.dp))
             Icon(
                 imageVector = Icons.Default.Check,
-                contentDescription = "Selected",
+                contentDescription = stringResource(R.string.cd_selected),
                 tint = Color(0xFF4CAF50), // Green checkmark
             )
         }
     }
 }
-

@@ -1,5 +1,6 @@
 package com.autobill.smartpos.feature.food
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,6 +11,7 @@ import com.autobill.smartpos.domain.usecase.AddToCartUseCase
 import com.autobill.smartpos.domain.usecase.GetCartUseCase
 import com.autobill.smartpos.domain.usecase.GetFoodByIdUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,6 +28,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class FoodDetailViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     savedStateHandle: SavedStateHandle,
     private val getFoodByIdUseCase: GetFoodByIdUseCase,
     private val getCartUseCase: GetCartUseCase,
@@ -55,7 +58,7 @@ class FoodDetailViewModel @Inject constructor(
             _foodState.value = when (val result = getFoodByIdUseCase(foodId)) {
                 is Result.Success -> UiState.Success(result.data)
                 is Result.Failure -> UiState.Error(
-                    result.exception.message ?: "Failed to load food details"
+                    result.exception.message ?: context.getString(R.string.error_failed_to_load_food_details)
                 )
                 Result.Loading -> UiState.Loading
             }

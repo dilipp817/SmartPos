@@ -1,5 +1,6 @@
 package com.autobill.smartpos.feature.order
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -18,7 +19,9 @@ import com.autobill.smartpos.domain.usecase.RemoveItemFromOrderUseCase
 import com.autobill.smartpos.domain.usecase.SearchFoodsUseCase
 import com.autobill.smartpos.domain.usecase.UpdateOrderItemUseCase
 import com.autobill.smartpos.domain.usecase.UpdateOrderStatusUseCase
+import com.autobill.smartpos.feature.order.R
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,6 +49,7 @@ import javax.inject.Inject
 @HiltViewModel
 class OrderDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
+    @ApplicationContext private val context: Context,
     private val getOrderByIdUseCase: GetOrderByIdUseCase,
     private val updateOrderStatusUseCase: UpdateOrderStatusUseCase,
     private val addItemToOrderUseCase: AddItemToOrderUseCase,
@@ -84,7 +88,7 @@ class OrderDetailViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        errorMessage = "No restaurant assigned to this account. Please log in again.",
+                        errorMessage = context.getString(R.string.error_no_restaurant_session),
                     )
                 }
                 return@launch
@@ -165,7 +169,7 @@ class OrderDetailViewModel @Inject constructor(
                     it.copy(
                         order            = result.data,
                         isUpdatingStatus = false,
-                        successMessage   = "Status updated to ${result.data.status.value}",
+                        successMessage   = context.getString(R.string.order_status_updated_to, result.data.status.value),
                     )
                 }
                 is Result.Failure -> {
@@ -175,7 +179,7 @@ class OrderDetailViewModel @Inject constructor(
                             order            = it.order?.copy(status = currentOrder.status),
                             isUpdatingStatus = false,
                             errorMessage     = result.exception.message
-                                ?: "Failed to update status.",
+                                ?: context.getString(R.string.error_update_order_status_failed),
                         )
                     }
                 }
@@ -225,7 +229,7 @@ class OrderDetailViewModel @Inject constructor(
                 is Result.Failure -> _uiState.update { state ->
                     state.copy(
                         addItemDialog = state.addItemDialog?.copy(isSearching = false),
-                        addItemError  = result.exception.message ?: "Food search failed.",
+                        addItemError  = result.exception.message ?: context.getString(R.string.error_food_search_failed),
                     )
                 }
                 Result.Loading -> Unit
@@ -264,7 +268,7 @@ class OrderDetailViewModel @Inject constructor(
         val rid = restaurantId ?: return
         val dialog = _uiState.value.addItemDialog ?: return
         val food = dialog.selectedFood ?: run {
-            _uiState.update { it.copy(addItemError = "Please select a food item first.") }
+            _uiState.update { it.copy(addItemError = context.getString(R.string.error_select_food_first)) }
             return
         }
         _uiState.update { it.copy(isAddingItem = true, addItemError = null) }
@@ -286,13 +290,13 @@ class OrderDetailViewModel @Inject constructor(
                         addItemDialog  = null,
                         isAddingItem   = false,
                         addItemError   = null,
-                        successMessage = "${food.name} added to order",
+                        successMessage = context.getString(R.string.order_item_added_success, food.name),
                     )
                 }
                 is Result.Failure -> _uiState.update {
                     it.copy(
                         isAddingItem = false,
-                        addItemError = result.exception.message ?: "Failed to add item.",
+                        addItemError = result.exception.message ?: context.getString(R.string.error_add_item_failed),
                     )
                 }
                 Result.Loading -> Unit
@@ -349,13 +353,13 @@ class OrderDetailViewModel @Inject constructor(
                         editItemDialog = null,
                         isEditingItem  = false,
                         editItemError  = null,
-                        successMessage = "Item updated",
+                        successMessage = context.getString(R.string.order_item_updated_success),
                     )
                 }
                 is Result.Failure -> _uiState.update {
                     it.copy(
                         isEditingItem = false,
-                        editItemError = result.exception.message ?: "Failed to update item.",
+                        editItemError = result.exception.message ?: context.getString(R.string.error_update_item_failed),
                     )
                 }
                 Result.Loading -> Unit
@@ -379,13 +383,13 @@ class OrderDetailViewModel @Inject constructor(
                     it.copy(
                         order           = result.data,
                         removingItemIds = it.removingItemIds - itemId,
-                        successMessage  = "Item removed",
+                        successMessage  = context.getString(R.string.order_item_removed_success),
                     )
                 }
                 is Result.Failure -> _uiState.update {
                     it.copy(
                         removingItemIds = it.removingItemIds - itemId,
-                        errorMessage    = result.exception.message ?: "Failed to remove item.",
+                        errorMessage    = result.exception.message ?: context.getString(R.string.error_remove_item_failed),
                     )
                 }
                 Result.Loading -> Unit
@@ -422,7 +426,7 @@ class OrderDetailViewModel @Inject constructor(
                     it.copy(
                         showCancelDialog = false,
                         isCancelling    = false,
-                        errorMessage    = result.exception.message ?: "Failed to cancel order.",
+                        errorMessage    = result.exception.message ?: context.getString(R.string.error_cancel_order_failed),
                     )
                 }
                 Result.Loading -> Unit
@@ -463,7 +467,7 @@ class OrderDetailViewModel @Inject constructor(
             is Result.Failure -> _uiState.update {
                 it.copy(
                     isLoading    = false,
-                    errorMessage = result.exception.message ?: "Failed to load order.",
+                    errorMessage = result.exception.message ?: context.getString(R.string.error_load_order_failed),
                 )
             }
             Result.Loading -> Unit
@@ -492,8 +496,7 @@ class OrderDetailViewModel @Inject constructor(
         if (retryResult is Result.Failure && retryResult.exception is HttpConflictException) {
             _uiState.update {
                 it.copy(
-                    conflictMessage = "This order was modified by another device. " +
-                        "Please review the updated order and try again.",
+                    conflictMessage = context.getString(R.string.error_order_conflict),
                 )
             }
         }

@@ -44,10 +44,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.autobill.smartpos.domain.model.PaymentMethod
+import com.autobill.smartpos.feature.billing.R
 
 /**
  * Payment Screen — Phase 6.3
@@ -94,10 +96,10 @@ fun PaymentScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(onClick = onBack, enabled = !uiState.isProcessing) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color(0xFF212121))
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.cd_back), tint = Color(0xFF212121))
                 }
                 Text(
-                    text       = "Payment",
+                    text       = stringResource(R.string.payment_title),
                     style      = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color      = Color(0xFF212121),
@@ -121,7 +123,7 @@ fun PaymentScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Text(
-                            text  = "Amount Due",
+                            text  = stringResource(R.string.payment_amount_due),
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.White.copy(alpha = 0.85f),
                         )
@@ -134,7 +136,7 @@ fun PaymentScreen(
                         )
                         if (uiState.remainingAmount > 0 && uiState.remainingAmount < uiState.totalAmount) {
                             Text(
-                                text  = "Remaining balance (total ₹%.2f)".format(uiState.totalAmount),
+                                text  = stringResource(R.string.payment_remaining_balance, uiState.totalAmount),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.White.copy(alpha = 0.7f),
                             )
@@ -153,7 +155,7 @@ fun PaymentScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         Text(
-                            "Payment Method",
+                            stringResource(R.string.payment_method_label),
                             style      = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color      = Color(0xFF212121),
@@ -182,7 +184,7 @@ fun PaymentScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             Text(
-                                "Cash Tendered",
+                                stringResource(R.string.payment_cash_tendered_label),
                                 style      = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
                                 color      = Color(0xFF212121),
@@ -190,7 +192,7 @@ fun PaymentScreen(
                             OutlinedTextField(
                                 value         = uiState.amountTenderedInput,
                                 onValueChange = onAmountTenderedChange,
-                                label         = { Text("Amount received from customer (₹)") },
+                                label         = { Text(stringResource(R.string.payment_cash_amount_field_label)) },
                                 isError       = uiState.amountTenderedError != null,
                                 supportingText = uiState.amountTenderedError?.let {
                                     { Text(it, color = Color(0xFFB00020)) }
@@ -209,7 +211,7 @@ fun PaymentScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                 ) {
                                     Text(
-                                        "Change to return",
+                                        stringResource(R.string.payment_change_to_return),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = Color(0xFF2E7D32),
                                     )
@@ -237,7 +239,7 @@ fun PaymentScreen(
                         OutlinedTextField(
                             value         = uiState.notesInput,
                             onValueChange = onNotesChange,
-                            label         = { Text("Note (optional)") },
+                            label         = { Text(stringResource(R.string.payment_notes_hint)) },
                             singleLine    = true,
                             modifier      = Modifier.fillMaxWidth(),
                         )
@@ -247,10 +249,10 @@ fun PaymentScreen(
                 // ── Pay Button ────────────────────────────────────────────────
                 item {
                     val buttonLabel = when (uiState.selectedMethod) {
-                        PaymentMethod.CASH   -> "Collect ₹%.2f Cash".format(uiState.effectiveAmount)
-                        PaymentMethod.CARD   -> "Charge ₹%.2f to Card".format(uiState.effectiveAmount)
-                        PaymentMethod.UPI    -> "Pay ₹%.2f via UPI".format(uiState.effectiveAmount)
-                        PaymentMethod.WALLET -> "Pay ₹%.2f via Wallet".format(uiState.effectiveAmount)
+                        PaymentMethod.CASH   -> stringResource(R.string.payment_collect_cash, uiState.effectiveAmount)
+                        PaymentMethod.CARD   -> stringResource(R.string.payment_charge_card, uiState.effectiveAmount)
+                        PaymentMethod.UPI    -> stringResource(R.string.payment_pay_upi, uiState.effectiveAmount)
+                        PaymentMethod.WALLET -> stringResource(R.string.payment_pay_wallet, uiState.effectiveAmount)
                     }
                     Button(
                         onClick  = onSubmitPayment,
@@ -266,7 +268,7 @@ fun PaymentScreen(
                                 color       = Color.White,
                             )
                             Spacer(Modifier.width(10.dp))
-                            Text("Processing…", fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.payment_processing), fontWeight = FontWeight.Bold)
                         } else {
                             Text(buttonLabel, fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.bodyLarge)
@@ -295,17 +297,16 @@ fun PaymentScreen(
     if (uiState.showCardConfirmDialog) {
         AlertDialog(
             onDismissRequest = { onDismissCardConfirm() },
-            title = { Text("Confirm Card Payment", fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.payment_card_confirm_title), fontWeight = FontWeight.Bold) },
             text  = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        "Card payment of ₹%.2f has been authorised.\n" +
-                        "Tap Confirm once the terminal shows Approved.".format(uiState.effectiveAmount),
+                        stringResource(R.string.payment_card_confirm_message, uiState.effectiveAmount),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     HorizontalDivider()
                     Text(
-                        text  = "Reference: ${uiState.pendingPayment?.referenceNumber.orEmpty()}",
+                        text  = stringResource(R.string.payment_card_reference, uiState.pendingPayment?.referenceNumber.orEmpty()),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color(0xFF9E9E9E),
                     )
@@ -325,13 +326,13 @@ fun PaymentScreen(
                     ) {
                         Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Confirm Payment", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.payment_card_confirm_button), fontWeight = FontWeight.Bold)
                     }
                 }
             },
             dismissButton = {
                 TextButton(onClick = onDismissCardConfirm, enabled = !uiState.isConfirmingCard) {
-                    Text("Cancel", color = Color(0xFF757575))
+                    Text(stringResource(R.string.billing_cancel_dialog_dismiss), color = Color(0xFF757575))
                 }
             },
             containerColor = Color.White,
@@ -349,10 +350,10 @@ private fun MethodChip(
     onClick: () -> Unit,
 ) {
     val label = when (method) {
-        PaymentMethod.CASH   -> "💵 Cash"
-        PaymentMethod.CARD   -> "💳 Card"
-        PaymentMethod.UPI    -> "📱 UPI"
-        PaymentMethod.WALLET -> "👛 Wallet"
+        PaymentMethod.CASH   -> stringResource(R.string.payment_method_cash)
+        PaymentMethod.CARD   -> stringResource(R.string.payment_method_card)
+        PaymentMethod.UPI    -> stringResource(R.string.payment_method_upi)
+        PaymentMethod.WALLET -> stringResource(R.string.payment_method_wallet)
     }
     val bg     = if (isSelected) Color(0xFFFFEBEE) else Color(0xFFF5F5F5)
     val border = if (isSelected) Color(0xFFE33E3E) else Color(0xFFE0E0E0)
@@ -375,4 +376,3 @@ private fun MethodChip(
         )
     }
 }
-

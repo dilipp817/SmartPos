@@ -1,5 +1,6 @@
 package com.autobill.smartpos.feature.table
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.autobill.smartpos.domain.common.Result
@@ -17,6 +18,7 @@ import com.autobill.smartpos.domain.usecase.ObserveTableEventsUseCase
 import com.autobill.smartpos.domain.usecase.UpdateTableStatusUseCase
 import com.autobill.smartpos.domain.usecase.UpdateTableUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,6 +42,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class TableViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val getTablesUseCase: GetTablesUseCase,
     private val getAvailableTablesUseCase: GetAvailableTablesUseCase,
     private val getOccupiedTablesUseCase: GetOccupiedTablesUseCase,
@@ -71,7 +74,7 @@ class TableViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        errorMessage = "No restaurant assigned to this account. Please log in again.",
+                        errorMessage = context.getString(R.string.error_no_restaurant_session),
                     )
                 }
                 return@launch
@@ -167,17 +170,13 @@ class TableViewModel @Inject constructor(
     fun confirmStatusUpdate(table: Table, newStatus: TableStatus) {
         val rid = restaurantId ?: return
         _uiState.update { it.copy(isUpdatingStatus = true, statusUpdateError = null) }
-
-        // Optimistic update: immediately reflect the change in the grid
         val optimisticTable = table.copy(status = newStatus)
         _uiState.update { state ->
             state.copy(tables = state.tables.map { if (it.id == table.id) optimisticTable else it })
         }
-
         viewModelScope.launch {
             when (val result = updateTableStatusUseCase(rid, table.id, newStatus)) {
                 is Result.Success -> {
-                    // Replace optimistic row with server-confirmed data
                     val confirmed = result.data
                     _uiState.update { state ->
                         state.copy(
@@ -192,13 +191,12 @@ class TableViewModel @Inject constructor(
                     refreshAvailableCount(rid)
                 }
                 is Result.Failure -> {
-                    // Roll back optimistic update
                     _uiState.update { state ->
                         state.copy(
                             tables = state.tables.map { if (it.id == table.id) table else it },
                             isUpdatingStatus = false,
                             statusUpdateError = result.exception.message
-                                ?: "Failed to update table status. Please try again.",
+                                ?: context.getString(R.string.error_update_table_status),
                         )
                     }
                 }
@@ -254,7 +252,7 @@ class TableViewModel @Inject constructor(
                             crudDialog = null,
                             isCrudInFlight = false,
                             crudError = null,
-                            crudSuccessMessage = "Table ${result.data.tableNumber} created ✓",
+                            crudSuccessMessage = context.getString(R.string.table_created_success, result.data.tableNumber),
                         )
                     }
                     refreshAvailableCount(rid)
@@ -263,7 +261,7 @@ class TableViewModel @Inject constructor(
                     it.copy(
                         isCrudInFlight = false,
                         crudError = it.crudError ?: result.exception.message
-                            ?: "Failed to create table.",
+                            ?: context.getString(R.string.error_create_table),
                     )
                 }
                 Result.Loading -> Unit
@@ -288,14 +286,14 @@ class TableViewModel @Inject constructor(
                             crudDialog = null,
                             isCrudInFlight = false,
                             crudError = null,
-                            crudSuccessMessage = "Table ${updated.tableNumber} updated ✓",
+                            crudSuccessMessage = context.getString(R.string.table_updated_success, updated.tableNumber),
                         )
                     }
                 }
                 is Result.Failure -> _uiState.update {
                     it.copy(
                         isCrudInFlight = false,
-                        crudError = result.exception.message ?: "Failed to update table.",
+                        crudError = result.exception.message ?: context.getString(R.string.error_update_table),
                     )
                 }
                 Result.Loading -> Unit
@@ -319,7 +317,7 @@ class TableViewModel @Inject constructor(
                             crudDialog = null,
                             isCrudInFlight = false,
                             crudError = null,
-                            crudSuccessMessage = "Table ${table.tableNumber} deleted",
+                            crudSuccessMessage = context.getString(R.string.table_deleted_success, table.tableNumber),
                         )
                     }
                     refreshAvailableCount(rid)
@@ -327,7 +325,7 @@ class TableViewModel @Inject constructor(
                 is Result.Failure -> _uiState.update {
                     it.copy(
                         isCrudInFlight = false,
-                        crudError = result.exception.message ?: "Failed to delete table.",
+                        crudError = result.exception.message ?: context.getString(R.string.error_delete_table),
                     )
                 }
                 Result.Loading -> Unit
@@ -373,7 +371,7 @@ class TableViewModel @Inject constructor(
                 )
                 is Result.Failure -> it.copy(
                     isLoading = false,
-                    errorMessage = result.exception.message ?: "Failed to load tables. Please try again.",
+                    errorMessage = result.exception.message ?: context.getString(R.string.error_load_tables),
                 )
                 Result.Loading -> it.copy(isLoading = true)
             }

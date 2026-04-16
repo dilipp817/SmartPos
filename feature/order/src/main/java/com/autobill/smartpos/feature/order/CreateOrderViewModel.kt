@@ -1,5 +1,6 @@
 package com.autobill.smartpos.feature.order
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,7 +15,9 @@ import com.autobill.smartpos.domain.usecase.GetCartUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
 import com.autobill.smartpos.domain.usecase.GetTableByIdUseCase
 import com.autobill.smartpos.domain.usecase.ObserveConnectivityUseCase
+import com.autobill.smartpos.feature.order.R
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,6 +37,7 @@ import javax.inject.Inject
 @HiltViewModel
 class CreateOrderViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
+    @ApplicationContext private val context: Context,
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
     private val getTableByIdUseCase: GetTableByIdUseCase,
     private val getCartUseCase: GetCartUseCase,
@@ -68,7 +72,7 @@ class CreateOrderViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isTableLoading = false,
-                        errorMessage = "Session error — please log in again.",
+                        errorMessage = context.getString(R.string.error_session_expired),
                     )
                 }
                 return@launch
@@ -135,7 +139,7 @@ class CreateOrderViewModel @Inject constructor(
                                 it.copy(
                                     isSubmitting = false,
                                     errorMessage = result.exception.message
-                                        ?: "Failed to place order. Please try again.",
+                                        ?: context.getString(R.string.error_place_order_failed),
                                 )
                             }
                         }
@@ -172,7 +176,7 @@ class CreateOrderViewModel @Inject constructor(
             is Result.Failure -> _uiState.update {
                 it.copy(
                     isTableLoading = false,
-                    errorMessage = "Could not load table details: ${result.exception.message}",
+                    errorMessage = context.getString(R.string.error_load_table_details, result.exception.message ?: ""),
                 )
             }
             Result.Loading -> Unit

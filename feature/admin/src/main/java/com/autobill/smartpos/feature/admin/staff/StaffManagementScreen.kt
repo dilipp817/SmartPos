@@ -44,6 +44,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.autobill.smartpos.domain.model.User
@@ -53,6 +54,7 @@ import com.autobill.smartpos.domain.model.canCancelOrders
 import com.autobill.smartpos.domain.model.canManageMenu
 import com.autobill.smartpos.domain.model.canManageTables
 import com.autobill.smartpos.domain.model.isSuperAdmin
+import com.autobill.smartpos.feature.admin.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,10 +66,10 @@ fun StaffManagementScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Staff Management") },
+                title = { Text(stringResource(R.string.staff_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },
             )
@@ -91,7 +93,7 @@ fun StaffManagementScreen(
                 // ── Current Session User ───────────────────────────────────
                 uiState.currentUser?.let { user ->
                     Text(
-                        "Active Session",
+                        stringResource(R.string.staff_section_active_session),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                     )
@@ -101,7 +103,7 @@ fun StaffManagementScreen(
 
                     // ── Role Permissions ──────────────────────────────────
                     Text(
-                        "Role Permissions",
+                        stringResource(R.string.staff_section_role_permissions),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                     )
@@ -112,7 +114,7 @@ fun StaffManagementScreen(
 
                 // ── Role Guide ─────────────────────────────────────────────
                 Text(
-                    "Role Guide",
+                    stringResource(R.string.staff_section_role_guide),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                 )
@@ -137,17 +139,14 @@ fun StaffManagementScreen(
                         Spacer(Modifier.width(12.dp))
                         Column {
                             Text(
-                                "Backend-Managed Accounts",
+                                stringResource(R.string.staff_backend_accounts_title),
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                             )
                             Spacer(Modifier.height(4.dp))
                             Text(
-                                "User accounts for this outlet are created and managed by your " +
-                                "system administrator directly on the backend. " +
-                                "Each billing counter is assigned its own account " +
-                                "(e.g. counter_1, counter_2) — all sharing the same restaurantId.",
+                                stringResource(R.string.staff_backend_accounts_message),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                             )
@@ -189,7 +188,7 @@ private fun CurrentUserCard(user: User) {
                         color = MaterialTheme.colorScheme.primaryContainer,
                     ) {
                         Text(
-                            text = if (user.isSuperAdmin()) "super_admin" else user.role.uppercase(),
+                            text = if (user.isSuperAdmin()) stringResource(R.string.staff_role_super_admin) else user.role.uppercase(),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
@@ -200,16 +199,16 @@ private fun CurrentUserCard(user: User) {
 
             HorizontalDivider()
 
-            ProfileRow(icon = Icons.Default.Email,       label = "Email",       value = user.email)
-            ProfileRow(icon = Icons.Default.AdminPanelSettings, label = "User ID",  value = "#${user.id}")
+            ProfileRow(icon = Icons.Default.Email,       label = stringResource(R.string.staff_profile_email),       value = user.email)
+            ProfileRow(icon = Icons.Default.AdminPanelSettings, label = stringResource(R.string.staff_profile_user_id),  value = stringResource(R.string.staff_profile_user_id_value, user.id))
             if (!user.restaurantId?.toString().isNullOrBlank()) {
-                ProfileRow(icon = Icons.Default.Badge, label = "Restaurant",  value = "ID ${user.restaurantId}")
+                ProfileRow(icon = Icons.Default.Badge, label = stringResource(R.string.staff_profile_restaurant),  value = stringResource(R.string.staff_profile_restaurant_value, user.restaurantId!!))
             }
             user.deviceId?.takeIf { it.isNotBlank() }?.let { deviceId ->
                 ProfileRow(
                     icon  = Icons.Default.DevicesOther,
-                    label = "Device",
-                    value = "$deviceId · ${user.deviceType ?: "unknown"}",
+                    label = stringResource(R.string.staff_profile_device),
+                    value = "$deviceId · ${user.deviceType ?: stringResource(R.string.staff_device_type_unknown)}",
                 )
             }
         }
@@ -245,22 +244,22 @@ private fun RolePermissionsCard(user: User) {
         ) {
             PermissionRow(
                 icon    = Icons.Default.Cancel,
-                label   = "Cancel Orders",
+                label   = stringResource(R.string.staff_perm_cancel_orders),
                 granted = user.canCancelOrders(),
             )
             PermissionRow(
                 icon    = Icons.Default.LocalOffer,
-                label   = "Apply Discounts",
+                label   = stringResource(R.string.staff_perm_apply_discounts),
                 granted = user.canApplyDiscounts(),
             )
             PermissionRow(
                 icon    = Icons.Default.RestaurantMenu,
-                label   = "Manage Menu",
+                label   = stringResource(R.string.staff_perm_manage_menu),
                 granted = user.canManageMenu(),
             )
             PermissionRow(
                 icon    = Icons.Default.TableBar,
-                label   = "Manage Tables",
+                label   = stringResource(R.string.staff_perm_manage_tables),
                 granted = user.canManageTables(),
             )
         }
@@ -287,7 +286,7 @@ private fun PermissionRow(icon: ImageVector, label: String, granted: Boolean) {
         )
         Icon(
             if (granted) Icons.Default.Check else Icons.Default.Cancel,
-            contentDescription = if (granted) "Granted" else "Denied",
+            contentDescription = if (granted) stringResource(R.string.staff_perm_granted_cd) else stringResource(R.string.staff_perm_denied_cd),
             tint = if (granted) MaterialTheme.colorScheme.primary
                    else MaterialTheme.colorScheme.error,
             modifier = Modifier.size(18.dp),
@@ -304,26 +303,22 @@ private fun RoleGuideCard() {
         ) {
             RoleRow(
                 role        = UserRole.STAFF,
-                description = "Counter billing staff — can browse menu, manage cart, " +
-                              "place orders and process payments.",
+                description = stringResource(R.string.staff_role_counter_desc),
             )
             HorizontalDivider()
             RoleRow(
                 role        = UserRole.MANAGER,
-                description = "All staff permissions + cancel orders, apply discounts, " +
-                              "manage tables.",
+                description = stringResource(R.string.staff_role_manager_desc),
             )
             HorizontalDivider()
             RoleRow(
                 role        = UserRole.ADMIN,
-                description = "All manager permissions + manage menu items, categories, " +
-                              "and restaurant settings.",
+                description = stringResource(R.string.staff_role_admin_desc),
             )
             HorizontalDivider()
             RoleRow(
-                role        = "super_admin",
-                description = "Cross-outlet access — all admin permissions across every " +
-                              "outlet. Restaurant ID is null.",
+                role        = stringResource(R.string.staff_role_super_admin),
+                description = stringResource(R.string.staff_role_super_admin_desc),
             )
         }
     }
@@ -350,4 +345,3 @@ private fun RoleRow(role: String, description: String) {
         )
     }
 }
-

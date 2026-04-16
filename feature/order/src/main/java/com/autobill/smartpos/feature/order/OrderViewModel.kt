@@ -1,5 +1,6 @@
 package com.autobill.smartpos.feature.order
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.autobill.smartpos.domain.common.Result
@@ -14,7 +15,9 @@ import com.autobill.smartpos.domain.usecase.ObserveConnectionStateUseCase
 import com.autobill.smartpos.domain.usecase.ObserveOrderEventsUseCase
 import com.autobill.smartpos.domain.usecase.ObserveRolePermissionsUseCase
 import com.autobill.smartpos.domain.usecase.SearchOrdersUseCase
+import com.autobill.smartpos.feature.order.R
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -40,6 +43,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class OrderViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val getAllOrdersUseCase: GetAllOrdersUseCase,
     private val getActiveOrdersUseCase: GetActiveOrdersUseCase,
     private val getOrdersByStatusUseCase: GetOrdersByStatusUseCase,
@@ -80,7 +84,7 @@ class OrderViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        errorMessage = "No restaurant assigned to this account. Please log in again.",
+                        errorMessage = context.getString(R.string.error_no_restaurant_session),
                     )
                 }
                 return@launch
@@ -183,7 +187,7 @@ class OrderViewModel @Inject constructor(
                 is Result.Failure -> _uiState.update {
                     it.copy(
                         isLoading = false,
-                        errorMessage = result.exception.message ?: "Search failed.",
+                        errorMessage = result.exception.message ?: context.getString(R.string.error_search_failed),
                     )
                 }
                 Result.Loading -> Unit
@@ -236,7 +240,7 @@ class OrderViewModel @Inject constructor(
                 )
                 is Result.Failure -> it.copy(
                     isLoading = false,
-                    errorMessage = result.exception.message ?: "Failed to load orders. Please try again.",
+                    errorMessage = result.exception.message ?: context.getString(R.string.error_load_orders_failed),
                 )
                 Result.Loading -> it.copy(isLoading = true)
             }

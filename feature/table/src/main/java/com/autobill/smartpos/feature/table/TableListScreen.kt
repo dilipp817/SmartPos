@@ -42,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.autobill.smartpos.domain.model.Table
@@ -85,9 +86,10 @@ fun TableListScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Status update success (green snackbar)
+    val statusUpdatedMsg = stringResource(R.string.table_status_updated_snackbar)
     LaunchedEffect(uiState.statusUpdateSuccess) {
         if (uiState.statusUpdateSuccess) {
-            snackbarHostState.showSnackbar("Table status updated ✓")
+            snackbarHostState.showSnackbar(statusUpdatedMsg)
             onStatusUpdateSuccessConsumed()
         }
     }
@@ -147,10 +149,8 @@ fun TableListScreen(
         if (uiState.canManageTables) {
             ExtendedFloatingActionButton(
                 onClick = onAddTable,
-                icon = {
-                    Icon(Icons.Default.Add, contentDescription = null)
-                },
-                text = { Text("Add Table") },
+                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                text = { Text(stringResource(R.string.table_fab_add)) },
                 containerColor = Color(0xFFE33E3E),
                 contentColor = Color.White,
                 modifier = Modifier
@@ -234,13 +234,13 @@ private fun TableHeader(
         IconButton(onClick = onBack) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
+                contentDescription = stringResource(R.string.cd_back),
                 tint = Color(0xFF212121),
             )
         }
 
         Text(
-            text = "Select a Table",
+            text = stringResource(R.string.table_list_title),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF212121),
@@ -263,7 +263,7 @@ private fun TableHeader(
                         .background(Color(0xFF4CAF50)),
                 )
                 Text(
-                    text = "$availableCount available",
+                    text = stringResource(R.string.table_available_count, availableCount),
                     style = MaterialTheme.typography.labelMedium,
                     color = Color(0xFF2E7D32),
                     fontWeight = FontWeight.SemiBold,
@@ -274,7 +274,7 @@ private fun TableHeader(
         IconButton(onClick = onRefresh) {
             Icon(
                 imageVector = Icons.Default.Refresh,
-                contentDescription = "Refresh",
+                contentDescription = stringResource(R.string.cd_refresh),
                 tint = Color(0xFF757575),
             )
         }
@@ -297,7 +297,14 @@ private fun TableFilterRow(
             FilterChip(
                 selected = selectedFilter == filter,
                 onClick = { onFilterSelect(filter) },
-                label = { Text(filter.label, style = MaterialTheme.typography.labelMedium) },
+                label = {
+                    val filterLabel = when (filter) {
+                        TableFilter.ALL       -> stringResource(R.string.table_filter_all)
+                        TableFilter.AVAILABLE -> stringResource(R.string.table_filter_available)
+                        TableFilter.OCCUPIED  -> stringResource(R.string.table_filter_occupied)
+                    }
+                    Text(filterLabel, style = MaterialTheme.typography.labelMedium)
+                },
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = Color(0xFFE33E3E),
                     selectedLabelColor = Color.White,
@@ -343,7 +350,7 @@ private fun TableLoadingGrid() {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             CircularProgressIndicator(color = Color(0xFFE33E3E))
             Spacer(modifier = Modifier.height(12.dp))
-            Text("Loading tables…", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF757575))
+            Text(stringResource(R.string.table_list_loading), style = MaterialTheme.typography.bodyMedium, color = Color(0xFF757575))
         }
     }
 }
@@ -358,9 +365,9 @@ private fun TableEmptyState(filter: TableFilter) {
             Text("🪑", style = MaterialTheme.typography.displayMedium)
             Text(
                 text = when (filter) {
-                    TableFilter.ALL       -> "No tables found"
-                    TableFilter.AVAILABLE -> "No available tables right now"
-                    TableFilter.OCCUPIED  -> "No tables are currently occupied"
+                    TableFilter.ALL       -> stringResource(R.string.table_empty_all)
+                    TableFilter.AVAILABLE -> stringResource(R.string.table_empty_available)
+                    TableFilter.OCCUPIED  -> stringResource(R.string.table_empty_occupied)
                 },
                 style = MaterialTheme.typography.bodyLarge,
                 color = Color(0xFF757575),
@@ -379,7 +386,7 @@ private fun TableErrorState(message: String, onRetry: () -> Unit) {
             Text("⚠️", style = MaterialTheme.typography.displayMedium)
             Text(message, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF757575))
             androidx.compose.material3.TextButton(onClick = onRetry) {
-                Text("Retry", color = Color(0xFFE33E3E))
+                Text(stringResource(R.string.retry), color = Color(0xFFE33E3E))
             }
         }
     }

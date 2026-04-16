@@ -25,7 +25,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import coil.compose.AsyncImage
+import com.autobill.smartpos.ui.R
 
 @Composable
 fun MenuItemCard(
@@ -131,7 +133,7 @@ fun OrderCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
-                    text = "Total",
+                    text = stringResource(R.string.card_total_label),
                     style = MaterialTheme.typography.labelMedium,
                 )
                 Text(
@@ -221,14 +223,14 @@ fun QuantityControl(
             onClick = { if (quantity > 1) onQuantityChange(quantity - 1) },
             modifier = Modifier.width(32.dp),
         ) {
-            Text("-")
+            Text(stringResource(R.string.card_qty_decrease))
         }
         Text(quantity.toString(), style = MaterialTheme.typography.labelMedium)
         IconButton(
             onClick = { onQuantityChange(quantity + 1) },
             modifier = Modifier.width(32.dp),
         ) {
-            Text("+")
+            Text(stringResource(R.string.card_qty_increase))
         }
     }
 }

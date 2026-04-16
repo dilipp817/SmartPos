@@ -14,8 +14,10 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.autobill.smartpos.ui.R
 
 // Search Field - Search menu items, orders, customers
 @Composable
@@ -23,7 +25,7 @@ fun SearchField(
     query: String,
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    placeholder: String = "Search...",
+    placeholder: String = stringResource(R.string.input_search_placeholder),
     enabled: Boolean = true,
 ) {
     TextField(
@@ -38,7 +40,7 @@ fun SearchField(
         trailingIcon = if (query.isNotEmpty()) {
             {
                 IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Default.Clear, contentDescription = "Clear search")
+                    Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.input_cd_clear))
                 }
             }
         } else null,
@@ -56,7 +58,7 @@ fun NumberField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    label: String = "Enter number",
+    label: String = stringResource(R.string.input_number_label),
     enabled: Boolean = true,
 ) {
     TextField(
@@ -117,7 +119,7 @@ fun DiscountField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    label: String = "Discount Amount",
+    label: String = stringResource(R.string.input_discount_label),
 ) {
     TextField(
         value = value,
@@ -139,4 +141,3 @@ fun DiscountField(
         singleLine = true,
     )
 }
-

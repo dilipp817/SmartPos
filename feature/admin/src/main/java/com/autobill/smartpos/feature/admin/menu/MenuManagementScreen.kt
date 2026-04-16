@@ -42,7 +42,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import com.autobill.smartpos.domain.model.Food
+import com.autobill.smartpos.feature.admin.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -110,12 +112,12 @@ fun MenuManagementScreen(
     uiState.deletingFood?.let { food ->
         AlertDialog(
             onDismissRequest = onCancelDelete,
-            title = { Text("Delete \"${food.name}\"?") },
-            text  = { Text("This action cannot be undone.") },
+            title = { Text(stringResource(R.string.menu_delete_dialog_title, food.name)) },
+            text  = { Text(stringResource(R.string.menu_delete_dialog_message)) },
             confirmButton = {
-                TextButton(onClick = onConfirmDelete) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                TextButton(onClick = onConfirmDelete) { Text(stringResource(R.string.menu_delete_confirm), color = MaterialTheme.colorScheme.error) }
             },
-            dismissButton = { TextButton(onClick = onCancelDelete) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = onCancelDelete) { Text(stringResource(R.string.cancel)) } },
         )
     }
 
@@ -124,17 +126,17 @@ fun MenuManagementScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Menu Management") },
+                title = { Text(stringResource(R.string.menu_management_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },
             )
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onCreateClick) {
-                Icon(Icons.Default.Add, contentDescription = "Add menu item")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_add))
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -145,7 +147,7 @@ fun MenuManagementScreen(
             OutlinedTextField(
                 value         = uiState.searchQuery,
                 onValueChange = onSearchQueryChange,
-                placeholder   = { Text("Search menu items…") },
+                placeholder   = { Text(stringResource(R.string.menu_search_placeholder)) },
                 leadingIcon   = { Icon(Icons.Default.Search, null) },
                 singleLine    = true,
                 modifier      = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
@@ -158,8 +160,8 @@ fun MenuManagementScreen(
             } else if (filteredFoods.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
-                        if (uiState.searchQuery.isBlank()) "No menu items yet.\nTap + to add one."
-                        else "No results for \"${uiState.searchQuery}\"",
+                        if (uiState.searchQuery.isBlank()) stringResource(R.string.menu_empty_no_items)
+                        else stringResource(R.string.menu_empty_no_results, uiState.searchQuery),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -201,9 +203,9 @@ private fun FoodItemRow(
                          style = MaterialTheme.typography.titleSmall,
                          fontWeight = FontWeight.SemiBold)
                     if (!food.isAvailable)
-                        Badge(containerColor = MaterialTheme.colorScheme.error) { Text("Unavailable") }
+                        Badge(containerColor = MaterialTheme.colorScheme.error) { Text(stringResource(R.string.menu_badge_unavailable)) }
                     if (food.isVegetarian)
-                        Badge(containerColor = MaterialTheme.colorScheme.tertiary) { Text("Veg") }
+                        Badge(containerColor = MaterialTheme.colorScheme.tertiary) { Text(stringResource(R.string.menu_badge_veg)) }
                 }
                 Text("₹${"%.2f".format(food.price)}",
                      style = MaterialTheme.typography.bodyMedium,
@@ -215,14 +217,13 @@ private fun FoodItemRow(
             }
             Spacer(Modifier.width(8.dp))
             IconButton(onClick = onEdit, modifier = Modifier.size(36.dp)) {
-                Icon(Icons.Default.Edit, contentDescription = "Edit",
+                Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.cd_edit),
                      tint = MaterialTheme.colorScheme.primary)
             }
             IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete",
+                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.cd_delete),
                      tint = MaterialTheme.colorScheme.error)
             }
         }
     }
 }
-

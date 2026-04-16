@@ -9,10 +9,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.autobill.smartpos.domain.common.UiState
-import com.autobill.smartpos.domain.model.Category
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -47,21 +47,28 @@ fun HomeRoute(
     val sortOption by viewModel.sortOption.collectAsStateWithLifecycle()
     val rolePermissions by viewModel.rolePermissions.collectAsStateWithLifecycle()
     val categories by viewModel.categories.collectAsStateWithLifecycle()
-    val sessionUser by viewModel.sessionUser.collectAsStateWithLifecycle()
+    // Real restaurant name — sourced from GET /restaurants/{id} cache populated by MainViewModel
+    val restaurantName by viewModel.restaurantName.collectAsStateWithLifecycle()
 
     // Observe cart state — all sourced from CartViewModel
     val cartItems by cartViewModel.cartItems.collectAsStateWithLifecycle()
     val cartTotals by cartViewModel.cartTotals.collectAsStateWithLifecycle()
+
+    // ── String resources ────────────────────────────────────────────────────
+    val strNewSale          = stringResource(R.string.new_sale)
+    val strDefaultTable     = stringResource(R.string.cart_default_table_number)
+    val strAppTitle         = stringResource(R.string.brand_name)
+    val strSortByDefault    = stringResource(R.string.sort_by)
+    val strLogoutTitle      = stringResource(R.string.logout_dialog_title)
+    val strLogoutMessage    = stringResource(R.string.logout_dialog_message)
+    val strLogoutConfirm    = stringResource(R.string.logout_confirm)
+    val strCancel           = stringResource(R.string.cancel)
 
     // Sort dialog state
     var showSortDialog by remember { mutableStateOf(false) }
 
     // Logout confirmation dialog state — prevents accidental logout on POS counters
     var showLogoutDialog by remember { mutableStateOf(false) }
-
-    // Generated once per composition entry — prevents a new value on every recomposition.
-    // TODO(invoice-number): Replace with a server-assigned invoice number from POST /orders.
-    val invoiceNumber = remember { "INV-${System.currentTimeMillis() % 100000}" }
 
     // Helper function to get current date/time
     fun getCurrentDateTime(): String {
@@ -83,8 +90,9 @@ fun HomeRoute(
         }
         return CartSummaryData(
             invoice = InvoiceData(
-                invoiceNumber = invoiceNumber,
-                tableNumber = "T-01",
+                // No order exists yet — real number assigned by POST /orders at checkout
+                invoiceNumber = strNewSale,
+                tableNumber = strDefaultTable,
                 dateTime = getCurrentDateTime(),
                 onChangeInvoice = {},
             ),
@@ -108,10 +116,8 @@ fun HomeRoute(
     }
 
     fun buildHeader() = HeaderData(
-        appTitle = "SmartPos",
-        // TODO(restaurant-name): Replace with restaurant profile name once
-        //  GET /restaurant/{id} is available in the backend API contract.
-        businessName = sessionUser?.username ?: "SmartPos",
+        appTitle = strAppTitle,
+        businessName = restaurantName,
         selectedTab = selectedTab,
         onTabChange = { tab -> viewModel.switchTab(tab) },
         onProfileClick = { showLogoutDialog = true },
@@ -123,7 +129,7 @@ fun HomeRoute(
         searchQuery = searchQuery,
         categories = categories.map { CategoryUI(id = it.id.toString(), name = it.name) },
         selectedCategoryId = selectedCategory,
-        sortOption = sortOption ?: "Sort by",
+        sortOption = sortOption ?: strSortByDefault,
         onSearchChange = { viewModel.updateSearchQuery(it) },
         onCategorySelect = { viewModel.selectCategory(it) },
         onSortClick = { showSortDialog = true },
@@ -215,8 +221,8 @@ fun HomeRoute(
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
-            title = { Text("Log out?") },
-            text = { Text("You will be returned to the login screen. Any unsaved cart items will be lost.") },
+            title = { Text(strLogoutTitle) },
+            text = { Text(strLogoutMessage) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -224,12 +230,12 @@ fun HomeRoute(
                         onLogout()
                     }
                 ) {
-                    Text("Log out")
+                    Text(strLogoutConfirm)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("Cancel")
+                    Text(strCancel)
                 }
             },
         )

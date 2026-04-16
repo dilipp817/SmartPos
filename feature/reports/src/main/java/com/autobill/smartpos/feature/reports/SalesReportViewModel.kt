@@ -1,11 +1,13 @@
 package com.autobill.smartpos.feature.reports
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
 import com.autobill.smartpos.domain.usecase.GetSalesReportUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,6 +26,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class SalesReportViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val getSalesReportUseCase: GetSalesReportUseCase,
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
 ) : ViewModel() {
@@ -40,7 +43,7 @@ class SalesReportViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading    = false,
-                        errorMessage = "No restaurant session found. Please log in again.",
+                        errorMessage = context.getString(R.string.error_no_restaurant_session),
                     )
                 }
             } else {
@@ -77,7 +80,7 @@ class SalesReportViewModel @Inject constructor(
                     it.copy(isLoading = false, report = result.data, errorMessage = null)
                 }
                 is Result.Failure -> _uiState.update {
-                    it.copy(isLoading = false, errorMessage = result.exception.message ?: "Failed to load report")
+                    it.copy(isLoading = false, errorMessage = result.exception.message ?: context.getString(R.string.error_load_report_failed))
                 }
                 Result.Loading    -> Unit
             }
@@ -86,4 +89,3 @@ class SalesReportViewModel @Inject constructor(
 
     fun dismissError() { _uiState.update { it.copy(errorMessage = null) } }
 }
-

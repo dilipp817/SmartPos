@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ── Admin Dashboard ───────────────────────────────────────────────── -->
+    <string name="admin_dashboard_title">Admin Dashboard</string>
+    <string name="admin_super_admin_label">Super Admin  ·  All Outlets</string>
+    <string name="admin_live_overview">Live Overview</string>
+    <string name="admin_stat_revenue">Today\'s Revenue</string>
+    <string name="admin_stat_active_orders">Active Orders</string>
+    <string name="admin_stat_free_tables">Free Tables</string>
+    <string name="admin_stat_offline_queue">Offline Queue</string>
+    <string name="admin_quick_actions">Quick Actions</string>
+    <string name="admin_action_menu_management">Menu\nManagement</string>
+    <string name="admin_action_restaurant_settings">Restaurant\nSettings</string>
+    <string name="admin_action_sales_reports">Sales\nReports</string>
+    <string name="admin_action_staff_management">Staff\nManagement</string>
+    <string name="admin_action_inventory_tracking">Inventory\nTracking</string>
+    <string name="admin_outlet_info">Outlet Info</string>
+    <string name="admin_outlet_name_label">Name</string>
+    <string name="admin_outlet_address_label">Address</string>
+    <string name="admin_outlet_phone_label">Phone</string>
+    <string name="admin_outlet_currency_label">Currency</string>
+    <string name="admin_outlet_tax_rate_label">Tax Rate</string>
+    <string name="admin_outlet_tips_label">Tips</string>
+    <string name="admin_tips_enabled">Enabled</string>
+    <string name="admin_tips_disabled">Disabled</string>
+    <string name="admin_super_admin_view_title">Super Admin View</string>
+    <string name="admin_super_admin_view_message">You have cross-outlet access.\nSelect an outlet from Settings to view its dashboard.</string>
+
+    <!-- ── Settings ──────────────────────────────────────────────────────── -->
+    <string name="settings_title">Restaurant Settings</string>
+    <string name="settings_section_outlet">Outlet</string>
+    <string name="settings_section_tax">Tax</string>
+    <string name="settings_field_tax_rate">Tax Rate (%)</string>
+    <string name="settings_toggle_tax_inclusive_label">Tax Inclusive Pricing</string>
+    <string name="settings_toggle_tax_inclusive_sub">Displayed prices already include tax</string>
+    <string name="settings_section_tips">Tips</string>
+    <string name="settings_toggle_tips_label">Enable Tips</string>
+    <string name="settings_toggle_tips_sub">Show tip input on payment screen</string>
+    <string name="settings_field_default_tip">Default Tip (%)</string>
+    <string name="settings_section_printing">Printing</string>
+    <string name="settings_toggle_auto_print_label">Auto Print Bill</string>
+    <string name="settings_toggle_auto_print_sub">Automatically trigger print after bill generation</string>
+    <string name="settings_save_button">Save Settings</string>
+    <string name="settings_saved_success">Settings saved</string>
+    <string name="settings_save_failed">Save failed</string>
+
+    <!-- ── Inventory ──────────────────────────────────────────────────────── -->
+    <string name="inventory_title">Inventory Tracking</string>
+    <string name="inventory_filter_available">Available</string>
+    <string name="inventory_filter_unavailable">Unavailable</string>
+    <string name="inventory_filter_total">Total</string>
+    <string name="inventory_search_placeholder">Search food items…</string>
+    <string name="inventory_no_items_match">No items match the current filter.</string>
+    <string name="inventory_filter_all">All</string>
+    <string name="inventory_update_availability_failed">Failed to update availability</string>
+    <!-- %1$s = food name -->
+    <string name="inventory_marked_available">%1$s marked available</string>
+    <string name="inventory_marked_unavailable">%1$s marked unavailable</string>
+
+    <!-- ── Menu Management ───────────────────────────────────────────────── -->
+    <string name="menu_management_title">Menu Management</string>
+    <!-- %1$s = food name -->
+    <string name="menu_delete_dialog_title">Delete \"%1$s\"?</string>
+    <string name="menu_delete_dialog_message">This action cannot be undone.</string>
+    <string name="menu_delete_confirm">Delete</string>
+    <string name="menu_search_placeholder">Search menu items…</string>
+    <string name="menu_empty_no_items">No menu items yet.\nTap + to add one.</string>
+    <!-- %1$s = search query -->
+    <string name="menu_empty_no_results">No results for \"%1$s\"</string>
+    <string name="menu_badge_unavailable">Unavailable</string>
+    <string name="menu_badge_veg">Veg</string>
+    <string name="menu_item_created">Item created</string>
+    <string name="menu_item_updated">Item updated</string>
+    <string name="menu_save_failed">Save failed</string>
+    <string name="menu_delete_failed">Delete failed</string>
+    <!-- %1$s = food name -->
+    <string name="menu_item_deleted">%1$s deleted</string>
+
+    <!-- ── Form validation ───────────────────────────────────────────────── -->
+    <string name="validation_name_required">Name is required</string>
+    <string name="validation_price_required">Price is required</string>
+    <string name="validation_price_invalid">Invalid price</string>
+    <string name="validation_price_negative">Price must be ≥ 0</string>
+
+    <!-- ── Food Form dialog ──────────────────────────────────────────────── -->
+    <string name="food_form_title_add">Add Menu Item</string>
+    <string name="food_form_title_edit">Edit Menu Item</string>
+    <string name="food_form_field_name">Name *</string>
+    <string name="food_form_field_price">Price (₹) *</string>
+    <string name="food_form_field_description">Description</string>
+    <string name="food_form_field_category">Category</string>
+    <string name="food_form_category_none">None</string>
+    <string name="food_form_field_image_url">Image URL</string>
+    <string name="food_form_field_prep_time">Prep (min)</string>
+    <string name="food_form_field_calories">Calories</string>
+    <string name="food_form_field_allergens">Allergens (comma separated)</string>
+    <string name="food_form_toggle_vegetarian">Vegetarian</string>
+    <string name="food_form_toggle_spicy">Spicy</string>
+    <string name="food_form_toggle_available">Available</string>
+    <string name="food_form_button_create">Create</string>
+    <string name="food_form_button_update">Update</string>
+
+    <!-- ── Staff Management ──────────────────────────────────────────────── -->
+    <string name="staff_title">Staff Management</string>
+    <string name="staff_section_active_session">Active Session</string>
+    <string name="staff_section_role_permissions">Role Permissions</string>
+    <string name="staff_section_role_guide">Role Guide</string>
+    <string name="staff_backend_accounts_title">Backend-Managed Accounts</string>
+    <string name="staff_backend_accounts_message">User accounts for this outlet are created and managed by your system administrator directly on the backend. Each billing counter is assigned its own account.</string>
+    <string name="staff_role_super_admin">super_admin</string>
+    <string name="staff_profile_email">Email</string>
+    <string name="staff_profile_user_id">User ID</string>
+    <!-- %1$d = user id -->
+    <string name="staff_profile_user_id_value">#%1$d</string>
+    <string name="staff_profile_restaurant">Restaurant</string>
+    <!-- %1$d = restaurant id -->
+    <string name="staff_profile_restaurant_value">ID %1$d</string>
+    <string name="staff_profile_device">Device</string>
+    <string name="staff_device_type_unknown">unknown</string>
+    <string name="staff_perm_cancel_orders">Cancel Orders</string>
+    <string name="staff_perm_apply_discounts">Apply Discounts</string>
+    <string name="staff_perm_manage_menu">Manage Menu</string>
+    <string name="staff_perm_manage_tables">Manage Tables</string>
+    <string name="staff_perm_granted_cd">Granted</string>
+    <string name="staff_perm_denied_cd">Denied</string>
+    <string name="staff_role_counter_desc">Counter billing staff — can browse menu, manage cart, place orders and process payments.</string>
+    <string name="staff_role_manager_desc">All staff permissions + cancel orders, apply discounts, manage tables.</string>
+    <string name="staff_role_admin_desc">All manager permissions + manage menu items, categories, and restaurant settings.</string>
+    <string name="staff_role_super_admin_desc">Cross-outlet access — all admin permissions across every outlet. Restaurant ID is null.</string>
+
+    <!-- ── Common ─────────────────────────────────────────────────────────── -->
+    <string name="cd_back">Back</string>
+    <string name="cd_refresh">Refresh</string>
+    <string name="cd_clear">Clear</string>
+    <string name="cd_add">Add menu item</string>
+    <string name="cd_edit">Edit</string>
+    <string name="cd_delete">Delete</string>
+    <string name="cancel">Cancel</string>
+
+</resources>
+
+
+

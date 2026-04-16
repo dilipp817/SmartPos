@@ -1,5 +1,6 @@
 package com.autobill.smartpos.feature.billing
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,7 +12,9 @@ import com.autobill.smartpos.domain.usecase.FreeTableUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
 import com.autobill.smartpos.domain.usecase.ProcessPaymentUseCase
 import com.autobill.smartpos.domain.util.PaymentReferenceGenerator
+import com.autobill.smartpos.feature.billing.R
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -45,6 +48,7 @@ class PaymentViewModel @Inject constructor(
     private val confirmCardPaymentUseCase: ConfirmCardPaymentUseCase,
     private val freeTableUseCase: FreeTableUseCase,
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     private val billId: Long            = checkNotNull(savedStateHandle["billId"])
@@ -76,7 +80,7 @@ class PaymentViewModel @Inject constructor(
         viewModelScope.launch {
             restaurantId = getRestaurantIdUseCase()
             if (restaurantId == null) {
-                _uiState.update { it.copy(errorMessage = "Session error — please log in again.") }
+                _uiState.update { it.copy(errorMessage = context.getString(R.string.error_session_expired)) }
             }
         }
     }
@@ -118,7 +122,7 @@ class PaymentViewModel @Inject constructor(
             val tendered = state.amountTenderedInput.toDoubleOrNull()
             if (tendered == null || tendered < state.effectiveAmount) {
                 _uiState.update {
-                    it.copy(amountTenderedError = "Amount must be ≥ ₹%.2f".format(state.effectiveAmount))
+                    it.copy(amountTenderedError = context.getString(R.string.error_amount_too_low, state.effectiveAmount))
                 }
                 return
             }
@@ -160,18 +164,18 @@ class PaymentViewModel @Inject constructor(
                         payment.status == PaymentStatus.FAILED -> {
                             currentReferenceNumber = PaymentReferenceGenerator.generate()
                             _uiState.update {
-                                it.copy(isProcessing = false, errorMessage = "Payment declined. Please try again.")
+                                it.copy(isProcessing = false, errorMessage = context.getString(R.string.error_payment_declined))
                             }
                         }
                         else -> _uiState.update {
                             it.copy(isProcessing = false,
-                                errorMessage = "Unexpected payment status: ${payment.status.value}")
+                                errorMessage = context.getString(R.string.error_unexpected_payment_status, payment.status.value))
                         }
                     }
                 }
                 is Result.Failure -> _uiState.update {
                     it.copy(isProcessing = false,
-                        errorMessage = result.exception.message ?: "Payment failed. Please retry.")
+                        errorMessage = result.exception.message ?: context.getString(R.string.error_payment_failed))
                 }
                 is Result.Loading -> { /* no-op */ }
             }
@@ -195,7 +199,7 @@ class PaymentViewModel @Inject constructor(
                 }
                 is Result.Failure -> _uiState.update {
                     it.copy(isConfirmingCard = false,
-                        errorMessage = result.exception.message ?: "Failed to confirm payment.")
+                        errorMessage = result.exception.message ?: context.getString(R.string.error_confirm_payment_failed))
                 }
                 is Result.Loading -> { /* no-op */ }
             }

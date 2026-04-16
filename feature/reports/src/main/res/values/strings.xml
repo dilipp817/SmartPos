@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ── Sales Report Screen ───────────────────────────────────────────── -->
+    <string name="sales_report_title">Sales Report</string>
+    <string name="sales_report_empty_hint">Select a date range and tap Load.</string>
+    <string name="sales_report_load_button">Load</string>
+    <string name="sales_report_stat_revenue">Total Revenue</string>
+    <!-- %1$d = delivered count -->
+    <string name="sales_report_stat_orders">Orders (%1$d delivered)</string>
+    <string name="sales_report_stat_avg_order">Avg Order Value</string>
+    <string name="sales_report_top_items_title">Top Selling Items</string>
+    <string name="sales_report_top_items_empty">No items found in this date range.</string>
+    <string name="sales_report_col_rank">#</string>
+    <string name="sales_report_col_item">Item</string>
+    <string name="sales_report_col_qty">Qty</string>
+    <string name="sales_report_col_revenue">Revenue</string>
+
+    <!-- ── Order History Screen ──────────────────────────────────────────── -->
+    <string name="order_history_title">Order History</string>
+    <string name="order_history_load_button">Load</string>
+    <string name="order_history_empty">No orders found for the selected range and filter.</string>
+    <!-- %1$d = table number, %2$d = item count, %3$s = order type -->
+    <string name="order_history_card_summary">Table %1$d  ·  %2$d items  ·  %3$s</string>
+    <!-- %1$.2f = subtotal -->
+    <string name="order_history_subtotal">Subtotal: ₹%1$.2f</string>
+    <!-- %1$.2f = tax -->
+    <string name="order_history_tax">Tax: ₹%1$.2f</string>
+
+    <!-- ── Order History Filter enum labels ──────────────────────────────── -->
+    <string name="history_filter_all">All</string>
+    <string name="history_filter_delivered">Delivered</string>
+    <string name="history_filter_cancelled">Cancelled</string>
+
+    <!-- ── Date picker dialogs (shared by both screens) ──────────────────── -->
+    <string name="date_picker_ok">OK</string>
+    <string name="date_picker_cancel">Cancel</string>
+
+    <!-- ── Error messages ────────────────────────────────────────────────── -->
+    <string name="error_no_restaurant_session">No restaurant session found. Please log in again.</string>
+    <string name="error_load_report_failed">Failed to load report</string>
+    <string name="error_load_order_history_failed">Failed to load order history</string>
+
+    <!-- ── Common ─────────────────────────────────────────────────────────── -->
+    <string name="cd_refresh">Refresh</string>
+
+</resources>
+
+
+

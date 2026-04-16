@@ -1,7 +1,9 @@
 package com.autobill.smartpos.feature.food
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.qualifiers.ApplicationContext
 import com.autobill.smartpos.domain.common.Pagination
 import com.autobill.smartpos.domain.common.PaginationResult
 import com.autobill.smartpos.domain.common.Result
@@ -12,6 +14,7 @@ import com.autobill.smartpos.domain.model.RolePermissions
 import com.autobill.smartpos.domain.usecase.GetCategoriesUseCase
 import com.autobill.smartpos.domain.usecase.GetFoodsPaginatedUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
+import com.autobill.smartpos.domain.usecase.ObserveRestaurantUseCase
 import com.autobill.smartpos.domain.usecase.ObserveRolePermissionsUseCase
 import com.autobill.smartpos.domain.usecase.ObserveSessionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,6 +22,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -42,11 +46,13 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class FoodViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val getFoodsPaginatedUseCase: GetFoodsPaginatedUseCase,
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
     private val getCategoriesUseCase: GetCategoriesUseCase,
     private val observeRolePermissionsUseCase: ObserveRolePermissionsUseCase,
     private val observeSessionUseCase: ObserveSessionUseCase,
+    observeRestaurantUseCase: ObserveRestaurantUseCase,
 ) : ViewModel() {
 
     // ========== FOOD STATE ==========
@@ -77,13 +83,31 @@ class FoodViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), RolePermissions.NONE)
 
     /**
-     * Active session user — used by the UI to display dynamic values such as
-     * the operator's username in the header.
-     * TODO(restaurant-name): Replace username with a restaurant profile name once
-     *  GET /restaurant/{id} is added to the backend API contract.
+     * Active session user — kept private, used only as a username fallback below.
      */
-    val sessionUser = observeSessionUseCase()
+    private val sessionUser = observeSessionUseCase()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), null)
+
+    /**
+     * Restaurant display name for the header.
+     *
+     * Source priority:
+     *  1. [ObserveRestaurantUseCase] — real name from GET /restaurants/{id}, cached by
+     *     [MainViewModel] at every cold app start before navigation resolves.
+     *     Emits null until the first successful fetch (rare on warm starts).
+     *  2. [sessionUser.username] — immediate fallback from the local DataStore session.
+     *  3. "SmartPos" — safe default if neither is available yet.
+     *
+     * In practice this resolves to the real restaurant name within milliseconds of
+     * [HomeRoute] being composed, because [MainViewModel] already ran [GetRestaurantUseCase]
+     * before the navigation stack reached Home.
+     */
+    val restaurantName: StateFlow<String> = combine(
+        observeRestaurantUseCase(),
+        sessionUser,
+    ) { restaurant, user ->
+        restaurant?.name ?: user?.username ?: context.getString(R.string.brand_name)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), context.getString(R.string.brand_name))
 
     // ========== FILTER STATE ==========
 
@@ -109,8 +133,7 @@ class FoodViewModel @Inject constructor(
             restaurantId = getRestaurantIdUseCase()
             if (restaurantId == null) {
                 _paginatedFoodsState.value = UiState.Error(
-                    "No restaurant assigned to this account. " +
-                    "Please log in with a counter or manager account."
+                    context.getString(R.string.error_no_restaurant_assigned)
                 )
                 return@launch
             }
@@ -205,7 +228,7 @@ class FoodViewModel @Inject constructor(
             }
             is PaginationResult.Failure -> {
                 _paginatedFoodsState.value = UiState.Error(
-                    message = result.exception.message ?: "Failed to load foods",
+                    message = result.exception.message ?: context.getString(R.string.error_failed_to_load_foods),
                     exception = result.exception,
                 )
             }

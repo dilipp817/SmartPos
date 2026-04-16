@@ -50,7 +50,8 @@ import androidx.compose.ui.unit.dp
 import com.autobill.smartpos.domain.model.CartItem
 import com.autobill.smartpos.domain.model.OrderType
 import com.autobill.smartpos.domain.model.Table
-import java.util.Locale
+import androidx.compose.ui.res.stringResource
+import com.autobill.smartpos.feature.order.R
 
 /**
  * Create Order confirmation screen.
@@ -108,7 +109,7 @@ fun CreateOrderScreen(
             ) {
                 Text(text = "⚠", style = MaterialTheme.typography.labelMedium)
                 Text(
-                    text       = "Offline — order will be queued and sent when connection restores",
+                    text       = stringResource(R.string.create_order_offline_banner),
                     style      = MaterialTheme.typography.labelMedium,
                     color      = Color(0xFFE65100),
                     fontWeight = FontWeight.Medium,
@@ -118,7 +119,7 @@ fun CreateOrderScreen(
 
         // ── Body ─────────────────────────────────────────────────────────────
         when {
-            uiState.isTableLoading -> CenteredLoading("Loading table details…")
+            uiState.isTableLoading -> CenteredLoading(stringResource(R.string.create_order_loading_table))
             uiState.tableConflict  -> TableConflictBanner(onReselectTable = onReselectTable)
             else -> OrderBody(
                 uiState           = uiState,
@@ -145,12 +146,12 @@ private fun OrderHeader(onBack: () -> Unit) {
         IconButton(onClick = onBack) {
             Icon(
                 Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
+                contentDescription = stringResource(R.string.cd_back),
                 tint = Color(0xFF212121),
             )
         }
         Text(
-            text = "New Order",
+            text = stringResource(R.string.create_order_title),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF212121),
@@ -197,7 +198,7 @@ private fun OrderBody(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
-                text = "Order Items (${uiState.cartItems.sumOf { it.quantity }} items)",
+                text = stringResource(R.string.create_order_items_section, uiState.cartItems.sumOf { it.quantity }),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF212121),
@@ -220,8 +221,8 @@ private fun OrderBody(
             OutlinedTextField(
                 value = uiState.notes,
                 onValueChange = onNotesChange,
-                label = { Text("Table Notes (optional)") },
-                placeholder = { Text("e.g. Birthday table, no nuts") },
+                label = { Text(stringResource(R.string.create_order_table_notes_label)) },
+                placeholder = { Text(stringResource(R.string.create_order_table_notes_placeholder)) },
                 singleLine = false,
                 maxLines = 3,
                 keyboardOptions = KeyboardOptions(
@@ -270,7 +271,7 @@ private fun OrderBody(
                     )
                 } else {
                     Text(
-                        text = "Place Order",
+                        text = stringResource(R.string.create_order_place_button),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                     )
@@ -304,13 +305,13 @@ private fun TableInfoCard(table: Table) {
             )
             Column {
                 Text(
-                    text = "Table ${table.tableNumber}",
+                    text = stringResource(R.string.create_order_table_number, table.tableNumber),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF212121),
                 )
                 Text(
-                    text = "Floor ${table.floor}  ·  👥 ${table.capacity} seats",
+                    text = stringResource(R.string.create_order_table_floor_capacity, table.floor, table.capacity),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFF757575),
                 )
@@ -346,7 +347,7 @@ private fun OrderTypeSelector(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text(
-            text = "Order Type",
+            text = stringResource(R.string.create_order_type_label),
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
             color = Color(0xFF424242),
@@ -419,7 +420,7 @@ private fun CartItemRow(item: CartItem) {
             modifier = Modifier.padding(horizontal = 12.dp),
         )
         Text(
-            text = "₹${String.format(Locale.US, "%.2f", item.subtotal)}",
+            text = "₹${"%.2f".format(item.subtotal)}",
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
             color = Color(0xFF212121),
@@ -430,19 +431,19 @@ private fun CartItemRow(item: CartItem) {
 @Composable
 private fun BillPreviewSection(uiState: CreateOrderUiState) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        BillRow("Subtotal", "₹${String.format(Locale.US, "%.2f", uiState.subtotal)}")
+        BillRow(stringResource(R.string.create_order_subtotal), "₹${"%.2f".format(uiState.subtotal)}")
         BillRow(
-            "Est. GST (18%)",
-            "₹${String.format(Locale.US, "%.2f", uiState.estimatedTax)}",
+            stringResource(R.string.create_order_est_gst),
+            "₹${"%.2f".format(uiState.estimatedTax)}",
             hint = true,
         )
         BillRow(
-            "Est. Total",
-            "₹${String.format(Locale.US, "%.2f", uiState.estimatedTotal)}",
+            stringResource(R.string.create_order_est_total),
+            "₹${"%.2f".format(uiState.estimatedTotal)}",
             bold = true,
         )
         Text(
-            text = "⚠ Actual GST calculated server-side when bill is generated",
+            text = stringResource(R.string.create_order_gst_hint),
             style = MaterialTheme.typography.labelSmall,
             color = Color(0xFF9E9E9E),
         )
@@ -503,13 +504,13 @@ private fun TableConflictBanner(onReselectTable: () -> Unit) {
                 modifier = Modifier.size(48.dp),
             )
             Text(
-                text = "Table No Longer Available",
+                text = stringResource(R.string.create_order_table_conflict_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF212121),
             )
             Text(
-                text = "This table was occupied by another order while you were reviewing your cart.\nPlease go back and select a different table.",
+                text = stringResource(R.string.create_order_table_conflict_message),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color(0xFF757575),
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -519,7 +520,7 @@ private fun TableConflictBanner(onReselectTable: () -> Unit) {
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE33E3E)),
                 shape = RoundedCornerShape(12.dp),
             ) {
-                Text("Re-select Table", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.create_order_reselect_table), fontWeight = FontWeight.Bold)
             }
         }
     }

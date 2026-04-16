@@ -20,8 +20,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.autobill.smartpos.ui.R
 
 /**
  * Reusable Loading & Dialog Components for SmartPos
@@ -38,7 +40,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun FullScreenLoading(
     modifier: Modifier = Modifier,
-    message: String = "Loading...",
+    message: String = stringResource(R.string.loading_default_message),
 ) {
     Box(
         modifier = modifier
@@ -120,8 +122,8 @@ fun ConfirmDialog(
     modifier: Modifier = Modifier,
     title: String,
     message: String,
-    confirmText: String = "Confirm",
-    dismissText: String = "Cancel",
+    confirmText: String = stringResource(R.string.dialog_confirm_default),
+    dismissText: String = stringResource(R.string.dialog_dismiss_default),
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
     isDangerous: Boolean = false,
@@ -180,7 +182,7 @@ fun SimpleAlertDialog(
     modifier: Modifier = Modifier,
     title: String,
     message: String,
-    buttonText: String = "OK",
+    buttonText: String = stringResource(R.string.dialog_ok_default),
     onDismiss: () -> Unit,
 ) {
     AlertDialog(
@@ -244,7 +246,7 @@ fun ErrorBanner(
                 Spacer(modifier = Modifier.width(16.dp))
                 SmartPosTextButton(
                     onClick = onDismiss,
-                    text = "Dismiss",
+                    text = stringResource(R.string.dialog_dismiss_snackbar),
                 )
             }
         }

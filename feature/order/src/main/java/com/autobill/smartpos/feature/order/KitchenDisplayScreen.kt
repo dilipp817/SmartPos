@@ -57,10 +57,12 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import com.autobill.smartpos.domain.model.ConnectionState
 import com.autobill.smartpos.domain.model.ItemStatus
 import com.autobill.smartpos.domain.model.Order
 import com.autobill.smartpos.domain.model.OrderItem
+import com.autobill.smartpos.feature.order.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -179,14 +181,14 @@ private fun KitchenTopBar(
         IconButton(onClick = onBack) {
             Icon(
                 imageVector        = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
+                contentDescription = stringResource(R.string.cd_back),
                 tint               = Color(0xFF212121),
             )
         }
 
         // Kitchen icon emoji + title
         Text(
-            text       = "🍳  Kitchen Display",
+            text       = stringResource(R.string.kitchen_title),
             style      = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color      = Color(0xFF212121),
@@ -202,7 +204,7 @@ private fun KitchenTopBar(
         IconButton(onClick = onRefresh) {
             Icon(
                 imageVector        = Icons.Default.Refresh,
-                contentDescription = "Refresh",
+                contentDescription = stringResource(R.string.cd_refresh),
                 tint               = Color(0xFF757575),
             )
         }
@@ -226,7 +228,7 @@ private fun KitchenConnectionBadge(state: ConnectionState) {
     ) {
         val bgColor   = if (isLive) Color(0xFF1B5E20) else Color(0xFFE65100)
         val textColor = Color.White
-        val label     = if (isLive) "⚡ LIVE" else "⚠ Reconnecting…"
+        val label     = if (isLive) stringResource(R.string.kitchen_badge_live) else stringResource(R.string.kitchen_badge_reconnecting)
 
         Box(
             modifier = Modifier
@@ -275,8 +277,14 @@ private fun KitchenFilterRow(
                 selected = filter == selectedFilter,
                 onClick  = { onFilterSelect(filter) },
                 label    = {
+                    val filterLabel = when (filter) {
+                        KitchenDisplayFilter.ALL_ACTIVE  -> stringResource(R.string.kitchen_filter_all_active)
+                        KitchenDisplayFilter.PENDING     -> stringResource(R.string.kitchen_filter_pending)
+                        KitchenDisplayFilter.IN_PROGRESS -> stringResource(R.string.kitchen_filter_in_progress)
+                        KitchenDisplayFilter.READY       -> stringResource(R.string.kitchen_filter_ready)
+                    }
                     Text(
-                        text       = if (count > 0) "${filter.label}  $count" else filter.label,
+                        text       = if (count > 0) "$filterLabel  $count" else filterLabel,
                         fontWeight = if (filter == selectedFilter) FontWeight.Bold else FontWeight.Normal,
                     )
                 },
@@ -375,7 +383,7 @@ private fun KitchenOrderCardHeader(order: Order) {
                 color      = Color(0xFF212121),
             )
             Text(
-                text  = "Table ${order.tableNumber}",
+                text  = stringResource(R.string.kitchen_table_label, order.tableNumber),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color(0xFF757575),
             )
@@ -521,7 +529,7 @@ private fun KitchenItemRow(
                 ) {
                     Icon(
                         imageVector        = Icons.Default.Lock,
-                        contentDescription = "Locked",
+                        contentDescription = stringResource(R.string.cd_locked),
                         tint               = Color(0xFF9E9E9E),
                         modifier           = Modifier.size(16.dp),
                     )
@@ -546,7 +554,7 @@ private fun KitchenItemRow(
                             shape = RoundedCornerShape(6.dp),
                         ) {
                             Text(
-                                text  = "Cancel",
+                                text  = stringResource(R.string.kitchen_cancel_button),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.SemiBold,
                             )
@@ -568,7 +576,12 @@ private fun KitchenItemRow(
                             shape = RoundedCornerShape(6.dp),
                         ) {
                             Text(
-                                text  = item.itemStatus.kdsActionLabel(),
+                                text  = when (item.itemStatus) {
+                                    ItemStatus.PENDING     -> stringResource(R.string.kitchen_action_start)
+                                    ItemStatus.IN_PROGRESS -> stringResource(R.string.kitchen_action_ready)
+                                    ItemStatus.READY       -> stringResource(R.string.kitchen_action_served)
+                                    else                   -> ""
+                                },
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                             )
@@ -595,7 +608,7 @@ private fun KitchenLoadingState() {
                 strokeWidth = 3.dp,
             )
             Text(
-                text  = "Loading kitchen orders…",
+                text  = stringResource(R.string.kitchen_loading),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color(0xFF757575),
             )
@@ -623,7 +636,7 @@ private fun KitchenErrorState(message: String, onRetry: () -> Unit) {
                 fontWeight = FontWeight.Medium,
             )
             TextButton(onClick = onRetry) {
-                Text("Retry", color = Color(0xFFE33E3E), fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.retry), color = Color(0xFFE33E3E), fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -642,17 +655,17 @@ private fun KitchenEmptyState(filter: KitchenDisplayFilter) {
             Text("✅", style = MaterialTheme.typography.displaySmall)
             Text(
                 text       = when (filter) {
-                    KitchenDisplayFilter.ALL_ACTIVE  -> "No active orders right now"
-                    KitchenDisplayFilter.PENDING     -> "No pending items"
-                    KitchenDisplayFilter.IN_PROGRESS -> "No items being prepared"
-                    KitchenDisplayFilter.READY       -> "No items waiting to be served"
+                    KitchenDisplayFilter.ALL_ACTIVE  -> stringResource(R.string.kitchen_empty_all_active)
+                    KitchenDisplayFilter.PENDING     -> stringResource(R.string.kitchen_empty_pending)
+                    KitchenDisplayFilter.IN_PROGRESS -> stringResource(R.string.kitchen_empty_in_progress)
+                    KitchenDisplayFilter.READY       -> stringResource(R.string.kitchen_empty_ready)
                 },
                 style      = MaterialTheme.typography.titleMedium,
                 color      = Color(0xFF424242),
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
-                text  = "Pull down to refresh",
+                text  = stringResource(R.string.kitchen_pull_to_refresh),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color(0xFF9E9E9E),
             )

@@ -15,15 +15,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.autobill.smartpos.ui.R
 
 // Confirm Dialog - Confirm destructive actions (delete order, cancel bill)
 @Composable
 fun ConfirmDialog(
     title: String,
     message: String,
-    confirmText: String = "Confirm",
-    dismissText: String = "Cancel",
+    confirmText: String = stringResource(R.string.dialog_confirm_default),
+    dismissText: String = stringResource(R.string.dialog_dismiss_default),
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
     isDestructive: Boolean = false,
@@ -56,7 +58,7 @@ fun SmartPosAlertDialog(
     title: String,
     message: String,
     onDismiss: () -> Unit,
-    dismissText: String = "OK",
+    dismissText: String = stringResource(R.string.dialog_ok_default),
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -73,7 +75,7 @@ fun SmartPosAlertDialog(
 // Loading Dialog - Full-screen loading overlay
 @Composable
 fun LoadingDialog(
-    message: String = "Loading...",
+    message: String = stringResource(R.string.loading_default_message),
 ) {
     AlertDialog(
         onDismissRequest = {}, // Can't dismiss
@@ -102,8 +104,8 @@ fun InputDialog(
     placeholder: String = "",
     onConfirm: (String) -> Unit,
     onDismiss: () -> Unit,
-    confirmText: String = "OK",
-    dismissText: String = "Cancel",
+    confirmText: String = stringResource(R.string.dialog_ok_default),
+    dismissText: String = stringResource(R.string.dialog_dismiss_default),
 ) {
     val inputValue = remember { mutableStateOf(initialValue) }
 

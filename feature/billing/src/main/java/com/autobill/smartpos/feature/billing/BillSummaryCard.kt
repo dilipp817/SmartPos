@@ -19,11 +19,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.autobill.smartpos.domain.model.Bill
 import com.autobill.smartpos.domain.model.BillStatus
+import com.autobill.smartpos.feature.billing.R
 
 /**
  * Reusable bill summary card — shows bill number, line items, tax breakdown,
@@ -103,24 +105,24 @@ fun BillSummaryCard(
         }
 
         // ── Tax breakdown ───────────────────────────────────────────────────
-        BillRow(label = "Subtotal", value = "₹%.2f".format(bill.subtotal))
+        BillRow(label = stringResource(R.string.bill_subtotal), value = "₹%.2f".format(bill.subtotal))
         if (bill.cgstAmount > 0) {
             BillRow(
-                label = "CGST (9%)",
+                label = stringResource(R.string.bill_cgst),
                 value = "₹%.2f".format(bill.cgstAmount),
                 labelColor = Color(0xFF757575),
             )
         }
         if (bill.sgstAmount > 0) {
             BillRow(
-                label = "SGST (9%)",
+                label = stringResource(R.string.bill_sgst),
                 value = "₹%.2f".format(bill.sgstAmount),
                 labelColor = Color(0xFF757575),
             )
         }
         if (bill.discountAmount > 0) {
             BillRow(
-                label      = "Discount",
+                label      = stringResource(R.string.bill_discount),
                 value      = "−₹%.2f".format(bill.discountAmount),
                 labelColor = Color(0xFF388E3C),
                 valueColor = Color(0xFF388E3C),
@@ -134,7 +136,7 @@ fun BillSummaryCard(
         // ── Total ───────────────────────────────────────────────────────────
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(
-                text       = "Total",
+                text       = stringResource(R.string.bill_total),
                 style      = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color      = Color(0xFF212121),
@@ -151,13 +153,13 @@ fun BillSummaryCard(
         if (bill.status == BillStatus.PARTIAL && bill.paidAmount > 0) {
             Spacer(modifier = Modifier.height(6.dp))
             BillRow(
-                label      = "Paid so far",
+                label      = stringResource(R.string.bill_paid_so_far),
                 value      = "₹%.2f".format(bill.paidAmount),
                 labelColor = Color(0xFF388E3C),
                 valueColor = Color(0xFF388E3C),
             )
             BillRow(
-                label      = "Remaining",
+                label      = stringResource(R.string.bill_remaining),
                 value      = "₹%.2f".format(bill.remainingAmount),
                 labelColor = Color(0xFFE33E3E),
                 valueColor = Color(0xFFE33E3E),
@@ -201,4 +203,3 @@ fun BillStatusChip(status: BillStatus, modifier: Modifier = Modifier) {
         )
     }
 }
-

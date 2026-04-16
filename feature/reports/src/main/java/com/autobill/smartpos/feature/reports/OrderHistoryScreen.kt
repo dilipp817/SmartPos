@@ -2,14 +2,12 @@ package com.autobill.smartpos.feature.reports
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -47,9 +45,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.autobill.smartpos.domain.model.Order
 import com.autobill.smartpos.domain.model.OrderStatus
@@ -93,10 +91,10 @@ fun OrderHistoryScreen(
             confirmButton = {
                 TextButton(onClick = {
                     state.selectedDateMillis?.let(onStartDateSelected) ?: onDismissStartPicker()
-                }) { Text("OK") }
+                }) { Text(stringResource(R.string.date_picker_ok)) }
             },
             dismissButton = {
-                TextButton(onClick = onDismissStartPicker) { Text("Cancel") }
+                TextButton(onClick = onDismissStartPicker) { Text(stringResource(R.string.date_picker_cancel)) }
             },
         ) { DatePicker(state = state) }
     }
@@ -109,10 +107,10 @@ fun OrderHistoryScreen(
             confirmButton = {
                 TextButton(onClick = {
                     state.selectedDateMillis?.let(onEndDateSelected) ?: onDismissEndPicker()
-                }) { Text("OK") }
+                }) { Text(stringResource(R.string.date_picker_ok)) }
             },
             dismissButton = {
-                TextButton(onClick = onDismissEndPicker) { Text("Cancel") }
+                TextButton(onClick = onDismissEndPicker) { Text(stringResource(R.string.date_picker_cancel)) }
             },
         ) { DatePicker(state = state) }
     }
@@ -141,13 +139,13 @@ fun OrderHistoryScreen(
                     )
                     Spacer(Modifier.width(10.dp))
                     Text(
-                        text       = "Order History",
+                        text       = stringResource(R.string.order_history_title),
                         style      = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                     )
                 }
                 IconButton(onClick = onRefresh, enabled = !uiState.isLoading && !uiState.isRefreshing) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                    Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.cd_refresh))
                 }
             }
 
@@ -192,7 +190,7 @@ fun OrderHistoryScreen(
                         onClick = onLoadOrders,
                         enabled = !uiState.isLoading && !uiState.isRefreshing,
                         shape   = RoundedCornerShape(8.dp),
-                    ) { Text("Load") }
+                    ) { Text(stringResource(R.string.order_history_load_button)) }
                 }
 
                 // Status filter chips
@@ -201,7 +199,14 @@ fun OrderHistoryScreen(
                         FilterChip(
                             selected = uiState.selectedFilter == filter,
                             onClick  = { onFilterSelected(filter) },
-                            label    = { Text(filter.label) },
+                            label    = {
+                                val filterLabel = when (filter) {
+                                    OrderHistoryFilter.ALL       -> stringResource(R.string.history_filter_all)
+                                    OrderHistoryFilter.DELIVERED -> stringResource(R.string.history_filter_delivered)
+                                    OrderHistoryFilter.CANCELLED -> stringResource(R.string.history_filter_cancelled)
+                                }
+                                Text(filterLabel)
+                            },
                             colors   = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                                 selectedLabelColor     = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -230,7 +235,7 @@ fun OrderHistoryScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            text      = "No orders found for the selected range and filter.",
+                            text      = stringResource(R.string.order_history_empty),
                             style     = MaterialTheme.typography.bodyLarge,
                             color     = Color(0xFF757575),
                             textAlign = TextAlign.Center,
@@ -307,7 +312,7 @@ private fun OrderHistoryCard(
                     color      = Color(0xFF212121),
                 )
                 Text(
-                    text  = "Table ${order.tableNumber} · ${order.items.size} items · ${order.orderType.value.replace("_", " ")}",
+                    text  = stringResource(R.string.order_history_card_summary, order.tableNumber, order.items.size, order.orderType.value.replace("_", " ")),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFF616161),
                 )
@@ -338,14 +343,14 @@ private fun OrderHistoryCard(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text  = "Subtotal: ₹%.2f".format(order.subtotal),
+                    text  = stringResource(R.string.order_history_subtotal, order.subtotal),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFF616161),
                 )
                 val tax = order.totalAmount - order.subtotal
                 if (tax > 0.01) {
                     Text(
-                        text  = "Tax: ₹%.2f".format(tax),
+                        text  = stringResource(R.string.order_history_tax, tax),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color(0xFF616161),
                     )

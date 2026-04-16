@@ -13,8 +13,8 @@ import androidx.compose.runtime.Immutable
  */
 @Immutable
 data class HeaderData(
-    val appTitle: String = "ODRfast",
-    val businessName: String = "Best business Pvt Ltd",
+    val appTitle: String = "",
+    val businessName: String = "",
     val businessAvatar: String? = null,
     val selectedTab: OrderTab = OrderTab.OFFLINE,
     val onTabChange: (OrderTab) -> Unit = {},
@@ -50,7 +50,7 @@ data class SearchFilterData(
     val searchQuery: String = "",
     val selectedCategoryId: String? = null,
     val categories: List<CategoryUI> = emptyList(),
-    val sortOption: String = "Sort by",
+    val sortOption: String = "",
     val onSearchChange: (String) -> Unit = {},
     val onCategorySelect: (String) -> Unit = {},
     val onSortClick: () -> Unit = {},
@@ -110,9 +110,9 @@ data class CartItemUI(
  */
 @Immutable
 data class InvoiceData(
-    val invoiceNumber: String = "KKB6266629",
-    val tableNumber: String = "23",
-    val dateTime: String = "Wed Jun 22, 2020 | 05:30 PM",
+    val invoiceNumber: String = "",
+    val tableNumber: String = "",
+    val dateTime: String = "",
     val onChangeInvoice: () -> Unit = {},
 )
 
@@ -149,4 +149,3 @@ data class HomeScreenData(
     val foodGrid: FoodGridData = FoodGridData(),
     val cartSummary: CartSummaryData = CartSummaryData(),
 )
-

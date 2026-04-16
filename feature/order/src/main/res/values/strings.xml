@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ── Order List Screen ─────────────────────────────────────────────── -->
+    <string name="order_list_title">Orders</string>
+    <string name="order_search_placeholder">Search by order no. or table…</string>
+    <string name="order_empty_active">No active orders right now</string>
+    <!-- %1$s = search query -->
+    <string name="order_empty_search">No orders found for \"%1$s\"</string>
+    <!-- %1$s = filter label (lowercased) -->
+    <string name="order_empty_filter">No %1$s orders</string>
+    <string name="order_reconnecting_banner">Live updates paused — reconnecting…</string>
+
+    <!-- ── Order Filter enum labels ──────────────────────────────────────── -->
+    <string name="order_filter_all">All</string>
+    <string name="order_filter_active">Active</string>
+    <string name="order_filter_pending">Pending</string>
+    <string name="order_filter_in_progress">In Progress</string>
+    <string name="order_filter_completed">Completed</string>
+
+    <!-- ── Order Item Card ───────────────────────────────────────────────── -->
+    <!-- %1$d = table number -->
+    <string name="order_card_table">Table %1$d</string>
+    <!-- %1$d = item count -->
+    <string name="order_card_items_count">%1$d item</string>
+    <string name="order_card_items_count_plural">%1$d items</string>
+
+    <!-- ── Order Detail Screen ───────────────────────────────────────────── -->
+    <string name="order_detail_default_title">Order Detail</string>
+    <!-- %1$d = table number -->
+    <string name="order_detail_table">Table %1$d</string>
+    <!-- %1$d = item count -->
+    <string name="order_detail_items_section">Items (%1$d)</string>
+    <string name="order_detail_add_item_button">Add Item</string>
+    <string name="order_detail_no_items">No items in this order</string>
+    <string name="order_detail_generate_bill">Generate Bill</string>
+    <string name="order_detail_cancel_order">Cancel Order</string>
+    <string name="order_detail_subtotal">Subtotal</string>
+    <string name="order_detail_total">Total</string>
+    <string name="order_detail_note_label">Note:</string>
+    <!-- Add item sheet -->
+    <string name="order_add_item_title">Add Item</string>
+    <string name="order_add_item_search_placeholder">Search food…</string>
+    <string name="order_add_item_note_placeholder">Special requests (optional)</string>
+    <string name="order_add_item_confirm">Add</string>
+    <!-- Edit item dialog -->
+    <string name="order_edit_item_title">Edit Item</string>
+    <string name="order_edit_item_quantity_label">Quantity</string>
+    <string name="order_edit_item_note_label">Special requests</string>
+    <string name="order_edit_item_note_placeholder">Optional kitchen note</string>
+    <string name="order_edit_item_save">Save</string>
+    <!-- Cancel order dialog -->
+    <string name="order_cancel_dialog_title">Cancel Order?</string>
+    <!-- %1$s = order number -->
+    <string name="order_cancel_dialog_message">Order %1$s will be permanently cancelled. This cannot be undone.</string>
+    <string name="order_cancel_dialog_confirm">Cancel Order</string>
+    <string name="order_cancel_dialog_dismiss">Keep Order</string>
+    <!-- %1$s = error message -->
+    <string name="order_detail_error_message">Order could not be loaded.</string>
+
+    <!-- ── Create Order Screen ───────────────────────────────────────────── -->
+    <string name="create_order_title">New Order</string>
+    <string name="create_order_offline_banner">Offline — order will be queued and sent when connection restores</string>
+    <string name="create_order_loading_table">Loading table details…</string>
+    <!-- %1$d = item count -->
+    <string name="create_order_items_section">Order Items (%1$d items)</string>
+    <string name="create_order_table_notes_label">Table Notes (optional)</string>
+    <string name="create_order_table_notes_placeholder">e.g. Birthday table, no nuts</string>
+    <string name="create_order_place_button">Place Order</string>
+    <!-- %1$s = table number -->
+    <string name="create_order_table_number">Table %1$s</string>
+    <!-- %1$d = floor, %2$d = capacity -->
+    <string name="create_order_table_floor_capacity">Floor %1$d    👥 %2$d seats</string>
+    <string name="create_order_type_label">Order Type</string>
+    <string name="create_order_subtotal">Subtotal</string>
+    <string name="create_order_est_gst">Est. GST (18%)</string>
+    <string name="create_order_est_total">Est. Total</string>
+    <!-- Table conflict dialog -->
+    <string name="create_order_table_conflict_title">Table No Longer Available</string>
+    <string name="create_order_table_conflict_message">This table was occupied by another order while you were reviewing your cart.\nPlease go back and select a different table.</string>
+    <string name="create_order_reselect_table">Re-select Table</string>
+
+    <!-- ── Kitchen Display Screen ────────────────────────────────────────── -->
+    <string name="kitchen_loading">Loading kitchen orders…</string>
+    <string name="kitchen_pull_to_refresh">Pull down to refresh</string>
+    <string name="kitchen_empty_all_active">No active orders right now</string>
+    <string name="kitchen_empty_pending">No pending items</string>
+    <string name="kitchen_empty_in_progress">No items being prepared</string>
+    <string name="kitchen_empty_ready">No items waiting to be served</string>
+    <!-- %1$d = table number -->
+    <string name="kitchen_table_label">Table %1$d</string>
+    <string name="kitchen_cancel_button">Cancel</string>
+
+    <!-- ── Kitchen filter enum labels ────────────────────────────────────── -->
+    <string name="kitchen_filter_all_active">All Active</string>
+    <string name="kitchen_filter_pending">Pending</string>
+    <string name="kitchen_filter_in_progress">In Progress</string>
+    <string name="kitchen_filter_ready">Ready to Serve</string>
+
+    <!-- ── Kitchen item action button labels ─────────────────────────────── -->
+    <!-- Maps to ItemStatus.PENDING → "Start", IN_PROGRESS → "Ready", READY → "Served" -->
+    <string name="kitchen_action_start">Start</string>
+    <string name="kitchen_action_ready">Ready</string>
+    <string name="kitchen_action_served">Served</string>
+
+    <!-- ── Error messages ────────────────────────────────────────────────── -->
+    <string name="error_no_restaurant_session">No restaurant assigned to this account. Please log in again.</string>
+    <string name="error_session_expired">Session error — please log in again.</string>
+    <string name="error_search_failed">Search failed.</string>
+    <string name="error_load_orders_failed">Failed to load orders. Please try again.</string>
+    <string name="error_kitchen_load_failed">Failed to load orders.</string>
+    <!-- %1$s = new status value -->
+    <string name="order_status_update_success">Item marked as %1$s</string>
+    <string name="error_update_item_status">Failed to update item status.</string>
+    <string name="error_place_order_failed">Failed to place order. Please try again.</string>
+    <!-- %1$s = exception message -->
+    <string name="error_load_table_details">Could not load table details: %1$s</string>
+    <string name="error_update_order_status_failed">Failed to update status.</string>
+    <string name="error_food_search_failed">Food search failed.</string>
+    <string name="error_select_food_first">Please select a food item first.</string>
+    <string name="error_add_item_failed">Failed to add item.</string>
+    <string name="order_item_updated_success">Item updated</string>
+    <string name="error_update_item_failed">Failed to update item.</string>
+    <string name="order_item_removed_success">Item removed</string>
+    <string name="error_remove_item_failed">Failed to remove item.</string>
+    <string name="error_cancel_order_failed">Failed to cancel order.</string>
+    <string name="error_load_order_failed">Failed to load order.</string>
+    <string name="error_order_conflict">This order was modified by another device. Please review the updated order and try again.</string>
+
+    <!-- ── Common ─────────────────────────────────────────────────────────── -->
+    <string name="cd_back">Back</string>
+    <string name="cd_refresh">Refresh</string>
+    <string name="cd_clear">Clear</string>
+    <string name="cd_close_search">Close search</string>
+    <string name="cd_search_orders">Search orders</string>
+    <string name="cd_locked">Locked</string>
+    <string name="cd_edit">Edit</string>
+    <string name="cd_remove">Remove</string>
+    <string name="cancel">Cancel</string>
+    <string name="retry">Retry</string>
+    <string name="order_kds_button">🍳 KDS</string>
+    <string name="kitchen_title">🍳  Kitchen Display</string>
+    <string name="kitchen_badge_live">⚡ LIVE</string>
+    <string name="kitchen_badge_reconnecting">⚠ Reconnecting…</string>
+    <!-- %1$s = new order status value -->
+    <string name="order_status_updated_to">Status updated to %1$s</string>
+    <!-- %1$s = food name -->
+    <string name="order_item_added_success">%1$s added to order</string>
+    <string name="create_order_gst_hint">⚠ Actual GST calculated server-side when bill is generated</string>
+
+</resources>
+
+

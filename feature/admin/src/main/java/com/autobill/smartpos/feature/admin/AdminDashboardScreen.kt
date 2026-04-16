@@ -45,8 +45,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.autobill.smartpos.feature.admin.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,10 +77,10 @@ fun AdminDashboardScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Admin Dashboard", style = MaterialTheme.typography.titleLarge)
+                        Text(stringResource(R.string.admin_dashboard_title), style = MaterialTheme.typography.titleLarge)
                         Text(
-                            text = if (uiState.isSuperAdmin) "Super Admin · All Outlets"
-                                   else "${uiState.restaurant?.name ?: ""} · ${uiState.role.replaceFirstChar { it.uppercase() }}",
+                            text = if (uiState.isSuperAdmin) stringResource(R.string.admin_super_admin_label)
+                                   else "${uiState.restaurant?.name ?: ""}  ${uiState.role.replaceFirstChar { it.uppercase() }}",
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -89,7 +91,7 @@ fun AdminDashboardScreen(
                         if (uiState.isLoading)
                             CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                         else
-                            Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.cd_refresh))
                     }
                 },
             )
@@ -111,7 +113,7 @@ fun AdminDashboardScreen(
                 // ── Stats row ──────────────────────────────────────────────
                 item {
                     Text(
-                        "Live Overview",
+                        stringResource(R.string.admin_live_overview),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                     )
@@ -122,25 +124,25 @@ fun AdminDashboardScreen(
                     ) {
                         StatCard(
                             icon   = Icons.Default.BarChart,
-                            label  = "Today's Revenue",
+                            label  = stringResource(R.string.admin_stat_revenue),
                             value  = "₹${"%.0f".format(uiState.stats.todayRevenue)}",
                             modifier = Modifier.weight(1f),
                         )
                         StatCard(
                             icon   = Icons.Default.ShoppingCart,
-                            label  = "Active Orders",
+                            label  = stringResource(R.string.admin_stat_active_orders),
                             value  = uiState.stats.activeOrders.toString(),
                             modifier = Modifier.weight(1f),
                         )
                         StatCard(
                             icon   = Icons.Default.TableBar,
-                            label  = "Free Tables",
+                            label  = stringResource(R.string.admin_stat_free_tables),
                             value  = uiState.stats.availableTables.toString(),
                             modifier = Modifier.weight(1f),
                         )
                         StatCard(
                             icon   = Icons.Default.CloudOff,
-                            label  = "Offline Queue",
+                            label  = stringResource(R.string.admin_stat_offline_queue),
                             value  = uiState.stats.offlineQueueCount.toString(),
                             highlight = uiState.stats.offlineQueueCount > 0,
                             modifier = Modifier.weight(1f),
@@ -152,20 +154,14 @@ fun AdminDashboardScreen(
                 if (uiState.stats.unavailableFoodCount > 0) {
                     item {
                         Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer,
-                            ),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.padding(12.dp),
                             ) {
-                                Icon(
-                                    Icons.Default.RestaurantMenu,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onErrorContainer,
-                                )
+                                Icon(Icons.Default.RestaurantMenu, contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer)
                                 Spacer(Modifier.width(8.dp))
                                 Text(
                                     "${uiState.stats.unavailableFoodCount} menu item(s) marked unavailable",
@@ -180,7 +176,7 @@ fun AdminDashboardScreen(
                 // ── Quick actions ──────────────────────────────────────────
                 item {
                     Text(
-                        "Quick Actions",
+                        stringResource(R.string.admin_quick_actions),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                     )
@@ -190,24 +186,9 @@ fun AdminDashboardScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        ActionCard(
-                            icon    = Icons.Default.MenuBook,
-                            label   = "Menu\nManagement",
-                            onClick = onNavigateToMenuManagement,
-                            modifier = Modifier.weight(1f),
-                        )
-                        ActionCard(
-                            icon    = Icons.Default.Settings,
-                            label   = "Restaurant\nSettings",
-                            onClick = onNavigateToSettings,
-                            modifier = Modifier.weight(1f),
-                        )
-                        ActionCard(
-                            icon    = Icons.Default.BarChart,
-                            label   = "Sales\nReports",
-                            onClick = onNavigateToReports,
-                            modifier = Modifier.weight(1f),
-                        )
+                        ActionCard(icon = Icons.Default.MenuBook, label = stringResource(R.string.admin_action_menu_management), onClick = onNavigateToMenuManagement, modifier = Modifier.weight(1f))
+                        ActionCard(icon = Icons.Default.Settings, label = stringResource(R.string.admin_action_restaurant_settings), onClick = onNavigateToSettings, modifier = Modifier.weight(1f))
+                        ActionCard(icon = Icons.Default.BarChart, label = stringResource(R.string.admin_action_sales_reports), onClick = onNavigateToReports, modifier = Modifier.weight(1f))
                     }
                     Spacer(Modifier.height(8.dp))
                     // Row 2: staff & inventory
@@ -215,18 +196,8 @@ fun AdminDashboardScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        ActionCard(
-                            icon    = Icons.Default.People,
-                            label   = "Staff\nManagement",
-                            onClick = onNavigateToStaffManagement,
-                            modifier = Modifier.weight(1f),
-                        )
-                        ActionCard(
-                            icon    = Icons.Default.Inventory2,
-                            label   = "Inventory\nTracking",
-                            onClick = onNavigateToInventory,
-                            modifier = Modifier.weight(1f),
-                        )
+                        ActionCard(icon = Icons.Default.People, label = stringResource(R.string.admin_action_staff_management), onClick = onNavigateToStaffManagement, modifier = Modifier.weight(1f))
+                        ActionCard(icon = Icons.Default.Inventory2, label = stringResource(R.string.admin_action_inventory_tracking), onClick = onNavigateToInventory, modifier = Modifier.weight(1f))
                         // Spacer card to keep consistent 3-column grid width
                         Spacer(Modifier.weight(1f))
                     }
@@ -235,21 +206,16 @@ fun AdminDashboardScreen(
                 // ── Outlet info ────────────────────────────────────────────
                 uiState.restaurant?.let { r ->
                     item {
-                        Text(
-                            "Outlet Info",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                        )
+                        Text(stringResource(R.string.admin_outlet_info), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                         Spacer(Modifier.height(8.dp))
                         ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                            Column(modifier = Modifier.padding(16.dp),
-                                   verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                OutletInfoRow("Name",     r.name)
-                                OutletInfoRow("Address",  r.address)
-                                OutletInfoRow("Phone",    r.phone)
-                                OutletInfoRow("Currency", r.currency)
-                                OutletInfoRow("Tax Rate", "${r.taxRate}%")
-                                OutletInfoRow("Tips",     if (r.settings.enableTips) "Enabled" else "Disabled")
+                            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                OutletInfoRow(stringResource(R.string.admin_outlet_name_label),     r.name)
+                                OutletInfoRow(stringResource(R.string.admin_outlet_address_label),  r.address)
+                                OutletInfoRow(stringResource(R.string.admin_outlet_phone_label),    r.phone)
+                                OutletInfoRow(stringResource(R.string.admin_outlet_currency_label), r.currency)
+                                OutletInfoRow(stringResource(R.string.admin_outlet_tax_rate_label), "${r.taxRate}%")
+                                OutletInfoRow(stringResource(R.string.admin_outlet_tips_label),     if (r.settings.enableTips) stringResource(R.string.admin_tips_enabled) else stringResource(R.string.admin_tips_disabled))
                             }
                         }
                     }
@@ -334,18 +300,15 @@ private fun OutletInfoRow(label: String, value: String) {
 @Composable
 private fun SuperAdminBanner(modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally,
-               verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(Icons.Default.Business, contentDescription = null,
-                 modifier = Modifier.size(64.dp),
-                 tint = MaterialTheme.colorScheme.primary)
-            Text("Super Admin View", style = MaterialTheme.typography.headlineSmall,
-                 fontWeight = FontWeight.Bold)
-            Text("You have cross-outlet access.\nSelect an outlet from Settings to view its dashboard.",
-                 style = MaterialTheme.typography.bodyMedium,
-                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                 textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Icon(Icons.Default.Business, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary)
+            Text(stringResource(R.string.admin_super_admin_view_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(
+                stringResource(R.string.admin_super_admin_view_message),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            )
         }
     }
 }
-
