@@ -332,7 +332,7 @@ fun PaymentScreen(
             },
             dismissButton = {
                 TextButton(onClick = onDismissCardConfirm, enabled = !uiState.isConfirmingCard) {
-                    Text(stringResource(R.string.billing_cancel_dialog_dismiss), color = Color(0xFF757575))
+                    Text(stringResource(android.R.string.cancel), color = Color(0xFF757575))
                 }
             },
             containerColor = Color.White,

@@ -68,7 +68,7 @@ fun TableCrudDialog(
 ) {
     val isEditMode = editTable != null
     val title = if (isEditMode) {
-        stringResource(R.string.table_crud_title_edit, editTable?.tableNumber ?: "")
+        stringResource(R.string.table_crud_title_edit, editTable!!.tableNumber)
     } else {
         stringResource(R.string.table_crud_title_add)
     }
@@ -77,7 +77,12 @@ fun TableCrudDialog(
     var floor       by rememberSaveable { mutableIntStateOf(editTable?.floor ?: 1) }
     var capacity    by rememberSaveable { mutableIntStateOf(editTable?.capacity ?: 4) }
 
+    // Show the error only after the user has touched the field at least once,
+    // so the dialog doesn't open with a red error state on first render.
+    var tableNumberTouched by rememberSaveable { mutableStateOf(false) }
+
     val tableNumberError = tableNumber.isBlank()
+    val showTableNumberError = tableNumberError && tableNumberTouched
     val canConfirm = !tableNumberError && !isInFlight
 
     AlertDialog(
@@ -108,12 +113,15 @@ fun TableCrudDialog(
                 // ── Table Number ───────────────────────────────────────────
                 OutlinedTextField(
                     value = tableNumber,
-                    onValueChange = { tableNumber = it },
+                    onValueChange = {
+                        tableNumber = it
+                        tableNumberTouched = true
+                    },
                     label = { Text(stringResource(R.string.table_crud_field_number)) },
                     placeholder = { Text(stringResource(R.string.table_crud_field_number_placeholder)) },
                     singleLine = true,
-                    isError = tableNumberError && tableNumber.isNotEmpty(),
-                    supportingText = if (tableNumberError && tableNumber.isNotEmpty()) {
+                    isError = showTableNumberError,
+                    supportingText = if (showTableNumberError) {
                         { Text(stringResource(R.string.table_crud_field_number_error)) }
                     } else null,
                     keyboardOptions = KeyboardOptions(

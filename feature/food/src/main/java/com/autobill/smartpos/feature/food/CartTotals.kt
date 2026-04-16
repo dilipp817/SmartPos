@@ -1,22 +1,20 @@
 package com.autobill.smartpos.feature.food
 
-import com.autobill.smartpos.domain.common.TaxConstants
-
 /**
  * Pre-computed cart display totals — produced by [CartViewModel], consumed by the UI.
  *
- * Moving the calculation here (instead of inside a @Composable) means the entire
- * subtotal/tax/total logic is testable with a plain JUnit test — no Compose runner needed:
+ * The calculation lives in [CartViewModel.cartTotals] (a derived StateFlow), keeping
+ * all arithmetic out of the UI layer and making it testable with a plain JUnit test:
  *
  *   @Test
  *   fun `tax is 18 percent of subtotal`() {
- *       // Arrange
- *       val fakeCart = listOf(
- *           CartItem(foodId = 1, foodName = "Pizza", foodPrice = 100.0, quantity = 2, ...)
+ *       val vm = CartViewModel(
+ *           getCartUseCase = FakeGetCartUseCase(flowOf(listOf(
+ *               CartItem(foodId = 1L, foodName = "Pizza", foodPrice = 100.0, quantity = 2)
+ *           ))),
+ *           // ... other fake use-cases
  *       )
- *       // Act
- *       val totals = CartTotals.from(fakeCart)
- *       // Assert
+ *       val totals = vm.cartTotals.value
  *       assertEquals(200.0, totals.subtotal, 0.001)
  *       assertEquals(36.0,  totals.tax,      0.001)
  *       assertEquals(236.0, totals.total,    0.001)

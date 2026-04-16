@@ -224,14 +224,20 @@ fun QuantityControl(
             onClick = { if (quantity > 1) onQuantityChange(quantity - 1) },
             modifier = Modifier.width(32.dp),
         ) {
-            Text(stringResource(R.string.card_qty_decrease))
+            Text(
+                text = "−",
+                style = MaterialTheme.typography.labelLarge,
+            )
         }
         Text(quantity.toString(), style = MaterialTheme.typography.labelMedium)
         IconButton(
             onClick = { onQuantityChange(quantity + 1) },
             modifier = Modifier.width(32.dp),
         ) {
-            Text(stringResource(R.string.card_qty_increase))
+            Text(
+                text = "+",
+                style = MaterialTheme.typography.labelLarge,
+            )
         }
     }
 }
