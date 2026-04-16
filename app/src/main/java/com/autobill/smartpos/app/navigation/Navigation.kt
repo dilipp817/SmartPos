@@ -80,12 +80,5 @@ sealed class Screen(val route: String) {
     object InventoryManagement : Screen("inventory_management")
 }
 
-/**
- * Navigation events that can be triggered from ViewModels
- */
-sealed class NavigationEvent {
-    data class NavigateToScreen(val screen: Screen) : NavigationEvent()
-    object NavigateBack : NavigationEvent()
-    data class NavigateWithResult(val screen: Screen, val result: Any) : NavigationEvent()
-}
+
 

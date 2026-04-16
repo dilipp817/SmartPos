@@ -25,7 +25,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import coil.compose.AsyncImage
+import com.autobill.smartpos.ui.R
+import com.autobill.smartpos.ui.components.theme.StatusColors
 
 @Composable
 fun MenuItemCard(
@@ -131,7 +134,7 @@ fun OrderCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
-                    text = "Total",
+                    text = stringResource(R.string.card_total_label),
                     style = MaterialTheme.typography.labelMedium,
                 )
                 Text(
@@ -221,41 +224,27 @@ fun QuantityControl(
             onClick = { if (quantity > 1) onQuantityChange(quantity - 1) },
             modifier = Modifier.width(32.dp),
         ) {
-            Text("-")
+            Text(
+                text = "−",
+                style = MaterialTheme.typography.labelLarge,
+            )
         }
         Text(quantity.toString(), style = MaterialTheme.typography.labelMedium)
         IconButton(
             onClick = { onQuantityChange(quantity + 1) },
             modifier = Modifier.width(32.dp),
         ) {
-            Text("+")
+            Text(
+                text = "+",
+                style = MaterialTheme.typography.labelLarge,
+            )
         }
     }
 }
 
-private fun getTableStatusColor(status: String): Color {
-    return when (status.lowercase()) {
-        "available" -> Color(0xFF4CAF50)
-        "occupied" -> Color(0xFFF44336)
-        "reserved" -> Color(0xFFFFC107)
-        "cleaning" -> Color(0xFF2196F3)
-        "maintenance" -> Color(0xFF9E9E9E)
-        else -> Color.Gray
-    }
-}
+private fun getTableStatusColor(status: String): Color =
+    StatusColors.tableStatusBackground(status)
 
-private fun getStatusColors(status: String): Pair<Color, Color> {
-    return when (status.lowercase()) {
-        "available" -> Color(0xFF4CAF50) to Color.White
-        "occupied" -> Color(0xFFF44336) to Color.White
-        "reserved" -> Color(0xFFFFC107) to Color.Black
-        "pending" -> Color(0xFF2196F3) to Color.White
-        "confirmed" -> Color(0xFF4CAF50) to Color.White
-        "completed" -> Color(0xFF9C27B0) to Color.White
-        "unpaid" -> Color(0xFFFF6F00) to Color.White
-        "partial" -> Color(0xFFFFC107) to Color.Black
-        "paid" -> Color(0xFF4CAF50) to Color.White
-        else -> Color.Gray to Color.White
-    }
-}
+private fun getStatusColors(status: String): Pair<Color, Color> =
+    StatusColors.generalStatusColors(status)
 

@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import com.autobill.smartpos.domain.model.Table
 
 /**
@@ -66,13 +67,22 @@ fun TableCrudDialog(
     onDismiss: () -> Unit,
 ) {
     val isEditMode = editTable != null
-    val title = if (isEditMode) "Edit Table ${editTable!!.tableNumber}" else "Add Table"
+    val title = if (isEditMode) {
+        stringResource(R.string.table_crud_title_edit, editTable!!.tableNumber)
+    } else {
+        stringResource(R.string.table_crud_title_add)
+    }
 
     var tableNumber by rememberSaveable { mutableStateOf(editTable?.tableNumber ?: "") }
     var floor       by rememberSaveable { mutableIntStateOf(editTable?.floor ?: 1) }
     var capacity    by rememberSaveable { mutableIntStateOf(editTable?.capacity ?: 4) }
 
+    // Show the error only after the user has touched the field at least once,
+    // so the dialog doesn't open with a red error state on first render.
+    var tableNumberTouched by rememberSaveable { mutableStateOf(false) }
+
     val tableNumberError = tableNumber.isBlank()
+    val showTableNumberError = tableNumberError && tableNumberTouched
     val canConfirm = !tableNumberError && !isInFlight
 
     AlertDialog(
@@ -89,8 +99,8 @@ fun TableCrudDialog(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = if (isEditMode) "Update number, floor, or capacity"
-                           else "New table starts as AVAILABLE",
+                    text = if (isEditMode) stringResource(R.string.table_crud_subtitle_edit)
+                           else stringResource(R.string.table_crud_subtitle_add),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFF757575),
                 )
@@ -103,13 +113,16 @@ fun TableCrudDialog(
                 // ── Table Number ───────────────────────────────────────────
                 OutlinedTextField(
                     value = tableNumber,
-                    onValueChange = { tableNumber = it },
-                    label = { Text("Table Number") },
-                    placeholder = { Text("e.g. T-1, A3, VIP-01") },
+                    onValueChange = {
+                        tableNumber = it
+                        tableNumberTouched = true
+                    },
+                    label = { Text(stringResource(R.string.table_crud_field_number)) },
+                    placeholder = { Text(stringResource(R.string.table_crud_field_number_placeholder)) },
                     singleLine = true,
-                    isError = tableNumberError && tableNumber.isNotEmpty(),
-                    supportingText = if (tableNumberError && tableNumber.isNotEmpty()) {
-                        { Text("Table number cannot be empty") }
+                    isError = showTableNumberError,
+                    supportingText = if (showTableNumberError) {
+                        { Text(stringResource(R.string.table_crud_field_number_error)) }
                     } else null,
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.Characters,
@@ -125,7 +138,7 @@ fun TableCrudDialog(
 
                 // ── Floor Stepper ──────────────────────────────────────────
                 StepperRow(
-                    label = "Floor",
+                    label = stringResource(R.string.table_crud_field_floor),
                     value = floor,
                     onDecrement = { if (floor > 1) floor-- },
                     onIncrement = { if (floor < 99) floor++ },
@@ -134,7 +147,7 @@ fun TableCrudDialog(
 
                 // ── Capacity Stepper ───────────────────────────────────────
                 StepperRow(
-                    label = "Capacity (seats)",
+                    label = stringResource(R.string.table_crud_field_capacity),
                     value = capacity,
                     onDecrement = { if (capacity > 1) capacity-- },
                     onIncrement = { if (capacity < 50) capacity++ },
@@ -166,7 +179,7 @@ fun TableCrudDialog(
                     enabled = canConfirm,
                 ) {
                     Text(
-                        text = "Save",
+                        text = stringResource(R.string.table_crud_save),
                         color = if (canConfirm) Color(0xFFE33E3E) else Color(0xFFBDBDBD),
                         fontWeight = FontWeight.Bold,
                     )
@@ -176,7 +189,7 @@ fun TableCrudDialog(
         dismissButton = {
             TextButton(onClick = onDismiss, enabled = !isInFlight) {
                 Text(
-                    text = "Cancel",
+                    text = stringResource(R.string.cancel),
                     color = if (!isInFlight) Color(0xFF757575) else Color(0xFFBDBDBD),
                 )
             }
@@ -212,7 +225,7 @@ private fun StepperRow(
             IconButton(onClick = onDecrement, enabled = enabled) {
                 Icon(
                     imageVector = Icons.Default.Remove,
-                    contentDescription = "Decrease $label",
+                    contentDescription = stringResource(R.string.table_crud_cd_decrease, label),
                     tint = if (enabled) Color(0xFFE33E3E) else Color(0xFFBDBDBD),
                 )
             }
@@ -227,7 +240,7 @@ private fun StepperRow(
             IconButton(onClick = onIncrement, enabled = enabled) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Increase $label",
+                    contentDescription = stringResource(R.string.table_crud_cd_increase, label),
                     tint = if (enabled) Color(0xFFE33E3E) else Color(0xFFBDBDBD),
                 )
             }

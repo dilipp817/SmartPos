@@ -1,5 +1,6 @@
 package com.autobill.smartpos.domain.usecase
 
+import android.util.Log
 import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.model.AdminStats
 import com.autobill.smartpos.domain.model.Food
@@ -154,7 +155,10 @@ class GetAdminStatsUseCase @Inject constructor(
 
         val offlineCount = try {
             offlineQueueRepository.observePendingCount().first()
-        } catch (_: Exception) { 0 }
+        } catch (e: Exception) {
+            Log.w("GetAdminStatsUseCase", "Failed to read offline queue count", e)
+            0
+        }
 
         AdminStats(
             todayRevenue        = revenueDeferred.await(),

@@ -9,10 +9,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.autobill.smartpos.domain.common.UiState
-import com.autobill.smartpos.domain.model.Category
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -34,20 +34,35 @@ fun HomeRoute(
     onLogout: () -> Unit = {},
     onNavigateToMenuManagement: () -> Unit = {},
 ) {
-    // Get ViewModel instance
+    // Get ViewModel instances — FoodViewModel owns food/pagination, CartViewModel owns cart
     val viewModel: FoodViewModel = hiltViewModel()
+    val cartViewModel: CartViewModel = hiltViewModel()
 
-    // Observe paginated state
+    // Observe food state
     val paginatedState by viewModel.paginatedFoodsState.collectAsStateWithLifecycle()
     val isLoadingMore by viewModel.isLoadingMore.collectAsStateWithLifecycle()
-    val cartItems by viewModel.cartItems.collectAsStateWithLifecycle()
     val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val selectedCategory by viewModel.selectedCategory.collectAsStateWithLifecycle()
     val sortOption by viewModel.sortOption.collectAsStateWithLifecycle()
     val rolePermissions by viewModel.rolePermissions.collectAsStateWithLifecycle()
-    // Real categories from backend — used to populate filter chips
     val categories by viewModel.categories.collectAsStateWithLifecycle()
+    // Real restaurant name — sourced from GET /restaurants/{id} cache populated by MainViewModel
+    val restaurantName by viewModel.restaurantName.collectAsStateWithLifecycle()
+
+    // Observe cart state — all sourced from CartViewModel
+    val cartItems by cartViewModel.cartItems.collectAsStateWithLifecycle()
+    val cartTotals by cartViewModel.cartTotals.collectAsStateWithLifecycle()
+
+    // ── String resources ────────────────────────────────────────────────────
+    val strNewSale          = stringResource(R.string.new_sale)
+    val strDefaultTable     = stringResource(R.string.cart_default_table_number)
+    val strAppTitle         = stringResource(R.string.brand_name)
+    val strSortByDefault    = stringResource(R.string.sort_by)
+    val strLogoutTitle      = stringResource(R.string.logout_dialog_title)
+    val strLogoutMessage    = stringResource(R.string.logout_dialog_message)
+    val strLogoutConfirm    = stringResource(R.string.logout_confirm)
+    val strCancel           = stringResource(R.string.cancel)
 
     // Sort dialog state
     var showSortDialog by remember { mutableStateOf(false) }
@@ -61,7 +76,7 @@ fun HomeRoute(
         return dateFormat.format(Date())
     }
 
-    // Build CartSummaryData directly from CartItem list (no food-list lookup needed)
+    // Build CartSummaryData — reads pre-computed totals from CartViewModel (no math here)
     fun buildCartSummary(): CartSummaryData {
         val cartItemsUI = cartItems.map { item ->
             CartItemUI(
@@ -73,29 +88,24 @@ fun HomeRoute(
                 imageUrl = item.imageUrl,
             )
         }
-        val subtotal = cartItems.sumOf { it.subtotal }
-        // ⚠️ Local estimate for cart preview UX only.
-        // The real bill (with exact CGST/SGST breakdown) is computed server-side via
-        // POST /orders/{id}/generate-bill in Phase 6 — never use this value for actual billing.
-        val tax = subtotal * 0.18
-        val total = subtotal + tax
         return CartSummaryData(
             invoice = InvoiceData(
-                invoiceNumber = "INV-${System.currentTimeMillis() % 100000}",
-                tableNumber = "T-01",
+                // No order exists yet — real number assigned by POST /orders at checkout
+                invoiceNumber = strNewSale,
+                tableNumber = strDefaultTable,
                 dateTime = getCurrentDateTime(),
                 onChangeInvoice = {},
             ),
             items = cartItemsUI,
-            itemCount = cartItems.sumOf { it.quantity },
-            subtotal = "₹${String.format(Locale.US, "%.2f", subtotal)}",
-            tax = "₹${String.format(Locale.US, "%.2f", tax)}",
+            itemCount = cartTotals.itemCount,
+            subtotal = "₹${String.format(Locale.US, "%.2f", cartTotals.subtotal)}",
+            tax = "₹${String.format(Locale.US, "%.2f", cartTotals.tax)}",
             discount = "₹0.00",
-            total = "₹${String.format(Locale.US, "%.2f", total)}",
-            onQuantityIncrease = { foodId -> viewModel.increaseQuantity(foodId) },
-            onQuantityDecrease = { foodId -> viewModel.decreaseQuantity(foodId) },
+            total = "₹${String.format(Locale.US, "%.2f", cartTotals.total)}",
+            onQuantityIncrease = { foodId -> foodId.toLongOrNull()?.let { cartViewModel.increaseQuantity(it) } },
+            onQuantityDecrease = { foodId -> foodId.toLongOrNull()?.let { cartViewModel.decreaseQuantity(it) } },
             onAcceptPayment = onCheckoutClick,
-            onClear = { viewModel.clearCart() },
+            onClear = { cartViewModel.clearCart() },
             onReset = { viewModel.resetFilters() },
             onPrint = {},
             // Discount is applied at bill-generation time in BillingScreen (POST /generate-bill?discount=X).
@@ -106,8 +116,8 @@ fun HomeRoute(
     }
 
     fun buildHeader() = HeaderData(
-        appTitle = "SmartPos",
-        businessName = "Best Business Pvt Ltd",
+        appTitle = strAppTitle,
+        businessName = restaurantName,
         selectedTab = selectedTab,
         onTabChange = { tab -> viewModel.switchTab(tab) },
         onProfileClick = { showLogoutDialog = true },
@@ -119,7 +129,7 @@ fun HomeRoute(
         searchQuery = searchQuery,
         categories = categories.map { CategoryUI(id = it.id.toString(), name = it.name) },
         selectedCategoryId = selectedCategory,
-        sortOption = sortOption ?: "Sort by",
+        sortOption = sortOption ?: strSortByDefault,
         onSearchChange = { viewModel.updateSearchQuery(it) },
         onCategorySelect = { viewModel.selectCategory(it) },
         onSortClick = { showSortDialog = true },
@@ -144,7 +154,7 @@ fun HomeRoute(
                 searchFilter = buildSearchFilter(),
                 foodGrid = FoodGridData(
                     items = pagination.data.map { food ->
-                        val qty = viewModel.getCartQuantity(food.id)
+                        val qty = cartViewModel.getCartQuantity(food.id)
                         FoodItemUI(
                             id = food.id.toString(),
                             name = food.name,
@@ -163,9 +173,13 @@ fun HomeRoute(
                     canLoadMore = pagination.hasMore,
                     onLoadMore = { viewModel.loadNextPage() },
                     onFoodClick = { idStr -> onFoodClick(idStr.toLong()) },
-                    onFoodAdd = { foodId -> viewModel.addToCart(foodId) },
-                    onFoodIncrease = { foodId -> viewModel.increaseQuantity(foodId) },
-                    onFoodDecrease = { foodId -> viewModel.decreaseQuantity(foodId) },
+                    // Resolve the full Food domain object before passing to CartViewModel
+                    // so CartViewModel stays independent of food-list state.
+                    onFoodAdd = { foodId ->
+                        viewModel.getFoodById(foodId)?.let { cartViewModel.addToCart(it) }
+                    },
+                    onFoodIncrease = { foodId -> foodId.toLongOrNull()?.let { cartViewModel.increaseQuantity(it) } },
+                    onFoodDecrease = { foodId -> foodId.toLongOrNull()?.let { cartViewModel.decreaseQuantity(it) } },
                 ),
                 cartSummary = buildCartSummary(),
             )
@@ -207,8 +221,8 @@ fun HomeRoute(
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
-            title = { Text("Log out?") },
-            text = { Text("You will be returned to the login screen. Any unsaved cart items will be lost.") },
+            title = { Text(strLogoutTitle) },
+            text = { Text(strLogoutMessage) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -216,12 +230,12 @@ fun HomeRoute(
                         onLogout()
                     }
                 ) {
-                    Text("Log out")
+                    Text(strLogoutConfirm)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("Cancel")
+                    Text(strCancel)
                 }
             },
         )

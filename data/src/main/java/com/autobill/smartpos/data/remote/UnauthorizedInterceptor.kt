@@ -1,7 +1,10 @@
 package com.autobill.smartpos.data.remote
 
+import com.autobill.smartpos.data.di.ApplicationScope
 import com.autobill.smartpos.data.local.SessionDataStore
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.launch
 import okhttp3.Interceptor
 import okhttp3.Response
 import javax.inject.Inject
@@ -22,19 +25,26 @@ import javax.inject.Singleton
  *
  * Execution order in OkHttpClient:
  *   AuthInterceptor (attaches token) → UnauthorizedInterceptor (handles 401) → network
+ *
+ * Testability:
+ *   Inject a [kotlinx.coroutines.test.TestScope] for [appScope] so tests can call
+ *   advanceUntilIdle() and assert clearUser() completed deterministically.
  */
 @Singleton
 class UnauthorizedInterceptor @Inject constructor(
     private val sessionDataStore: SessionDataStore,
+    @ApplicationScope private val appScope: CoroutineScope,
 ) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val response = chain.proceed(chain.request())
 
         if (response.code == 401) {
-            // Close response body before doing any I/O to avoid leaking the connection
+            // Close response body before doing any I/O to avoid leaking the connection.
             response.close()
-            runBlocking { sessionDataStore.clearUser() }
+            // Launch on the injected app-lifetime scope — never blocks the OkHttp thread.
+            // NonCancellable ensures the session wipe completes even under cancellation.
+            appScope.launch(NonCancellable) { sessionDataStore.clearUser() }
 
             // Re-proceed the original request — now without a token.
             // The result will be another 401 (or redirect), which propagates back
@@ -46,4 +56,6 @@ class UnauthorizedInterceptor @Inject constructor(
         return response
     }
 }
+
+
 

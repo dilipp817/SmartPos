@@ -30,7 +30,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import com.autobill.smartpos.domain.model.Category
+import com.autobill.smartpos.feature.admin.R
 
 /**
  * Reusable dialog for creating or editing a food item.
@@ -59,7 +61,7 @@ fun FoodFormDialog(
 ) {
     AlertDialog(
         onDismissRequest = { if (!isSaving) onDismiss() },
-        title  = { Text(if (isEditMode) "Edit Menu Item" else "Add Menu Item") },
+        title  = { Text(if (isEditMode) stringResource(R.string.food_form_title_edit) else stringResource(R.string.food_form_title_add)) },
         text   = {
             Column(
                 modifier = Modifier
@@ -71,7 +73,7 @@ fun FoodFormDialog(
                 OutlinedTextField(
                     value         = formState.name,
                     onValueChange = onNameChange,
-                    label         = { Text("Name *") },
+                    label         = { Text(stringResource(R.string.food_form_field_name)) },
                     isError       = formState.nameError != null,
                     supportingText = formState.nameError?.let { { Text(it) } },
                     singleLine    = true,
@@ -81,7 +83,7 @@ fun FoodFormDialog(
                 OutlinedTextField(
                     value         = formState.price,
                     onValueChange = onPriceChange,
-                    label         = { Text("Price (₹) *") },
+                    label         = { Text(stringResource(R.string.food_form_field_price)) },
                     isError       = formState.priceError != null,
                     supportingText = formState.priceError?.let { { Text(it) } },
                     singleLine    = true,
@@ -92,7 +94,7 @@ fun FoodFormDialog(
                 OutlinedTextField(
                     value         = formState.description,
                     onValueChange = onDescriptionChange,
-                    label         = { Text("Description") },
+                    label         = { Text(stringResource(R.string.food_form_field_description)) },
                     minLines      = 2,
                     maxLines      = 3,
                     modifier      = Modifier.fillMaxWidth(),
@@ -106,10 +108,10 @@ fun FoodFormDialog(
                         onExpandedChange = { expanded = it },
                     ) {
                         OutlinedTextField(
-                            value         = selectedCat?.name ?: "None",
+                            value         = selectedCat?.name ?: stringResource(R.string.food_form_category_none),
                             onValueChange = {},
                             readOnly      = true,
-                            label         = { Text("Category") },
+                            label         = { Text(stringResource(R.string.food_form_field_category)) },
                             trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
                             modifier      = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
                         )
@@ -118,7 +120,7 @@ fun FoodFormDialog(
                             onDismissRequest = { expanded = false },
                         ) {
                             DropdownMenuItem(
-                                text    = { Text("None") },
+                                text    = { Text(stringResource(R.string.food_form_category_none)) },
                                 onClick = { onCategoryChange(null); expanded = false },
                             )
                             categories.forEach { cat ->
@@ -134,7 +136,7 @@ fun FoodFormDialog(
                 OutlinedTextField(
                     value         = formState.imageUrl,
                     onValueChange = onImageUrlChange,
-                    label         = { Text("Image URL") },
+                    label         = { Text(stringResource(R.string.food_form_field_image_url)) },
                     singleLine    = true,
                     modifier      = Modifier.fillMaxWidth(),
                 )
@@ -143,7 +145,7 @@ fun FoodFormDialog(
                     OutlinedTextField(
                         value         = formState.preparationTime,
                         onValueChange = onPrepTimeChange,
-                        label         = { Text("Prep (min)") },
+                        label         = { Text(stringResource(R.string.food_form_field_prep_time)) },
                         singleLine    = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier      = Modifier.weight(1f),
@@ -151,7 +153,7 @@ fun FoodFormDialog(
                     OutlinedTextField(
                         value         = formState.calories,
                         onValueChange = onCaloriesChange,
-                        label         = { Text("Calories") },
+                        label         = { Text(stringResource(R.string.food_form_field_calories)) },
                         singleLine    = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier      = Modifier.weight(1f),
@@ -161,7 +163,7 @@ fun FoodFormDialog(
                 OutlinedTextField(
                     value         = formState.allergens,
                     onValueChange = onAllergensChange,
-                    label         = { Text("Allergens (comma separated)") },
+                    label         = { Text(stringResource(R.string.food_form_field_allergens)) },
                     singleLine    = true,
                     modifier      = Modifier.fillMaxWidth(),
                 )
@@ -176,10 +178,10 @@ fun FoodFormDialog(
                         Switch(checked = checked, onCheckedChange = onCheckedChange)
                     }
                 }
-                ToggleRow("Vegetarian",  formState.isVegetarian, onVegetarianChange)
-                ToggleRow("Spicy",       formState.isSpicy,      onSpicyChange)
+                ToggleRow(stringResource(R.string.food_form_toggle_vegetarian), formState.isVegetarian, onVegetarianChange)
+                ToggleRow(stringResource(R.string.food_form_toggle_spicy),      formState.isSpicy,      onSpicyChange)
                 if (isEditMode)
-                    ToggleRow("Available", formState.isAvailable, onAvailableChange)
+                    ToggleRow(stringResource(R.string.food_form_toggle_available), formState.isAvailable, onAvailableChange)
 
                 Spacer(Modifier.height(4.dp))
             }
@@ -190,12 +192,11 @@ fun FoodFormDialog(
                 enabled  = formState.isValid && !isSaving,
             ) {
                 if (isSaving) CircularProgressIndicator()
-                else Text(if (isEditMode) "Update" else "Create")
+                else Text(if (isEditMode) stringResource(R.string.food_form_button_update) else stringResource(R.string.food_form_button_create))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !isSaving) { Text("Cancel") }
+            TextButton(onClick = onDismiss, enabled = !isSaving) { Text(stringResource(R.string.cancel)) }
         },
     )
 }
-

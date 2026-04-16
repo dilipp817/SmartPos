@@ -17,9 +17,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.autobill.smartpos.ui.R
 import com.autobill.smartpos.ui.components.cards.QuantityControl
+import com.autobill.smartpos.ui.components.theme.StatusColors
 
 // Order Item List Item - Display individual item in order list
 @Composable
@@ -70,7 +73,7 @@ fun OrderItemListItem(
                     onQuantityChange = onQuantityChange,
                 )
             } else {
-                Text(text = "x$quantity", style = MaterialTheme.typography.labelMedium)
+                Text(text = stringResource(R.string.list_item_quantity, quantity), style = MaterialTheme.typography.labelMedium)
             }
 
             Text(
@@ -86,7 +89,7 @@ fun OrderItemListItem(
                 ) {
                     Icon(
                         Icons.Default.Delete,
-                        contentDescription = "Remove item",
+                        contentDescription = stringResource(R.string.list_item_cd_remove),
                         tint = MaterialTheme.colorScheme.error,
                     )
                 }
@@ -200,13 +203,13 @@ fun TableListItem(
                 fontWeight = FontWeight.Bold,
             )
             Text(
-                text = "Capacity: $capacity",
+                text = stringResource(R.string.list_item_capacity, capacity),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             if (currentOrderId != null) {
                 Text(
-                    text = "Order: #$currentOrderId",
+                    text = stringResource(R.string.list_item_order_id, currentOrderId),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.tertiary,
                 )
@@ -222,12 +225,5 @@ fun TableListItem(
     }
 }
 
-private fun getStatusColor(status: String): Color {
-    return when (status.lowercase()) {
-        "available" -> Color(0xFF4CAF50)
-        "occupied" -> Color(0xFFF44336)
-        "reserved" -> Color(0xFFFFC107)
-        else -> Color.Gray
-    }
-}
-
+private fun getStatusColor(status: String): Color =
+    StatusColors.tableStatusBackground(status)

@@ -37,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import com.autobill.smartpos.domain.model.Table
 import com.autobill.smartpos.domain.model.TableStatus
 
@@ -92,7 +93,7 @@ fun TableGridCard(
                     modifier = Modifier.size(22.dp),
                 )
                 Text(
-                    text = "Table ${table.tableNumber}",
+                    text = stringResource(R.string.table_card_number, table.tableNumber),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = if (isSelectable) contentColor else Color(0xFF9E9E9E),
@@ -108,7 +109,7 @@ fun TableGridCard(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.MoreVert,
-                                    contentDescription = "Table options",
+                                    contentDescription = stringResource(R.string.cd_table_options),
                                     tint = Color(0xFF9E9E9E),
                                     modifier = Modifier.size(18.dp),
                                 )
@@ -118,7 +119,7 @@ fun TableGridCard(
                                 onDismissRequest = { menuExpanded = false },
                             ) {
                                 DropdownMenuItem(
-                                    text = { Text("Edit Table") },
+                                    text = { Text(stringResource(R.string.table_menu_edit)) },
                                     leadingIcon = {
                                         Icon(
                                             Icons.Default.Edit,
@@ -129,7 +130,7 @@ fun TableGridCard(
                                     onClick = { menuExpanded = false; onEdit() },
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Delete Table", color = Color(0xFFC62828)) },
+                                    text = { Text(stringResource(R.string.table_menu_delete), color = Color(0xFFC62828)) },
                                     leadingIcon = {
                                         Icon(
                                             Icons.Default.Delete,
@@ -147,7 +148,7 @@ fun TableGridCard(
                     !isSelectable -> {
                         Icon(
                             imageVector = Icons.Default.EditNote,
-                            contentDescription = "Change status",
+                            contentDescription = stringResource(R.string.cd_change_status),
                             tint = Color(0xFFBDBDBD),
                             modifier = Modifier.size(18.dp),
                         )
@@ -162,7 +163,7 @@ fun TableGridCard(
                     .padding(end = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                InfoChip(label = "Floor ${table.floor}", color = Color(0xFF757575))
+                InfoChip(label = stringResource(R.string.table_card_floor, table.floor), color = Color(0xFF757575))
                 InfoChip(
                     label = "👥 ${table.capacity}",
                     color = if (isSelectable) contentColor else Color(0xFF9E9E9E),

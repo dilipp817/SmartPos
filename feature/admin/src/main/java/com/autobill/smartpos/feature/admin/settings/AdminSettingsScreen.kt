@@ -36,6 +36,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.autobill.smartpos.feature.admin.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,10 +66,10 @@ fun AdminSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Restaurant Settings") },
+                title = { Text(stringResource(R.string.settings_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },
             )
@@ -90,7 +92,7 @@ fun AdminSettingsScreen(
             ) {
                 // ── Outlet info (read-only) ────────────────────────────────
                 uiState.restaurant?.let { r ->
-                    Text("Outlet", style = MaterialTheme.typography.titleMedium,
+                    Text(stringResource(R.string.settings_section_outlet), style = MaterialTheme.typography.titleMedium,
                          fontWeight = FontWeight.SemiBold)
                     Text(r.name, style = MaterialTheme.typography.bodyLarge)
                     Text("${r.address} · ${r.phone}",
@@ -100,21 +102,21 @@ fun AdminSettingsScreen(
                 }
 
                 // ── Tax settings ───────────────────────────────────────────
-                Text("Tax", style = MaterialTheme.typography.titleMedium,
+                Text(stringResource(R.string.settings_section_tax), style = MaterialTheme.typography.titleMedium,
                      fontWeight = FontWeight.SemiBold)
 
                 OutlinedTextField(
                     value         = uiState.taxRate,
                     onValueChange = onTaxRateChange,
-                    label         = { Text("Tax Rate (%)") },
+                    label         = { Text(stringResource(R.string.settings_field_tax_rate)) },
                     singleLine    = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier      = Modifier.fillMaxWidth(),
                 )
 
                 SettingToggleRow(
-                    label   = "Tax Inclusive Pricing",
-                    subtext = "Displayed prices already include tax",
+                    label   = stringResource(R.string.settings_toggle_tax_inclusive_label),
+                    subtext = stringResource(R.string.settings_toggle_tax_inclusive_sub),
                     checked = uiState.taxInclusive,
                     onCheckedChange = onTaxInclusiveChange,
                 )
@@ -122,12 +124,12 @@ fun AdminSettingsScreen(
                 HorizontalDivider()
 
                 // ── Tips ───────────────────────────────────────────────────
-                Text("Tips", style = MaterialTheme.typography.titleMedium,
+                Text(stringResource(R.string.settings_section_tips), style = MaterialTheme.typography.titleMedium,
                      fontWeight = FontWeight.SemiBold)
 
                 SettingToggleRow(
-                    label   = "Enable Tips",
-                    subtext = "Show tip input on payment screen",
+                    label   = stringResource(R.string.settings_toggle_tips_label),
+                    subtext = stringResource(R.string.settings_toggle_tips_sub),
                     checked = uiState.enableTips,
                     onCheckedChange = onEnableTipsChange,
                 )
@@ -136,7 +138,7 @@ fun AdminSettingsScreen(
                     OutlinedTextField(
                         value         = uiState.defaultTipPercentage,
                         onValueChange = onDefaultTipPercentageChange,
-                        label         = { Text("Default Tip (%)") },
+                        label         = { Text(stringResource(R.string.settings_field_default_tip)) },
                         singleLine    = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier      = Modifier.fillMaxWidth(),
@@ -146,12 +148,12 @@ fun AdminSettingsScreen(
                 HorizontalDivider()
 
                 // ── Printing ───────────────────────────────────────────────
-                Text("Printing", style = MaterialTheme.typography.titleMedium,
+                Text(stringResource(R.string.settings_section_printing), style = MaterialTheme.typography.titleMedium,
                      fontWeight = FontWeight.SemiBold)
 
                 SettingToggleRow(
-                    label   = "Auto Print Bill",
-                    subtext = "Automatically trigger print after bill generation",
+                    label   = stringResource(R.string.settings_toggle_auto_print_label),
+                    subtext = stringResource(R.string.settings_toggle_auto_print_sub),
                     checked = uiState.autoPrintBill,
                     onCheckedChange = onAutoPrintBillChange,
                 )
@@ -166,7 +168,7 @@ fun AdminSettingsScreen(
                 ) {
                     if (uiState.isSaving)
                         CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp))
-                    Text("Save Settings")
+                    Text(stringResource(R.string.settings_save_button))
                 }
             }
         }
@@ -192,4 +194,3 @@ private fun SettingToggleRow(
         Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
-

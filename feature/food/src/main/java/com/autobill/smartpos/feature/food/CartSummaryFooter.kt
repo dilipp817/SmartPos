@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -65,13 +66,13 @@ fun CartSummaryFooter(
             ) {
                 Column {
                     Text(
-                        text = "Invoice No. ${data.invoice.invoiceNumber}",
+                        text = stringResource(R.string.invoice_number_label, data.invoice.invoiceNumber),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF212121),
                     )
                     Text(
-                        text = "Table No. ${data.invoice.tableNumber}",
+                        text = stringResource(R.string.table_number_label, data.invoice.tableNumber),
                         style = MaterialTheme.typography.labelMedium,
                         color = Color(0xFF757575),
                     )
@@ -84,7 +85,7 @@ fun CartSummaryFooter(
                     modifier = Modifier.height(36.dp),
                 ) {
                     Text(
-                        text = "Change Invoice",
+                        text = stringResource(R.string.change_invoice),
                         style = MaterialTheme.typography.labelSmall,
                     )
                 }
@@ -124,11 +125,11 @@ fun CartSummaryFooter(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            BillRow(label = "Subtotal", value = data.subtotal, isRegular = true)
+            BillRow(label = stringResource(R.string.subtotal), value = data.subtotal, isRegular = true)
             // Est. tax shown for preview only — actual GST computed server-side via generate-bill (Phase 6)
-            BillRow(label = "Est. GST (18%)", value = data.tax, isRegular = true)
+            BillRow(label = stringResource(R.string.est_gst), value = data.tax, isRegular = true)
             if (data.discount != "₹0.00") {
-                BillRow(label = "Discount", value = data.discount, isRegular = true)
+                BillRow(label = stringResource(R.string.discount), value = data.discount, isRegular = true)
             }
             // Apply Discount button — only visible for manager / admin / super_admin
             if (data.canApplyDiscount) {
@@ -143,7 +144,7 @@ fun CartSummaryFooter(
                     ),
                 ) {
                     Text(
-                        text = "Apply Discount",
+                        text = stringResource(R.string.apply_discount),
                         style = MaterialTheme.typography.labelMedium,
                     )
                 }
@@ -155,7 +156,7 @@ fun CartSummaryFooter(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "Total Amount",
+                    text = stringResource(R.string.total_amount),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF212121),
@@ -180,7 +181,7 @@ fun CartSummaryFooter(
             ),
         ) {
             Text(
-                text = "Accept Payment",
+                text = stringResource(R.string.accept_payment),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -201,7 +202,7 @@ fun CartSummaryFooter(
                 ),
             ) {
                 Text(
-                    text = "Clear",
+                    text = stringResource(R.string.clear),
                     style = MaterialTheme.typography.labelLarge,
                 )
             }
@@ -215,7 +216,7 @@ fun CartSummaryFooter(
                 ),
             ) {
                 Text(
-                    text = "Reset",
+                    text = stringResource(R.string.reset),
                     style = MaterialTheme.typography.labelLarge,
                 )
             }
@@ -229,7 +230,7 @@ fun CartSummaryFooter(
                 ),
             ) {
                 Text(
-                    text = "Print",
+                    text = stringResource(R.string.print),
                     style = MaterialTheme.typography.labelLarge,
                 )
             }
@@ -312,7 +313,7 @@ private fun CartItemRow(
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Increase",
+                    contentDescription = stringResource(R.string.cd_increase),
                     tint = Color(0xFF757575),
                     modifier = Modifier.size(16.dp),
                 )
@@ -354,4 +355,3 @@ private fun BillRow(
         )
     }
 }
-

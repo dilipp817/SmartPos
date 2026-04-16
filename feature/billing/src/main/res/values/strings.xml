@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ── Billing Screen ────────────────────────────────────────────────── -->
+    <string name="billing_title">Billing</string>
+    <string name="billing_generate_bill_button">Generate Bill</string>
+    <string name="billing_generating">Generating…</string>
+    <string name="billing_proceed_to_payment">Proceed to Payment  ₹%.2f</string>
+    <string name="billing_cancel_bill_button">Cancel Bill</string>
+    <string name="billing_loading_bill">Loading bill…</string>
+    <string name="billing_tax_info">Tax (18% GST) is calculated automatically by the server.\nEnter an optional discount in rupees (e.g. 50 for ₹50 off).</string>
+    <string name="billing_field_discount">Discount (₹) — optional</string>
+    <!-- Cancel Bill dialog -->
+    <string name="billing_cancel_dialog_title">Cancel Bill?</string>
+    <!-- %1$s = bill number -->
+    <string name="billing_cancel_dialog_message">Bill %1$s will be voided. This cannot be undone.</string>
+    <string name="billing_cancel_dialog_confirm">Cancel Bill</string>
+    <string name="billing_cancel_dialog_dismiss">Keep Bill</string>
+
+    <!-- ── Bill Summary Card ──────────────────────────────────────────────── -->
+    <string name="bill_subtotal">Subtotal</string>
+    <string name="bill_cgst">CGST (9%)</string>
+    <string name="bill_sgst">SGST (9%)</string>
+    <string name="bill_discount">Discount</string>
+    <string name="bill_total">Total</string>
+    <string name="bill_paid_so_far">Paid so far</string>
+    <string name="bill_remaining">Remaining</string>
+
+    <!-- ── Payment Screen ────────────────────────────────────────────────── -->
+    <string name="payment_title">Payment</string>
+    <string name="payment_amount_due">Amount Due</string>
+    <!-- %1$.2f = total amount -->
+    <string name="payment_remaining_balance">Remaining balance (total ₹%1$.2f)</string>
+    <string name="payment_method_label">Payment Method</string>
+    <string name="payment_cash_tendered_label">Cash Tendered</string>
+    <string name="payment_cash_field_label">Amount received from customer (₹)</string>
+    <string name="payment_cash_amount_field_label">Amount received from customer (₹)</string>
+    <string name="payment_change_to_return">Change to return</string>
+    <string name="payment_note_field_label">Note (optional)</string>
+    <string name="payment_notes_hint">Note (optional)</string>
+    <!-- Payment method chips -->
+    <string name="payment_method_cash">💵 Cash</string>
+    <string name="payment_method_card">💳 Card</string>
+    <string name="payment_method_upi">📱 UPI</string>
+    <string name="payment_method_wallet">👛 Wallet</string>
+    <!-- Pay button labels — %1$.2f = amount -->
+    <string name="payment_button_cash">Collect ₹%1$.2f Cash</string>
+    <string name="payment_collect_cash">Collect ₹%1$.2f Cash</string>
+    <string name="payment_button_card">Charge ₹%1$.2f to Card</string>
+    <string name="payment_charge_card">Charge ₹%1$.2f to Card</string>
+    <string name="payment_button_upi">Pay ₹%1$.2f via UPI</string>
+    <string name="payment_pay_upi">Pay ₹%1$.2f via UPI</string>
+    <string name="payment_button_wallet">Pay ₹%1$.2f via Wallet</string>
+    <string name="payment_pay_wallet">Pay ₹%1$.2f via Wallet</string>
+    <string name="payment_processing">Processing…</string>
+    <!-- Confirm card dialog -->
+    <string name="payment_confirm_card_title">Confirm Card Payment</string>
+    <string name="payment_card_confirm_title">Confirm Card Payment</string>
+    <!-- %1$.2f = amount -->
+    <string name="payment_confirm_card_message">Card payment of ₹%1$.2f has been authorised.\nTap Confirm once the terminal shows Approved.</string>
+    <string name="payment_card_confirm_message">Card payment of ₹%1$.2f has been authorised.\nTap Confirm once the terminal shows Approved.</string>
+    <!-- %1$s = reference number -->
+    <string name="payment_confirm_card_reference">Reference: %1$s</string>
+    <string name="payment_card_reference">Reference: %1$s</string>
+    <string name="payment_confirm_button">Confirm Payment</string>
+    <string name="payment_card_confirm_button">Confirm Payment</string>
+
+    <!-- ── Error messages ────────────────────────────────────────────────── -->
+    <string name="error_session_expired">Session error — please log in again.</string>
+    <!-- %1$.2f = minimum amount -->
+    <string name="error_amount_too_low">Amount must be ≥ ₹%1$.2f</string>
+    <string name="error_payment_declined">Payment declined. Please try again.</string>
+    <!-- %1$s = status value -->
+    <string name="error_unexpected_payment_status">Unexpected payment status: %1$s</string>
+    <string name="error_payment_failed">Payment failed. Please retry.</string>
+    <string name="error_confirm_payment_failed">Failed to confirm payment.</string>
+    <string name="error_generate_bill_failed">Failed to generate bill</string>
+    <string name="error_load_bill_failed">Failed to load bill</string>
+    <string name="error_cancel_bill_failed">Failed to cancel bill</string>
+    <string name="billing_cancel_success">Bill cancelled.</string>
+    <string name="error_discount_negative">Discount cannot be negative.</string>
+
+    <!-- ── Common ─────────────────────────────────────────────────────────── -->
+    <string name="cd_back">Back</string>
+    <string name="cancel">Cancel</string>
+
+</resources>
+
+

@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
@@ -82,7 +83,7 @@ fun HomeHeader(
                     onClick = { data.onTabChange(OrderTab.OFFLINE) },
                     text = {
                         Text(
-                            text = "Offline orders",
+                            text = stringResource(R.string.offline_orders),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = if (data.selectedTab == OrderTab.OFFLINE) FontWeight.SemiBold else FontWeight.Normal,
                         )
@@ -95,7 +96,7 @@ fun HomeHeader(
                     onClick = { data.onTabChange(OrderTab.ONLINE) },
                     text = {
                         Text(
-                            text = "Online orders",
+                            text = stringResource(R.string.online_orders),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = if (data.selectedTab == OrderTab.ONLINE) FontWeight.SemiBold else FontWeight.Normal,
                         )
@@ -123,7 +124,7 @@ fun HomeHeader(
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
-                                text = "Manage Menu",
+                                text = stringResource(R.string.manage_menu),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = Color(0xFFE65100),
                                 fontWeight = FontWeight.SemiBold,
@@ -154,14 +155,14 @@ fun HomeHeader(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Person,
-                            contentDescription = "Profile",
+                            contentDescription = stringResource(R.string.cd_profile),
                             modifier = Modifier.size(20.dp),
                             tint = Color(0xFF757575),
                         )
                     }
                     Icon(
                         imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = "Dropdown",
+                        contentDescription = stringResource(R.string.cd_dropdown),
                         tint = Color(0xFF757575),
                     )
                 }
@@ -172,4 +173,3 @@ fun HomeHeader(
         HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 1.dp)
     }
 }
-

@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 
 /**
@@ -46,14 +47,14 @@ fun SearchFilterPanel(
             modifier = Modifier.fillMaxWidth(),
             placeholder = {
                 Text(
-                    text = "Search",
+                    text = stringResource(R.string.search_placeholder),
                     color = Color(0xFF757575),
                 )
             },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
-                    contentDescription = "Search icon",
+                    contentDescription = stringResource(R.string.cd_search_icon),
                     tint = Color(0xFF757575),
                 )
             },
@@ -81,7 +82,7 @@ fun SearchFilterPanel(
                     onClick = { data.onCategorySelect("") },
                     label = {
                         Text(
-                            text = "All category",
+                            text = stringResource(R.string.all_category),
                             style = MaterialTheme.typography.labelMedium,
                         )
                     },

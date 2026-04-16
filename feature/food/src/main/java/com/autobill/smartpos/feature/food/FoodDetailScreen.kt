@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -128,7 +129,7 @@ private fun FoodDetailTopBar(
         IconButton(onClick = onBack) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
+                contentDescription = stringResource(R.string.cd_back),
                 tint = TextPrimary,
             )
         }
@@ -262,7 +263,7 @@ private fun FoodDetailInfoPanel(
             // Description
             val desc = food.description
             if (!desc.isNullOrBlank()) {
-                Text(text = "Description", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextSecondary)
+                Text(text = stringResource(R.string.description_label), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextSecondary)
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(text = desc, fontSize = 14.sp, color = TextPrimary, lineHeight = 20.sp)
                 Spacer(modifier = Modifier.height(12.dp))
@@ -294,7 +295,7 @@ private fun FoodDetailInfoPanel(
             // Availability
             if (!food.isAvailable) {
                 Text(
-                    text = "Currently unavailable",
+                    text = stringResource(R.string.currently_unavailable),
                     fontSize = 13.sp,
                     color = Color(0xFFF44336),
                     fontWeight = FontWeight.Medium,
@@ -322,7 +323,7 @@ private fun FoodDetailInfoPanel(
 @Composable
 private fun VegBadge(isVegetarian: Boolean) {
     val color = if (isVegetarian) VegGreen else Color(0xFFF44336)
-    val label = if (isVegetarian) "VEG" else "NON-VEG"
+    val label = if (isVegetarian) stringResource(R.string.food_type_veg) else stringResource(R.string.food_type_non_veg)
     Row(
         modifier = Modifier
             .border(1.5.dp, color, RoundedCornerShape(4.dp))
@@ -349,12 +350,12 @@ private fun SpicyBadge() {
         horizontalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Icon(
-                imageVector = Icons.Filled.LocalFireDepartment,
-            contentDescription = "Spicy",
+            imageVector = Icons.Filled.LocalFireDepartment,
+            contentDescription = stringResource(R.string.cd_spicy),
             tint = Color(0xFFF44336),
             modifier = Modifier.size(14.dp),
         )
-        Text(text = "SPICY", fontSize = 11.sp, color = Color(0xFFF44336), fontWeight = FontWeight.Bold)
+        Text(text = stringResource(R.string.spicy_label), fontSize = 11.sp, color = Color(0xFFF44336), fontWeight = FontWeight.Bold)
     }
 }
 
@@ -395,8 +396,8 @@ private fun AddToCartButton(
         )
         Spacer(modifier = Modifier.width(6.dp))
         Text(
-            text = if (cartQuantity > 0) "Add More  ·  $cartQuantity in cart"
-            else "Add to Cart",
+            text = if (cartQuantity > 0) stringResource(R.string.add_more_in_cart, cartQuantity)
+            else stringResource(R.string.add_to_cart),
             fontSize = 15.sp,
             fontWeight = FontWeight.SemiBold,
         )
@@ -435,7 +436,7 @@ fun FoodDetailErrorScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
-                text = "Couldn't load food details",
+                text = stringResource(R.string.error_load_food_details_title),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = TextPrimary,
@@ -449,23 +450,16 @@ fun FoodDetailErrorScreen(
             )
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 TextButton(onClick = onBack) {
-                    Text("Go Back", color = TextSecondary)
+                    Text(stringResource(R.string.go_back), color = TextSecondary)
                 }
                 Button(
                     onClick = onRetry,
                     colors = ButtonDefaults.buttonColors(containerColor = BrandOrange),
                     shape = RoundedCornerShape(8.dp),
                 ) {
-                    Text("Retry")
+                    Text(stringResource(R.string.retry))
                 }
             }
         }
     }
 }
-
-
-
-
-
-
-

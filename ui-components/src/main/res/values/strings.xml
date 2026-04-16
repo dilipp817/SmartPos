@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ── Loading / Dialog components ──────────────────────────────────── -->
+    <string name="loading_default_message">Loading…</string>
+    <string name="dialog_confirm_default">Confirm</string>
+    <string name="dialog_dismiss_default">Cancel</string>
+    <string name="dialog_ok_default">OK</string>
+    <string name="dialog_dismiss_snackbar">Dismiss</string>
+
+    <!-- ── Card components ───────────────────────────────────────────────── -->
+    <string name="card_total_label">Total</string>
+    <string name="card_qty_decrease">Decrease quantity</string>
+    <string name="card_qty_increase">Increase quantity</string>
+
+    <!-- ── List item components ──────────────────────────────────────────── -->
+    <!-- %1$d = quantity -->
+    <string name="list_item_quantity">x%1$d</string>
+    <string name="list_item_cd_remove">Remove item</string>
+    <!-- %1$d = capacity -->
+    <string name="list_item_capacity">Capacity: %1$d</string>
+    <!-- %1$d = order id -->
+    <string name="list_item_order_id">Order: #%1$d</string>
+
+    <!-- ── Input field components ────────────────────────────────────────── -->
+    <string name="input_search_placeholder">Search…</string>
+    <string name="input_cd_search">Search</string>
+    <string name="input_cd_clear">Clear</string>
+    <string name="input_number_label">Enter number</string>
+    <string name="input_discount_label">Discount Amount</string>
+    <string name="input_price_label">Price (₹)</string>
+
+</resources>
+
+

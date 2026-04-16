@@ -50,6 +50,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.ui.window.Dialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -64,10 +65,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.res.stringResource
 import com.autobill.smartpos.domain.model.Food
 import com.autobill.smartpos.domain.model.OrderItem
 import com.autobill.smartpos.domain.model.OrderStatus
+import com.autobill.smartpos.feature.order.R
 import com.autobill.smartpos.ui.components.badges.OrderStatusBadge
 
 /**
@@ -170,7 +172,7 @@ fun OrderDetailScreen(
                 when {
                     uiState.isLoading      -> OrderDetailLoadingState()
                     uiState.order == null  -> OrderDetailErrorState(
-                        message = uiState.errorMessage ?: "Order could not be loaded.",
+                        message = uiState.errorMessage ?: stringResource(R.string.order_detail_error_message),
                         onRetry = onRefresh,
                     )
                     else -> OrderDetailContent(
@@ -255,10 +257,10 @@ private fun OrderDetailTopBar(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color(0xFF212121))
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.cd_back), tint = Color(0xFF212121))
             }
             Text(
-                text       = order?.orderNumber ?: "Order Detail",
+                text       = order?.orderNumber ?: stringResource(R.string.order_detail_default_title),
                 style      = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color      = Color(0xFF212121),
@@ -274,7 +276,7 @@ private fun OrderDetailTopBar(
             }
             order?.let { OrderStatusBadge(status = it.status.value) }
             IconButton(onClick = onRefresh, enabled = !isLoading) {
-                Icon(Icons.Default.Refresh, "Refresh", tint = Color(0xFF757575))
+                Icon(Icons.Default.Refresh, stringResource(R.string.cd_refresh), tint = Color(0xFF757575))
             }
         }
         if (order != null) {
@@ -283,7 +285,7 @@ private fun OrderDetailTopBar(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("Table ${order.tableNumber}", style = MaterialTheme.typography.bodyMedium,
+                Text(stringResource(R.string.order_detail_table, order.tableNumber), style = MaterialTheme.typography.bodyMedium,
                     color = Color(0xFF424242), fontWeight = FontWeight.SemiBold)
                 Text("·", style = MaterialTheme.typography.bodySmall, color = Color(0xFF9E9E9E))
                 Text(order.orderType.value.replace("_", " "),
@@ -356,7 +358,7 @@ private fun OrderDetailContent(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment     = Alignment.CenterVertically,
             ) {
-                Text("Items (${order.items.size})", style = MaterialTheme.typography.titleSmall,
+                Text(stringResource(R.string.order_detail_items_section, order.items.size), style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold, color = Color(0xFF212121))
                 if (uiState.canAddItems) {
                     OutlinedButton(
@@ -368,7 +370,7 @@ private fun OrderDetailContent(
                     ) {
                         Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Add Item", style = MaterialTheme.typography.labelMedium)
+                        Text(stringResource(R.string.order_detail_add_item_button), style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }
@@ -378,7 +380,7 @@ private fun OrderDetailContent(
             item {
                 Box(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
                     contentAlignment = Alignment.Center) {
-                    Text("No items in this order", style = MaterialTheme.typography.bodyMedium,
+                    Text(stringResource(R.string.order_detail_no_items), style = MaterialTheme.typography.bodyMedium,
                         color = Color(0xFF9E9E9E))
                 }
             }
@@ -411,7 +413,7 @@ private fun OrderDetailContent(
                         modifier = Modifier.size(18.dp),
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Generate Bill", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.order_detail_generate_bill), fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -426,7 +428,7 @@ private fun OrderDetailContent(
                     border   = BorderStroke(1.dp, Color(0xFFB00020)),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Cancel Order", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.order_detail_cancel_order), fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -445,13 +447,13 @@ private fun OrderSummaryCard(order: com.autobill.smartpos.domain.model.Order) {
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Subtotal", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF757575))
+            Text(stringResource(R.string.order_detail_subtotal), style = MaterialTheme.typography.bodyMedium, color = Color(0xFF757575))
             Text("₹%.2f".format(order.subtotal), style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium)
         }
         HorizontalDivider(color = Color(0xFFF0F0F0))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Total", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.order_detail_total), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             Text("₹%.2f".format(order.totalAmount), style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold, color = Color(0xFF212121))
         }
@@ -459,7 +461,7 @@ private fun OrderSummaryCard(order: com.autobill.smartpos.domain.model.Order) {
         if (!notes.isNullOrBlank()) {
             HorizontalDivider(color = Color(0xFFF0F0F0))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
-                Text("Note:", style = MaterialTheme.typography.bodySmall, color = Color(0xFF9E9E9E))
+                Text(stringResource(R.string.order_detail_note_label), style = MaterialTheme.typography.bodySmall, color = Color(0xFF9E9E9E))
                 Text(notes, style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFF424242), fontStyle = FontStyle.Italic)
             }
@@ -515,15 +517,15 @@ private fun OrderDetailItemRow(
         when {
             isRemoving -> CircularProgressIndicator(
                 modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = Color(0xFFE33E3E))
-            isLocked   -> Icon(Icons.Default.Lock, "Locked",
+            isLocked   -> Icon(Icons.Default.Lock, stringResource(R.string.cd_locked),
                 tint = Color(0xFF9E9E9E), modifier = Modifier.size(18.dp))
             else       -> {
                 IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Default.Edit, "Edit", tint = Color(0xFF1565C0),
+                    Icon(Icons.Default.Edit, stringResource(R.string.cd_edit), tint = Color(0xFF1565C0),
                         modifier = Modifier.size(18.dp))
                 }
                 IconButton(onClick = onRemove, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Default.Delete, "Remove", tint = Color(0xFFB00020),
+                    Icon(Icons.Default.Delete, stringResource(R.string.cd_remove), tint = Color(0xFFB00020),
                         modifier = Modifier.size(18.dp))
                 }
             }
@@ -549,18 +551,18 @@ private fun AddItemDialog(
         Surface(shape = RoundedCornerShape(16.dp), color = Color.White,
             modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Add Item", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.order_add_item_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 
                 OutlinedTextField(
                     value           = dialog.searchQuery,
                     onValueChange   = onFoodSearch,
                     modifier        = Modifier.fillMaxWidth(),
-                    placeholder     = { Text("Search food…") },
+                    placeholder     = { Text(stringResource(R.string.order_add_item_search_placeholder)) },
                     leadingIcon     = { Icon(Icons.Default.Search, null, tint = Color(0xFF9E9E9E)) },
                     trailingIcon    = {
                         if (dialog.searchQuery.isNotBlank()) {
                             IconButton(onClick = { onFoodSearch("") }) {
-                                Icon(Icons.Default.Clear, "Clear", tint = Color(0xFF9E9E9E))
+                                Icon(Icons.Default.Clear, stringResource(R.string.cd_clear), tint = Color(0xFF9E9E9E))
                             }
                         }
                     },
@@ -620,7 +622,7 @@ private fun AddItemDialog(
                         value         = dialog.specialRequests,
                         onValueChange = onSpecialRequestsChange,
                         modifier      = Modifier.fillMaxWidth(),
-                        placeholder   = { Text("Special requests (optional)") },
+                        placeholder   = { Text(stringResource(R.string.order_add_item_note_placeholder)) },
                         maxLines      = 2,
                         shape         = RoundedCornerShape(10.dp),
                         colors        = OutlinedTextFieldDefaults.colors(
@@ -637,7 +639,7 @@ private fun AddItemDialog(
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically) {
                     TextButton(onClick = onDismiss, enabled = !isAdding) {
-                        Text("Cancel", color = Color(0xFF757575))
+                        Text(stringResource(R.string.cancel), color = Color(0xFF757575))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     if (isAdding) {
@@ -645,7 +647,7 @@ private fun AddItemDialog(
                             strokeWidth = 2.dp, color = Color(0xFFE33E3E))
                     } else {
                         TextButton(onClick = onConfirm, enabled = dialog.selectedFood != null) {
-                            Text("Add",
+                            Text(stringResource(R.string.order_add_item_confirm),
                                 color = if (dialog.selectedFood != null) Color(0xFFE33E3E) else Color(0xFFBDBDBD),
                                 fontWeight = FontWeight.Bold)
                         }
@@ -670,22 +672,22 @@ private fun EditItemDialog(
 ) {
     AlertDialog(
         onDismissRequest = { if (!isEditing) onDismiss() },
-        title       = { Text("Edit Item", fontWeight = FontWeight.Bold) },
+        title       = { Text(stringResource(R.string.order_edit_item_title), fontWeight = FontWeight.Bold) },
         text        = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(dialog.item.foodName, style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold)
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Quantity", style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.order_edit_item_quantity_label), style = MaterialTheme.typography.bodyMedium)
                     QuantityStepper(quantity = dialog.quantity, onQuantityChange = onQuantityChange)
                 }
                 OutlinedTextField(
                     value         = dialog.specialRequests,
                     onValueChange = onSpecialRequestsChange,
                     modifier      = Modifier.fillMaxWidth(),
-                    label         = { Text("Special requests") },
-                    placeholder   = { Text("Optional kitchen note") },
+                    label         = { Text(stringResource(R.string.order_edit_item_note_label)) },
+                    placeholder   = { Text(stringResource(R.string.order_edit_item_note_placeholder)) },
                     maxLines      = 2,
                     shape         = RoundedCornerShape(10.dp),
                     colors        = OutlinedTextFieldDefaults.colors(
@@ -704,13 +706,13 @@ private fun EditItemDialog(
                     strokeWidth = 2.dp, color = Color(0xFFE33E3E))
             } else {
                 TextButton(onClick = onConfirm) {
-                    Text("Save", color = Color(0xFFE33E3E), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.order_edit_item_save), color = Color(0xFFE33E3E), fontWeight = FontWeight.Bold)
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, enabled = !isEditing) {
-                Text("Cancel", color = Color(0xFF757575))
+                Text(stringResource(R.string.cancel), color = Color(0xFF757575))
             }
         },
         containerColor = Color.White,
@@ -729,10 +731,10 @@ private fun CancelOrderDialog(
 ) {
     AlertDialog(
         onDismissRequest = { if (!isCancelling) onDismiss() },
-        title       = { Text("Cancel Order?", fontWeight = FontWeight.Bold) },
+        title       = { Text(stringResource(R.string.order_cancel_dialog_title), fontWeight = FontWeight.Bold) },
         text        = {
             Text(
-                text  = "Order $orderNumber will be permanently cancelled. This cannot be undone.",
+                text  = stringResource(R.string.order_cancel_dialog_message, orderNumber),
                 style = MaterialTheme.typography.bodyMedium,
             )
         },
@@ -742,13 +744,13 @@ private fun CancelOrderDialog(
                     strokeWidth = 2.dp, color = Color(0xFFB00020))
             } else {
                 TextButton(onClick = onConfirm) {
-                    Text("Cancel Order", color = Color(0xFFB00020), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.order_cancel_dialog_confirm), color = Color(0xFFB00020), fontWeight = FontWeight.Bold)
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, enabled = !isCancelling) {
-                Text("Keep Order", color = Color(0xFF757575))
+                Text(stringResource(R.string.order_cancel_dialog_dismiss), color = Color(0xFF757575))
             }
         },
         containerColor = Color.White,
@@ -798,7 +800,7 @@ private fun OrderDetailErrorState(message: String, onRetry: () -> Unit) {
             Text("⚠️", style = MaterialTheme.typography.displaySmall)
             Text(message, style = MaterialTheme.typography.bodyMedium,
                 color = Color(0xFFB00020), fontWeight = FontWeight.Medium)
-            TextButton(onClick = onRetry) { Text("Retry", color = Color(0xFFE33E3E)) }
+            TextButton(onClick = onRetry) { Text(stringResource(R.string.retry), color = Color(0xFFE33E3E)) }
         }
     }
 }

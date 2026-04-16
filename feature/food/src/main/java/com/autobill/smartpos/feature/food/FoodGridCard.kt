@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -140,7 +141,7 @@ fun FoodGridCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = "Increase",
+                        contentDescription = stringResource(R.string.cd_increase),
                         tint = Color.White,
                         modifier = Modifier.size(16.dp),
                     )
@@ -158,7 +159,7 @@ fun FoodGridCard(
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Add to cart",
+                    contentDescription = stringResource(R.string.cd_add_to_cart),
                     tint = Color.White,
                     modifier = Modifier.size(18.dp),
                 )

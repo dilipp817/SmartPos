@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.autobill.smartpos.ui.components.EmptyStateCard
 import com.autobill.smartpos.ui.components.ErrorBanner
@@ -62,11 +63,11 @@ fun FoodGridSection(
                             .padding(16.dp),
                     ) {
                         ErrorBanner(
-                            message = data.errorMessage ?: "Failed to load foods",
+                            message = data.errorMessage ?: stringResource(R.string.error_failed_to_load_foods),
                             modifier = Modifier.padding(bottom = 16.dp),
                         )
                         Text(
-                            text = "Please try again",
+                            text = stringResource(R.string.please_try_again),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     }
@@ -75,7 +76,7 @@ fun FoodGridSection(
 
             data.isLoading && data.items.isEmpty() -> {
                 // Initial loading state
-                FullScreenLoading(message = "Loading menu...")
+                FullScreenLoading(message = stringResource(R.string.loading_menu))
             }
 
             data.items.isEmpty() -> {
@@ -85,7 +86,7 @@ fun FoodGridSection(
                     contentAlignment = Alignment.Center,
                 ) {
                     EmptyStateCard(
-                        message = "No foods available",
+                        message = stringResource(R.string.no_foods_available),
                         modifier = Modifier.padding(32.dp),
                     )
                 }
@@ -121,4 +122,3 @@ fun FoodGridSection(
         }
     }
 }
-

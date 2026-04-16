@@ -43,11 +43,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.autobill.smartpos.domain.model.Category
 import com.autobill.smartpos.domain.model.Food
+import com.autobill.smartpos.feature.admin.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,10 +82,10 @@ fun InventoryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Inventory Tracking") },
+                title = { Text(stringResource(R.string.inventory_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },
                 actions = {
@@ -91,7 +93,7 @@ fun InventoryScreen(
                         if (uiState.isLoading)
                             CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                         else
-                            Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.cd_refresh))
                     }
                 },
             )
@@ -121,21 +123,21 @@ fun InventoryScreen(
                     ) {
                         StatChip(
                             icon  = Icons.Default.CheckCircle,
-                            label = "Available",
+                            label = stringResource(R.string.inventory_filter_available),
                             count = uiState.availableCount,
                             tintOk = true,
                             modifier = Modifier.weight(1f),
                         )
                         StatChip(
                             icon  = Icons.Default.Close,
-                            label = "Unavailable",
+                            label = stringResource(R.string.inventory_filter_unavailable),
                             count = uiState.unavailableCount,
                             tintOk = uiState.unavailableCount == 0,
                             modifier = Modifier.weight(1f),
                         )
                         StatChip(
                             icon  = Icons.Default.Inventory2,
-                            label = "Total",
+                            label = stringResource(R.string.inventory_filter_total),
                             count = uiState.foods.size,
                             tintOk = true,
                             modifier = Modifier.weight(1f),
@@ -148,12 +150,12 @@ fun InventoryScreen(
                     OutlinedTextField(
                         value           = uiState.searchQuery,
                         onValueChange   = onSearchQueryChange,
-                        placeholder     = { Text("Search food items…") },
+                        placeholder     = { Text(stringResource(R.string.inventory_search_placeholder)) },
                         leadingIcon     = { Icon(Icons.Default.Search, contentDescription = null) },
                         trailingIcon    = {
                             if (uiState.searchQuery.isNotBlank())
                                 IconButton(onClick = { onSearchQueryChange("") }) {
-                                    Icon(Icons.Default.Close, contentDescription = "Clear")
+                                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_clear))
                                 }
                         },
                         singleLine      = true,
@@ -181,7 +183,7 @@ fun InventoryScreen(
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
-                                "No items match the current filter.",
+                                stringResource(R.string.inventory_no_items_match),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -259,7 +261,7 @@ private fun CategoryFilterRow(
             FilterChip(
                 selected  = selectedCategoryId == null,
                 onClick   = { onCategorySelected(null) },
-                label     = { Text("All") },
+                label     = { Text(stringResource(R.string.inventory_filter_all)) },
             )
         }
         items(categories, key = { it.id }) { category ->
@@ -349,5 +351,3 @@ private fun FoodAvailabilityRow(
         }
     }
 }
-
-

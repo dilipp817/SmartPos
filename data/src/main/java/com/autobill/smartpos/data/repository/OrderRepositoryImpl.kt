@@ -1,5 +1,6 @@
 package com.autobill.smartpos.data.repository
 
+import android.util.Log
 import com.autobill.smartpos.data.di.IoDispatcher
 import com.autobill.smartpos.data.local.dao.OrderDao
 import com.autobill.smartpos.data.mapper.toDomain
@@ -391,7 +392,12 @@ class OrderRepositoryImpl @Inject constructor(
 
     /** Extracts a human-readable lock reason from a 400 response body (best-effort). */
     private fun getLockedItemReason(e: HttpException): String =
-        try { e.response()?.errorBody()?.string() ?: "locked" } catch (_: Exception) { "locked" }
+        try {
+            e.response()?.errorBody()?.string() ?: "locked"
+        } catch (ex: Exception) {
+            Log.w("OrderRepositoryImpl", "Failed to read error body for locked item", ex)
+            "locked"
+        }
 }
 
 

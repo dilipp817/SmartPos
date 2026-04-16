@@ -1,61 +1,61 @@
 package com.autobill.smartpos.feature.food
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.qualifiers.ApplicationContext
 import com.autobill.smartpos.domain.common.Pagination
 import com.autobill.smartpos.domain.common.PaginationResult
 import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.common.UiState
-import com.autobill.smartpos.domain.model.CartItem
 import com.autobill.smartpos.domain.model.Category
 import com.autobill.smartpos.domain.model.Food
 import com.autobill.smartpos.domain.model.RolePermissions
-import com.autobill.smartpos.domain.usecase.AddToCartUseCase
-import com.autobill.smartpos.domain.usecase.ClearCartUseCase
-import com.autobill.smartpos.domain.usecase.DecreaseCartQuantityUseCase
-import com.autobill.smartpos.domain.usecase.GetCartUseCase
 import com.autobill.smartpos.domain.usecase.GetCategoriesUseCase
 import com.autobill.smartpos.domain.usecase.GetFoodsPaginatedUseCase
-import com.autobill.smartpos.domain.usecase.GetFoodsUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
-import com.autobill.smartpos.domain.usecase.IncreaseCartQuantityUseCase
+import com.autobill.smartpos.domain.usecase.ObserveRestaurantUseCase
 import com.autobill.smartpos.domain.usecase.ObserveRolePermissionsUseCase
+import com.autobill.smartpos.domain.usecase.ObserveSessionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
  * ViewModel: Food Feature
- * Manages UI state for the Food screen using production-ready patterns.
- * Supports infinite scroll pagination with automatic load-more detection.
- * Uses Result<T> for single operations and PaginationResult<T> for paginated data.
- * Injected with Hilt for dependency management.
+ *
+ * Single responsibility: paginated food loading, category filtering, and session/role state.
+ * Cart operations have been extracted to [CartViewModel] — this keeps constructor params
+ * at 5, making the ViewModel straightforward to test in isolation:
+ *
+ *   val vm = FoodViewModel(
+ *       getFoodsPaginatedUseCase    = FakeFoodsPaginatedUseCase(successResult),
+ *       getRestaurantIdUseCase      = FakeRestaurantIdUseCase(42L),
+ *       getCategoriesUseCase        = FakeCategoriesUseCase(emptyList()),
+ *       observeRolePermissionsUseCase = FakeRolePermissionsUseCase(RolePermissions.NONE),
+ *       observeSessionUseCase       = FakeSessionUseCase(flowOf(null)),
+ *   )
+ *   vm.loadFirstPage()
+ *   assertEquals(UiState.Loading, vm.paginatedFoodsState.value)
  */
 @HiltViewModel
 class FoodViewModel @Inject constructor(
-    private val getFoodsUseCase: GetFoodsUseCase,
+    @ApplicationContext private val context: Context,
     private val getFoodsPaginatedUseCase: GetFoodsPaginatedUseCase,
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
     private val getCategoriesUseCase: GetCategoriesUseCase,
     private val observeRolePermissionsUseCase: ObserveRolePermissionsUseCase,
-    // Cart use cases
-    private val getCartUseCase: GetCartUseCase,
-    private val addToCartUseCase: AddToCartUseCase,
-    private val increaseCartQuantityUseCase: IncreaseCartQuantityUseCase,
-    private val decreaseCartQuantityUseCase: DecreaseCartQuantityUseCase,
-    private val clearCartUseCase: ClearCartUseCase,
+    private val observeSessionUseCase: ObserveSessionUseCase,
+    observeRestaurantUseCase: ObserveRestaurantUseCase,
 ) : ViewModel() {
 
     // ========== FOOD STATE ==========
-
-    private val _foodsState = MutableStateFlow<UiState<List<Food>>>(UiState.Idle)
-    val foodsState: StateFlow<UiState<List<Food>>> = _foodsState.asStateFlow()
 
     private val _paginatedFoodsState = MutableStateFlow<UiState<Pagination<Food>>>(UiState.Idle)
     val paginatedFoodsState: StateFlow<UiState<Pagination<Food>>> = _paginatedFoodsState.asStateFlow()
@@ -71,11 +71,6 @@ class FoodViewModel @Inject constructor(
      */
     private var restaurantId: Long? = null
 
-    // ========== CART STATE (from repository — reactive) ==========
-
-    /** Live cart items — sourced from CartRepository */
-    val cartItems: StateFlow<List<CartItem>> = getCartUseCase()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
     // ========== ROLE PERMISSIONS (from session — reactive) ==========
 
@@ -86,6 +81,33 @@ class FoodViewModel @Inject constructor(
      */
     val rolePermissions: StateFlow<RolePermissions> = observeRolePermissionsUseCase()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), RolePermissions.NONE)
+
+    /**
+     * Active session user — kept private, used only as a username fallback below.
+     */
+    private val sessionUser = observeSessionUseCase()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), null)
+
+    /**
+     * Restaurant display name for the header.
+     *
+     * Source priority:
+     *  1. [ObserveRestaurantUseCase] — real name from GET /restaurants/{id}, cached by
+     *     [MainViewModel] at every cold app start before navigation resolves.
+     *     Emits null until the first successful fetch (rare on warm starts).
+     *  2. [sessionUser.username] — immediate fallback from the local DataStore session.
+     *  3. "SmartPos" — safe default if neither is available yet.
+     *
+     * In practice this resolves to the real restaurant name within milliseconds of
+     * [HomeRoute] being composed, because [MainViewModel] already ran [GetRestaurantUseCase]
+     * before the navigation stack reached Home.
+     */
+    val restaurantName: StateFlow<String> = combine(
+        observeRestaurantUseCase(),
+        sessionUser,
+    ) { restaurant, user ->
+        restaurant?.name ?: user?.username ?: context.getString(R.string.brand_name)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), context.getString(R.string.brand_name))
 
     // ========== FILTER STATE ==========
 
@@ -111,53 +133,19 @@ class FoodViewModel @Inject constructor(
             restaurantId = getRestaurantIdUseCase()
             if (restaurantId == null) {
                 _paginatedFoodsState.value = UiState.Error(
-                    "No restaurant assigned to this account. " +
-                    "Please log in with a counter or manager account."
+                    context.getString(R.string.error_no_restaurant_assigned)
                 )
                 return@launch
             }
             loadFirstPage()
             // Load categories for the filter chips
-            when (val result = getCategoriesUseCase(restaurantId!!)) {
+            when (val result = getCategoriesUseCase(restaurantId ?: return@launch)) {
                 is Result.Success -> _categories.value = result.data
                 else -> Unit   // non-fatal — filter chips simply stay hidden
             }
         }
     }
 
-    // ========== CART OPERATIONS ==========
-
-    /**
-     * Add a food item to cart. Looks up from current paginated list.
-     * If food is already in cart, quantity is incremented by 1.
-     */
-    fun addToCart(foodId: String) {
-        val food = currentPagination?.data?.find { it.id.toString() == foodId } ?: return
-        viewModelScope.launch { addToCartUseCase(food) }
-    }
-
-    /** Increase quantity of a cart item by 1 */
-    fun increaseQuantity(foodId: String) {
-        viewModelScope.launch {
-            increaseCartQuantityUseCase(foodId.toLongOrNull() ?: return@launch)
-        }
-    }
-
-    /** Decrease quantity by 1 — removes item from cart if quantity reaches 0 */
-    fun decreaseQuantity(foodId: String) {
-        viewModelScope.launch {
-            decreaseCartQuantityUseCase(foodId.toLongOrNull() ?: return@launch)
-        }
-    }
-
-    /** Remove all items from cart */
-    fun clearCart() {
-        viewModelScope.launch { clearCartUseCase() }
-    }
-
-    /** Get current quantity of a food item in cart (0 = not in cart) */
-    fun getCartQuantity(foodId: Long): Int =
-        cartItems.value.find { it.foodId == foodId }?.quantity ?: 0
 
     // ========== FILTER OPERATIONS ==========
 
@@ -214,7 +202,8 @@ class FoodViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoadingMore.value = true
             try {
-                val nextOffset = currentPagination!!.offset + currentPagination!!.limit
+                val pagination = currentPagination ?: return@launch
+                val nextOffset = pagination.offset + pagination.limit
                 val result = getFoodsPaginatedUseCase(restaurantId = restaurantId, offset = nextOffset, limit = 20)
                 handlePaginationResult(result, append = true)
             } finally {
@@ -226,9 +215,10 @@ class FoodViewModel @Inject constructor(
     private fun handlePaginationResult(result: PaginationResult<Food>, append: Boolean) {
         when (result) {
             is PaginationResult.Success -> {
-                val newPagination = if (append && currentPagination != null) {
-                    currentPagination!!.copy(
-                        data = currentPagination!!.data + result.pagination.data,
+                val existing = currentPagination
+                val newPagination = if (append && existing != null) {
+                    existing.copy(
+                        data = existing.data + result.pagination.data,
                         currentPage = result.pagination.currentPage,
                         hasMore = result.pagination.hasMore,
                     )
@@ -240,7 +230,7 @@ class FoodViewModel @Inject constructor(
             }
             is PaginationResult.Failure -> {
                 _paginatedFoodsState.value = UiState.Error(
-                    message = result.exception.message ?: "Failed to load foods",
+                    message = result.exception.message ?: context.getString(R.string.error_failed_to_load_foods),
                     exception = result.exception,
                 )
             }
@@ -248,24 +238,13 @@ class FoodViewModel @Inject constructor(
         }
     }
 
-    // Legacy non-paginated load (kept for backward compat)
-    fun loadFoods() {
-        viewModelScope.launch {
-            _foodsState.value = UiState.Loading
-            val result = getFoodsUseCase()
-            _foodsState.update {
-                when (result) {
-                    is Result.Success -> UiState.Success(result.data)
-                    is Result.Failure -> UiState.Error(
-                        message = result.exception.message ?: "Failed to load foods",
-                        exception = result.exception,
-                    )
-                    Result.Loading -> UiState.Loading
-                }
-            }
-        }
-    }
-
-    fun retryLoadFoods() = loadFoods()
     fun retryLoadPaginatedFoods() = loadFirstPage()
+
+    /**
+     * Look up a [Food] from the current page by its string id.
+     * Used by [HomeRoute] to resolve the full domain object before handing it to
+     * [CartViewModel.addToCart] — keeps [CartViewModel] independent of food-list state.
+     */
+    fun getFoodById(foodId: String): Food? =
+        currentPagination?.data?.find { it.id.toString() == foodId }
 }

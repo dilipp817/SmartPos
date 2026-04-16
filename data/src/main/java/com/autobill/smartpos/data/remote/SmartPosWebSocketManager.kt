@@ -29,6 +29,7 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
+import android.util.Log
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -80,6 +81,7 @@ class SmartPosWebSocketManager @Inject constructor(
     private var reconnectAttempt = 0
 
     companion object {
+        private const val TAG = "SmartPosWS"
         // Delays in ms: 1 s, 2 s, 4 s, 8 s, 16 s, then cap at 30 s
         private val RECONNECT_DELAYS = listOf(1_000L, 2_000L, 4_000L, 8_000L, 16_000L, 30_000L)
         private const val PING_INTERVAL_MS = 30_000L
@@ -193,8 +195,8 @@ class SmartPosWebSocketManager @Inject constructor(
             }
 
             event?.let { emit(it) }
-        } catch (_: Exception) {
-            // Malformed JSON or unexpected shape — log-worthy in prod, silently ignored here
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to parse WebSocket message: $e")
         }
     }
 

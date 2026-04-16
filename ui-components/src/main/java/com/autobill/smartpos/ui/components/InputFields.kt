@@ -19,9 +19,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.autobill.smartpos.ui.R
 
 /**
  * Reusable Input Components for SmartPos
@@ -114,7 +116,7 @@ fun SearchBar(
     onSearch: () -> Unit,
     modifier: Modifier = Modifier,
     onClear: () -> Unit = { onQueryChange("") },
-    placeholder: String = "Search...",
+    placeholder: String = stringResource(R.string.input_search_placeholder),
 ) {
     OutlinedTextField(
         value = query,
@@ -126,7 +128,7 @@ fun SearchBar(
         leadingIcon = {
             Icon(
                 imageVector = Icons.Filled.Search,
-                contentDescription = "Search",
+                contentDescription = stringResource(R.string.input_cd_search),
                 modifier = Modifier.size(24.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -136,7 +138,7 @@ fun SearchBar(
                 IconButton(onClick = onClear) {
                     Icon(
                         imageVector = Icons.Filled.Clear,
-                        contentDescription = "Clear",
+                        contentDescription = stringResource(R.string.input_cd_clear),
                         modifier = Modifier.size(24.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -228,7 +230,7 @@ fun PriceInputField(
                 onValueChange(filtered)
             }
         },
-        label = "Price (₹)",
+        label = stringResource(R.string.input_price_label),
         modifier = modifier,
         placeholder = "0.00",
         enabled = enabled,
@@ -237,4 +239,3 @@ fun PriceInputField(
         errorMessage = errorMessage,
     )
 }
-

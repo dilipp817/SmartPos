@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ── Table List Screen ─────────────────────────────────────────────── -->
+    <string name="table_list_title">Select a Table</string>
+    <string name="table_list_loading">Loading tables…</string>
+    <string name="table_fab_add">Add Table</string>
+    <string name="table_status_updated_snackbar">Table status updated ✓</string>
+    <string name="table_empty_all">No tables found</string>
+    <string name="table_empty_available">No available tables right now</string>
+    <string name="table_empty_occupied">No tables are currently occupied</string>
+    <!-- %1$d = count -->
+    <string name="table_available_count">%1$d available</string>
+
+    <!-- ── Table Filter enum labels ──────────────────────────────────────── -->
+    <string name="table_filter_all">All Tables</string>
+    <string name="table_filter_available">Available</string>
+    <string name="table_filter_occupied">Occupied</string>
+
+    <!-- ── Table Grid Card ───────────────────────────────────────────────── -->
+    <!-- %1$s = table number -->
+    <string name="table_card_number">Table %1$s</string>
+    <!-- %1$d = floor number -->
+    <string name="table_card_floor">Floor %1$d</string>
+    <string name="table_menu_edit">Edit Table</string>
+    <string name="table_menu_delete">Delete Table</string>
+
+    <!-- ── Table CRUD dialog ─────────────────────────────────────────────── -->
+    <!-- %1$s = table number when editing -->
+    <string name="table_crud_title_add">Add Table</string>
+    <string name="table_crud_title_edit">Edit Table %1$s</string>
+    <string name="table_crud_subtitle_add">New table starts as AVAILABLE</string>
+    <string name="table_crud_subtitle_edit">Update number, floor, or capacity</string>
+    <string name="table_crud_field_number">Table Number</string>
+    <string name="table_crud_field_number_placeholder">e.g. T-1, A3, VIP-01</string>
+    <string name="table_crud_field_number_error">Table number cannot be empty</string>
+    <string name="table_crud_field_floor">Floor</string>
+    <string name="table_crud_field_capacity">Capacity (seats)</string>
+    <string name="table_crud_save">Save</string>
+    <!-- %1$s = field label (Floor / Capacity) -->
+    <string name="table_crud_cd_decrease">Decrease %1$s</string>
+    <string name="table_crud_cd_increase">Increase %1$s</string>
+
+    <!-- ── Table Status dialog ───────────────────────────────────────────── -->
+    <string name="table_status_dialog_title">Change Table Status</string>
+    <!-- %1$s = table number, %2$d = floor, %3$d = capacity -->
+    <string name="table_status_dialog_summary">Table %1$s    Floor %2$d    👥 %3$d</string>
+    <string name="table_status_current_label">Current:</string>
+    <string name="table_status_select_label">Select new status:</string>
+    <string name="table_status_confirm">Confirm</string>
+
+    <!-- ── Delete Confirm dialog ─────────────────────────────────────────── -->
+    <string name="table_delete_dialog_title">Delete Table?</string>
+    <string name="table_delete_dialog_confirm_prompt">Are you sure you want to permanently remove:</string>
+    <!-- %1$s = table number -->
+    <string name="table_delete_dialog_table_number">Table %1$s</string>
+    <!-- %1$d = floor, %2$d = capacity, %3$s = status -->
+    <string name="table_delete_dialog_details">Floor %1$d    👥 %2$d seats    %3$s</string>
+    <string name="table_delete_dialog_warning">This action cannot be undone. Only tables that are not currently occupied or reserved can be deleted.</string>
+    <string name="table_delete_confirm">Delete</string>
+
+    <!-- ── Success messages ──────────────────────────────────────────────── -->
+    <!-- %1$s = table number -->
+    <string name="table_created_success">Table %1$s created ✓</string>
+    <string name="table_updated_success">Table %1$s updated ✓</string>
+    <string name="table_deleted_success">Table %1$s deleted</string>
+
+    <!-- ── Error messages ────────────────────────────────────────────────── -->
+    <string name="error_no_restaurant_session">No restaurant assigned to this account. Please log in again.</string>
+    <string name="error_update_table_status">Failed to update table status. Please try again.</string>
+    <string name="error_create_table">Failed to create table.</string>
+    <string name="error_update_table">Failed to update table.</string>
+    <string name="error_delete_table">Failed to delete table.</string>
+    <string name="error_load_tables">Failed to load tables. Please try again.</string>
+
+    <!-- ── Common ─────────────────────────────────────────────────────────── -->
+    <string name="cd_back">Back</string>
+    <string name="cd_refresh">Refresh</string>
+    <string name="cd_table_options">Table options</string>
+    <string name="cd_change_status">Change status</string>
+    <string name="cancel">Cancel</string>
+    <string name="retry">Retry</string>
+
+</resources>
+
+

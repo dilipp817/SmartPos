@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
@@ -46,11 +45,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.autobill.smartpos.domain.model.SalesReport
 import com.autobill.smartpos.domain.model.TopSellingItem
 
 /**
@@ -102,10 +101,10 @@ fun SalesReportScreen(
             confirmButton = {
                 TextButton(onClick = {
                     state.selectedDateMillis?.let(onStartDateSelected) ?: onDismissStartPicker()
-                }) { Text("OK") }
+                }) { Text(stringResource(R.string.date_picker_ok)) }
             },
             dismissButton = {
-                TextButton(onClick = onDismissStartPicker) { Text("Cancel") }
+                TextButton(onClick = onDismissStartPicker) { Text(stringResource(R.string.date_picker_cancel)) }
             },
         ) { DatePicker(state = state) }
     }
@@ -118,10 +117,10 @@ fun SalesReportScreen(
             confirmButton = {
                 TextButton(onClick = {
                     state.selectedDateMillis?.let(onEndDateSelected) ?: onDismissEndPicker()
-                }) { Text("OK") }
+                }) { Text(stringResource(R.string.date_picker_ok)) }
             },
             dismissButton = {
-                TextButton(onClick = onDismissEndPicker) { Text("Cancel") }
+                TextButton(onClick = onDismissEndPicker) { Text(stringResource(R.string.date_picker_cancel)) }
             },
         ) { DatePicker(state = state) }
     }
@@ -150,13 +149,13 @@ fun SalesReportScreen(
                     )
                     Spacer(Modifier.width(10.dp))
                     Text(
-                        text       = "Sales Report",
+                        text       = stringResource(R.string.sales_report_title),
                         style      = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                     )
                 }
                 IconButton(onClick = onLoadReport, enabled = !uiState.isLoading) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Refresh report")
+                    Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.cd_refresh))
                 }
             }
 
@@ -194,13 +193,11 @@ fun SalesReportScreen(
                 } else if (uiState.report == null) {
                     item {
                         Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 48.dp),
+                            Modifier.fillMaxWidth().padding(vertical = 48.dp),
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
-                                text      = "Select a date range and tap Load.",
+                                text      = stringResource(R.string.sales_report_empty_hint),
                                 style     = MaterialTheme.typography.bodyLarge,
                                 color     = Color(0xFF757575),
                                 textAlign = TextAlign.Center,
@@ -216,24 +213,24 @@ fun SalesReportScreen(
                             modifier              = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                    SalesMetricCard(
-                        icon        = Icons.AutoMirrored.Filled.TrendingUp,
-                        iconTint    = Color(0xFF2E7D32),
-                        label       = "Total Revenue",
-                        value       = "₹%.2f".format(report.totalRevenue),
-                        modifier    = Modifier.weight(1f),
-                    )
+                            SalesMetricCard(
+                                icon        = Icons.AutoMirrored.Filled.TrendingUp,
+                                iconTint    = Color(0xFF2E7D32),
+                                label       = stringResource(R.string.sales_report_stat_revenue),
+                                value       = "₹%.2f".format(report.totalRevenue),
+                                modifier    = Modifier.weight(1f),
+                            )
                             SalesMetricCard(
                                 icon        = Icons.Default.ShoppingCart,
                                 iconTint    = Color(0xFF1565C0),
-                                label       = "Orders (${report.deliveredCount} delivered)",
+                                label       = stringResource(R.string.sales_report_stat_orders, report.deliveredCount),
                                 value       = "${report.orderCount}",
                                 modifier    = Modifier.weight(1f),
                             )
                             SalesMetricCard(
                                 icon        = Icons.Default.BarChart,
                                 iconTint    = Color(0xFF6A1B9A),
-                                label       = "Avg Order Value",
+                                label       = stringResource(R.string.sales_report_stat_avg_order),
                                 value       = "₹%.2f".format(report.averageOrderValue),
                                 modifier    = Modifier.weight(1f),
                             )
@@ -304,7 +301,7 @@ private fun DateRangeSelector(
             enabled  = !isLoading,
             shape    = RoundedCornerShape(8.dp),
         ) {
-            Text("Load")
+            Text(stringResource(R.string.sales_report_load_button))
         }
     }
 }
@@ -373,7 +370,7 @@ private fun TopSellingItemsSection(
                 modifier           = Modifier.size(20.dp),
             )
             Text(
-                text       = "Top Selling Items",
+                text       = stringResource(R.string.sales_report_top_items_title),
                 style      = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
             )
@@ -382,7 +379,7 @@ private fun TopSellingItemsSection(
         if (items.isEmpty()) {
             Spacer(Modifier.height(12.dp))
             Text(
-                text      = "No items found in this date range.",
+                text      = stringResource(R.string.sales_report_top_items_empty),
                 style     = MaterialTheme.typography.bodyMedium,
                 color     = Color(0xFF757575),
                 textAlign = TextAlign.Center,
@@ -396,10 +393,10 @@ private fun TopSellingItemsSection(
                 modifier              = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text("#", style = MaterialTheme.typography.labelSmall, color = Color(0xFF9E9E9E), modifier = Modifier.width(28.dp))
-                Text("Item", style = MaterialTheme.typography.labelSmall, color = Color(0xFF9E9E9E), modifier = Modifier.weight(1f))
-                Text("Qty", style = MaterialTheme.typography.labelSmall, color = Color(0xFF9E9E9E), modifier = Modifier.width(40.dp), textAlign = TextAlign.End)
-                Text("Revenue", style = MaterialTheme.typography.labelSmall, color = Color(0xFF9E9E9E), modifier = Modifier.width(80.dp), textAlign = TextAlign.End)
+                Text(stringResource(R.string.sales_report_col_rank), style = MaterialTheme.typography.labelSmall, color = Color(0xFF9E9E9E), modifier = Modifier.width(28.dp))
+                Text(stringResource(R.string.sales_report_col_item), style = MaterialTheme.typography.labelSmall, color = Color(0xFF9E9E9E), modifier = Modifier.weight(1f))
+                Text(stringResource(R.string.sales_report_col_qty), style = MaterialTheme.typography.labelSmall, color = Color(0xFF9E9E9E), modifier = Modifier.width(40.dp), textAlign = TextAlign.End)
+                Text(stringResource(R.string.sales_report_col_revenue), style = MaterialTheme.typography.labelSmall, color = Color(0xFF9E9E9E), modifier = Modifier.width(80.dp), textAlign = TextAlign.End)
             }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
@@ -448,8 +445,5 @@ private fun TopSellingItemsSection(
         }
     }
 }
-
-
-
 
 

@@ -3,6 +3,7 @@ package com.autobill.smartpos.feature.order
 import com.autobill.smartpos.domain.model.CartItem
 import com.autobill.smartpos.domain.model.OrderType
 import com.autobill.smartpos.domain.model.Table
+import com.autobill.smartpos.domain.common.TaxConstants
 
 /**
  * UI state for the Create Order confirmation screen.
@@ -36,7 +37,7 @@ data class CreateOrderUiState(
     val subtotal: Double get() = cartItems.sumOf { it.subtotal }
 
     /** Estimated GST (18%) — for preview only; server computes the real value in generate-bill. */
-    val estimatedTax: Double get() = subtotal * 0.18
+    val estimatedTax: Double get() = subtotal * TaxConstants.GST_ESTIMATE_RATE
 
     /** Estimated total — preview only. */
     val estimatedTotal: Double get() = subtotal + estimatedTax

@@ -1,5 +1,6 @@
 package com.autobill.smartpos.feature.admin.settings
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.autobill.smartpos.domain.common.Result
@@ -8,7 +9,9 @@ import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantUseCase
 import com.autobill.smartpos.domain.usecase.ObserveRestaurantUseCase
 import com.autobill.smartpos.domain.usecase.UpdateRestaurantSettingsUseCase
+import com.autobill.smartpos.feature.admin.R
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,6 +27,7 @@ class AdminSettingsViewModel @Inject constructor(
     private val getRestaurantUseCase: GetRestaurantUseCase,
     private val observeRestaurantUseCase: ObserveRestaurantUseCase,
     private val updateRestaurantSettingsUseCase: UpdateRestaurantSettingsUseCase,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AdminSettingsUiState())
@@ -91,12 +95,12 @@ class AdminSettingsViewModel @Inject constructor(
                 is Result.Success -> _uiState.update { it.copy(
                     isSaving        = false,
                     isDirty         = false,
-                    successMessage  = "Settings saved",
+                    successMessage  = context.getString(R.string.settings_saved_success),
                     restaurant      = result.data,
                 ) }
                 is Result.Failure -> _uiState.update { it.copy(
                     isSaving = false,
-                    error    = result.exception.message ?: "Save failed",
+                    error    = result.exception.message ?: context.getString(R.string.settings_save_failed),
                 ) }
                 else -> _uiState.update { it.copy(isSaving = false) }
             }
@@ -106,4 +110,3 @@ class AdminSettingsViewModel @Inject constructor(
     fun dismissError()   = _uiState.update { it.copy(error = null) }
     fun dismissSuccess() = _uiState.update { it.copy(successMessage = null) }
 }
-

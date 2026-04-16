@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -32,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.autobill.smartpos.domain.model.TableStatus
@@ -74,14 +74,14 @@ fun TableStatusUpdateDialog(
         title = {
             Column {
                 Text(
-                    text = "Change Table Status",
+                    text = stringResource(R.string.table_status_dialog_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF212121),
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "Table ${table.tableNumber}  ·  Floor ${table.floor}  ·  👥 ${table.capacity}",
+                    text = stringResource(R.string.table_status_dialog_summary, table.tableNumber, table.floor, table.capacity),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFF757575),
                 )
@@ -97,7 +97,7 @@ fun TableStatusUpdateDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text(
-                        text = "Current:",
+                        text = stringResource(R.string.table_status_current_label),
                         style = MaterialTheme.typography.labelMedium,
                         color = Color(0xFF757575),
                     )
@@ -106,7 +106,7 @@ fun TableStatusUpdateDialog(
 
                 // New status options
                 Text(
-                    text = "Select new status:",
+                    text = stringResource(R.string.table_status_select_label),
                     style = MaterialTheme.typography.labelMedium,
                     color = Color(0xFF424242),
                     fontWeight = FontWeight.SemiBold,
@@ -161,7 +161,7 @@ fun TableStatusUpdateDialog(
                     enabled = selectedStatus != null,
                 ) {
                     Text(
-                        text = "Confirm",
+                        text = stringResource(R.string.table_status_confirm),
                         color = if (selectedStatus != null) Color(0xFFE33E3E) else Color(0xFFBDBDBD),
                         fontWeight = FontWeight.Bold,
                     )
@@ -174,7 +174,7 @@ fun TableStatusUpdateDialog(
                 enabled = !isUpdating,
             ) {
                 Text(
-                    text = "Cancel",
+                    text = stringResource(R.string.cancel),
                     color = if (!isUpdating) Color(0xFF757575) else Color(0xFFBDBDBD),
                 )
             }

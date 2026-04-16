@@ -40,10 +40,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.autobill.smartpos.feature.billing.R
 
 /**
  * Billing Screen — Phase 6.1 & 6.2
@@ -101,10 +103,10 @@ fun BillingScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color(0xFF212121))
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.cd_back), tint = Color(0xFF212121))
                 }
                 Text(
-                    text       = "Billing",
+                    text       = stringResource(R.string.billing_title),
                     style      = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color      = Color(0xFF212121),
@@ -144,7 +146,7 @@ fun BillingScreen(
                                     modifier = Modifier.fillMaxWidth().height(52.dp),
                                 ) {
                                     Text(
-                                        text       = "Proceed to Payment  ₹%.2f".format(
+                                        text       = stringResource(R.string.billing_proceed_to_payment,
                                             if (uiState.bill.remainingAmount > 0)
                                                 uiState.bill.remainingAmount
                                             else uiState.bill.totalAmount
@@ -166,7 +168,7 @@ fun BillingScreen(
                                     ),
                                     modifier = Modifier.fillMaxWidth(),
                                 ) {
-                                    Text("Cancel Bill", fontWeight = FontWeight.SemiBold)
+                                    Text(stringResource(R.string.billing_cancel_bill_button), fontWeight = FontWeight.SemiBold)
                                 }
                             }
                         }
@@ -206,11 +208,10 @@ fun BillingScreen(
     if (uiState.showCancelDialog) {
         AlertDialog(
             onDismissRequest = { if (!uiState.isCancelling) onDismissCancelDialog() },
-            title = { Text("Cancel Bill?", fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.billing_cancel_dialog_title), fontWeight = FontWeight.Bold) },
             text  = {
                 Text(
-                    "Bill ${uiState.bill?.billNumber.orEmpty()} will be voided. " +
-                    "This cannot be undone.",
+                    stringResource(R.string.billing_cancel_dialog_message, uiState.bill?.billNumber.orEmpty()),
                     style = MaterialTheme.typography.bodyMedium,
                 )
             },
@@ -223,13 +224,13 @@ fun BillingScreen(
                     )
                 } else {
                     TextButton(onClick = onConfirmCancelBill) {
-                        Text("Cancel Bill", color = Color(0xFFB00020), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.billing_cancel_dialog_confirm), color = Color(0xFFB00020), fontWeight = FontWeight.Bold)
                     }
                 }
             },
             dismissButton = {
                 TextButton(onClick = onDismissCancelDialog, enabled = !uiState.isCancelling) {
-                    Text("Keep Bill", color = Color(0xFF757575))
+                    Text(stringResource(R.string.billing_cancel_dialog_dismiss), color = Color(0xFF757575))
                 }
             },
             containerColor = Color.White,
@@ -256,14 +257,13 @@ private fun GenerateBillForm(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(
-            text       = "Generate Bill",
+            text       = stringResource(R.string.billing_generate_bill_button),
             style      = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color      = Color(0xFF212121),
         )
         Text(
-            text  = "Tax (18% GST) is calculated automatically by the server.\n" +
-                    "Enter an optional discount in rupees (e.g. 50 for ₹50 off).",
+            text  = stringResource(R.string.billing_tax_info),
             style = MaterialTheme.typography.bodySmall,
             color = Color(0xFF757575),
         )
@@ -271,7 +271,7 @@ private fun GenerateBillForm(
         OutlinedTextField(
             value         = discountInput,
             onValueChange = onDiscountChange,
-            label         = { Text("Discount (₹) — optional") },
+            label         = { Text(stringResource(R.string.billing_field_discount)) },
             placeholder   = { Text("0") },
             isError       = discountError != null,
             supportingText = discountError?.let { { Text(it, color = Color(0xFFB00020)) } },
@@ -295,9 +295,9 @@ private fun GenerateBillForm(
                     color       = Color.White,
                 )
                 Spacer(modifier = Modifier.width(10.dp))
-                Text("Generating…", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.billing_generating), fontWeight = FontWeight.Bold)
             } else {
-                Text("Generate Bill", fontWeight = FontWeight.Bold,
+                Text(stringResource(R.string.billing_generate_bill_button), fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.bodyLarge)
             }
         }
@@ -322,7 +322,7 @@ private fun BillingLoadingState() {
                 color       = Color(0xFFE33E3E),
             )
             Text(
-                "Loading bill…",
+                stringResource(R.string.billing_loading_bill),
                 style     = MaterialTheme.typography.bodyMedium,
                 color     = Color(0xFF9E9E9E),
                 textAlign = TextAlign.Center,
@@ -330,4 +330,3 @@ private fun BillingLoadingState() {
         }
     }
 }
-

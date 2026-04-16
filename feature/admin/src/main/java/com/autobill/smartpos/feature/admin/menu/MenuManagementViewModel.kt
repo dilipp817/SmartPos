@@ -1,5 +1,6 @@
 package com.autobill.smartpos.feature.admin.menu
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.autobill.smartpos.domain.common.Result
@@ -9,7 +10,9 @@ import com.autobill.smartpos.domain.usecase.GetCategoriesUseCase
 import com.autobill.smartpos.domain.usecase.GetFoodsUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
 import com.autobill.smartpos.domain.usecase.UpdateFoodUseCase
+import com.autobill.smartpos.feature.admin.R
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +28,7 @@ class MenuManagementViewModel @Inject constructor(
     private val createFoodUseCase: CreateFoodUseCase,
     private val updateFoodUseCase: UpdateFoodUseCase,
     private val deleteFoodUseCase: DeleteFoodUseCase,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MenuManagementUiState())
@@ -163,11 +167,15 @@ class MenuManagementViewModel @Inject constructor(
             when (result) {
                 is Result.Success -> {
                     _uiState.update { it.copy(isSaving = false, showCreateDialog = false,
-                        editingFood = null, successMessage = if (editing == null) "Item created" else "Item updated") }
+                        editingFood = null,
+                        successMessage = if (editing == null)
+                            context.getString(R.string.menu_item_created)
+                        else
+                            context.getString(R.string.menu_item_updated)) }
                     loadFoods()
                 }
                 is Result.Failure -> _uiState.update { it.copy(isSaving = false,
-                    error = result.exception.message ?: "Save failed") }
+                    error = result.exception.message ?: context.getString(R.string.menu_save_failed)) }
                 else -> _uiState.update { it.copy(isSaving = false) }
             }
         }
@@ -182,11 +190,11 @@ class MenuManagementViewModel @Inject constructor(
             when (val r = deleteFoodUseCase(food.id)) {
                 is Result.Success -> {
                     _uiState.update { it.copy(isDeleting = false,
-                        successMessage = "${food.name} deleted") }
+                        successMessage = context.getString(R.string.menu_item_deleted, food.name)) }
                     loadFoods()
                 }
                 is Result.Failure -> _uiState.update { it.copy(isDeleting = false,
-                    error = r.exception.message ?: "Delete failed") }
+                    error = r.exception.message ?: context.getString(R.string.menu_delete_failed)) }
                 else -> _uiState.update { it.copy(isDeleting = false) }
             }
         }

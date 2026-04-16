@@ -1,19 +1,44 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Backup / transfer rules for SmartPos (Android 12+ / API 31+).
+    For Android 6–11, android:allowBackup="false" in the manifest disables everything.
+
+    Cloud backup  → android:allowBackup="false" in the manifest already disables this
+                    entirely on Android 12+. The <cloud-backup> rules below are an
+                    explicit belt-and-suspenders layer in case that attribute changes.
+
+    Device-to-device transfer → android:allowBackup does NOT cover this on Android 12+.
+                    Rules here are the only protection. For a shared POS tablet, no
+                    app state should ever be silently transferred to a replacement device:
+                    - JWT lives in Android Keystore (hardware-bound, never leaves the device)
+                    - Session metadata without a matching JWT creates a broken ghost session
+                    - Order history / cart data belongs to the restaurant outlet, not the device
 -->
 <data-extraction-rules>
+
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
+        <!--
+            Belt-and-suspenders: allowBackup="false" already disables cloud backup,
+            but explicitly exclude the sensitive files here for clarity.
         -->
+        <exclude domain="file"     path="datastore/smartpos_session.preferences_pb" />
+        <exclude domain="file"     path="datastore/smartpos_restaurant.preferences_pb" />
+        <exclude domain="database" path="smartpos.db" />
     </cloud-backup>
-    <!--
+
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <!--
+            POS tablets must never silently transfer state to a replacement device.
+            A new tablet must log in fresh so it gets its own Keystore-bound JWT.
+
+            Exclude all three layers of local state:
+              1. Session DataStore  — userId / role / restaurantId
+              2. Restaurant cache   — name / settings (refreshed on first login anyway)
+              3. Room database      — orders, cart, pending orders, food cache, tables
+        -->
+        <exclude domain="file"     path="datastore/smartpos_session.preferences_pb" />
+        <exclude domain="file"     path="datastore/smartpos_restaurant.preferences_pb" />
+        <exclude domain="database" path="smartpos.db" />
     </device-transfer>
-    -->
+
 </data-extraction-rules>

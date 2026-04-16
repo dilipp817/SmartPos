@@ -1,5 +1,6 @@
 package com.autobill.smartpos.feature.billing
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,7 +10,9 @@ import com.autobill.smartpos.domain.usecase.CancelBillUseCase
 import com.autobill.smartpos.domain.usecase.GenerateBillUseCase
 import com.autobill.smartpos.domain.usecase.GetBillByIdUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
+import com.autobill.smartpos.feature.billing.R
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,6 +40,7 @@ class BillingViewModel @Inject constructor(
     private val generateBillUseCase: GenerateBillUseCase,
     private val getBillByIdUseCase: GetBillByIdUseCase,
     private val cancelBillUseCase: CancelBillUseCase,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     private val orderId: Long = checkNotNull(savedStateHandle["orderId"]) {
@@ -53,13 +57,13 @@ class BillingViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            restaurantId = getRestaurantIdUseCase()
-            if (restaurantId == null) {
+            val rid = restaurantId
+            if (rid == null) {
                 _uiState.update {
-                    it.copy(errorMessage = "Session error — please log in again.")
+                    it.copy(errorMessage = context.getString(R.string.error_session_expired))
                 }
             } else {
-                _uiState.update { it.copy(restaurantId = restaurantId!!) }
+                _uiState.update { it.copy(restaurantId = rid) }
             }
         }
     }
@@ -74,12 +78,12 @@ class BillingViewModel @Inject constructor(
 
     fun generateBill() {
         val rid = restaurantId ?: run {
-            _uiState.update { it.copy(errorMessage = "Session error — please log in again.") }
+            _uiState.update { it.copy(errorMessage = context.getString(R.string.error_session_expired)) }
             return
         }
         val discount = _uiState.value.discountInput.toDoubleOrNull() ?: 0.0
         if (discount < 0) {
-            _uiState.update { it.copy(discountError = "Discount cannot be negative.") }
+            _uiState.update { it.copy(discountError = context.getString(R.string.error_discount_negative)) }
             return
         }
 
@@ -87,22 +91,17 @@ class BillingViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = generateBillUseCase(rid, orderId, discount)) {
                 is Result.Success -> {
-                    _uiState.update {
-                        it.copy(isGenerating = false, bill = result.data)
-                    }
+                    _uiState.update { it.copy(isGenerating = false, bill = result.data) }
                 }
                 is Result.Failure -> {
                     if (result.exception is HttpConflictException) {
-                        // 409 — bill already exists; Route will re-fetch and call setBillFromExisting
-                        _uiState.update {
-                            it.copy(isGenerating = false, billAlreadyExists = true)
-                        }
+                        _uiState.update { it.copy(isGenerating = false, billAlreadyExists = true) }
                     } else {
                         _uiState.update {
                             it.copy(
                                 isGenerating = false,
                                 errorMessage = result.exception.message
-                                    ?: "Failed to generate bill",
+                                    ?: context.getString(R.string.error_generate_bill_failed),
                             )
                         }
                     }
@@ -133,7 +132,7 @@ class BillingViewModel @Inject constructor(
                 is Result.Failure -> _uiState.update {
                     it.copy(
                         isLoadingExistingBill = false,
-                        errorMessage = result.exception.message ?: "Failed to load bill",
+                        errorMessage = result.exception.message ?: context.getString(R.string.error_load_bill_failed),
                     )
                 }
                 is Result.Loading -> { /* no-op */ }
@@ -155,13 +154,13 @@ class BillingViewModel @Inject constructor(
                     it.copy(
                         isCancelling = false,
                         bill = result.data,
-                        successMessage = "Bill cancelled.",
+                        successMessage = context.getString(R.string.billing_cancel_success),
                     )
                 }
                 is Result.Failure -> _uiState.update {
                     it.copy(
                         isCancelling = false,
-                        errorMessage = result.exception.message ?: "Failed to cancel bill",
+                        errorMessage = result.exception.message ?: context.getString(R.string.error_cancel_bill_failed),
                     )
                 }
                 is Result.Loading -> { /* no-op */ }

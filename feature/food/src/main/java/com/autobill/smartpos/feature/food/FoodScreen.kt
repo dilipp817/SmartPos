@@ -19,14 +19,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.autobill.smartpos.domain.model.Food
 import com.autobill.smartpos.domain.common.Pagination
 import com.autobill.smartpos.domain.common.UiState
+import com.autobill.smartpos.feature.food.R
 import com.autobill.smartpos.ui.components.InfiniteScrollHandler
-import java.util.Locale
 
 /**
  * Composable: FoodRoute
@@ -77,7 +78,7 @@ fun FoodScreen(
     ) {
         // Header text
         Text(
-            text = "Foods",
+            text = stringResource(R.string.foods),
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(bottom = 12.dp),
         )
@@ -85,7 +86,7 @@ fun FoodScreen(
         // Handle different UI states
         when (state) {
             UiState.Idle -> {
-                Text("Loading foods...")
+                Text(stringResource(R.string.loading_foods))
             }
 
             UiState.Loading -> {
@@ -98,7 +99,7 @@ fun FoodScreen(
                 ) {
                     CircularProgressIndicator()
                     Text(
-                        text = "Loading foods...",
+                        text = stringResource(R.string.loading_foods),
                         modifier = Modifier.padding(top = 16.dp),
                     )
                 }
@@ -109,7 +110,7 @@ fun FoodScreen(
                 
                 if (pagination.data.isEmpty()) {
                     Text(
-                        text = "No foods available",
+                        text = stringResource(R.string.no_foods_available),
                         modifier = Modifier.padding(top = 16.dp),
                     )
                 } else {
@@ -142,7 +143,7 @@ fun FoodScreen(
                                         .padding(8.dp),
                                 )
                                 Text(
-                                    text = "Loading more...",
+                                    text = stringResource(R.string.loading_more),
                                     style = MaterialTheme.typography.labelSmall,
                                     modifier = Modifier.padding(top = 8.dp),
                                 )
@@ -151,7 +152,7 @@ fun FoodScreen(
 
                         // Pagination info
                         Text(
-                            text = "Loaded ${pagination.data.size} of ${pagination.total}",
+                            text = stringResource(R.string.loaded_x_of_y, pagination.data.size, pagination.total),
                             style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -182,7 +183,7 @@ fun FoodScreen(
                         modifier = Modifier.padding(bottom = 16.dp),
                     )
                     Button(onClick = onRetry) {
-                        Text(text = "Retry")
+                        Text(text = stringResource(R.string.retry))
                     }
                 }
             }
@@ -197,10 +198,9 @@ private fun FoodCard(food: Food, onClick: () -> Unit = {}) {
     Card(modifier = Modifier.fillMaxWidth().clickable { onClick() }) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(text = food.name, style = MaterialTheme.typography.titleMedium)
-            Text(text = "ID: ${food.id}")
-            Text(text = "Restaurant: ${food.restaurantId}")
-            Text(text = "Price: Rs ${String.format(Locale.US, "%.2f", food.price)}")
+            Text(text = stringResource(R.string.food_id_label, food.id))
+            Text(text = stringResource(R.string.food_restaurant_label, food.restaurantId))
+            Text(text = stringResource(R.string.food_price_label, food.price))
         }
     }
 }
-

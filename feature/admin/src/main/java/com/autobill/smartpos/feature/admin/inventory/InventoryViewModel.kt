@@ -1,5 +1,6 @@
 package com.autobill.smartpos.feature.admin.inventory
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.autobill.smartpos.domain.common.Result
@@ -7,7 +8,9 @@ import com.autobill.smartpos.domain.usecase.GetCategoriesUseCase
 import com.autobill.smartpos.domain.usecase.GetFoodsUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
 import com.autobill.smartpos.domain.usecase.UpdateFoodUseCase
+import com.autobill.smartpos.feature.admin.R
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,6 +24,7 @@ class InventoryViewModel @Inject constructor(
     private val getFoodsUseCase: GetFoodsUseCase,
     private val getCategoriesUseCase: GetCategoriesUseCase,
     private val updateFoodUseCase: UpdateFoodUseCase,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(InventoryUiState())
@@ -116,8 +120,10 @@ class InventoryViewModel @Inject constructor(
                         foods = state.foods.map {
                             if (it.id == foodId) result.data else it
                         },
-                        successMessage = if (newAvailable) "${food.name} marked available"
-                                         else "${food.name} marked unavailable",
+                        successMessage = if (newAvailable)
+                            context.getString(R.string.inventory_marked_available, food.name)
+                        else
+                            context.getString(R.string.inventory_marked_unavailable, food.name),
                     )
                 }
                 is Result.Failure -> {
@@ -128,7 +134,7 @@ class InventoryViewModel @Inject constructor(
                             foods = state.foods.map {
                                 if (it.id == foodId) food else it   // restore original
                             },
-                            error = result.exception.message ?: "Failed to update availability",
+                            error = result.exception.message ?: context.getString(R.string.inventory_update_availability_failed),
                         )
                     }
                 }
@@ -140,6 +146,3 @@ class InventoryViewModel @Inject constructor(
     fun dismissError()   = _uiState.update { it.copy(error = null) }
     fun dismissSuccess() = _uiState.update { it.copy(successMessage = null) }
 }
-
-
-

@@ -45,11 +45,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.autobill.smartpos.domain.model.ConnectionState
 import com.autobill.smartpos.domain.model.Order
+import com.autobill.smartpos.feature.order.R
 import com.autobill.smartpos.ui.components.badges.CountBadge
 
 /**
@@ -117,7 +119,7 @@ fun OrderListScreen(
             ) {
                 Text(text = "⚠", style = MaterialTheme.typography.labelMedium)
                 Text(
-                    text  = "Live updates paused — reconnecting…",
+                    text  = stringResource(R.string.order_reconnecting_banner),
                     style = MaterialTheme.typography.labelMedium,
                     color = Color(0xFFE65100),
                     fontWeight = FontWeight.Medium,
@@ -184,13 +186,13 @@ private fun OrderListHeader(
         IconButton(onClick = onBack) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
+                contentDescription = stringResource(R.string.cd_back),
                 tint = Color(0xFF212121),
             )
         }
 
         Text(
-            text = "Orders",
+            text = stringResource(R.string.order_list_title),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF212121),
@@ -214,7 +216,7 @@ private fun OrderListHeader(
             ),
         ) {
             Text(
-                text       = "🍳 KDS",
+                text       = stringResource(R.string.order_kds_button),
                 style      = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
             )
@@ -222,7 +224,7 @@ private fun OrderListHeader(
         IconButton(onClick = onSearchToggle) {
             Icon(
                 imageVector = if (isSearchActive) Icons.Default.Clear else Icons.Default.Search,
-                contentDescription = if (isSearchActive) "Close search" else "Search orders",
+                contentDescription = if (isSearchActive) stringResource(R.string.cd_close_search) else stringResource(R.string.cd_search_orders),
                 tint = Color(0xFF757575),
             )
         }
@@ -230,7 +232,7 @@ private fun OrderListHeader(
         IconButton(onClick = onRefresh) {
             Icon(
                 imageVector = Icons.Default.Refresh,
-                contentDescription = "Refresh",
+                contentDescription = stringResource(R.string.cd_refresh),
                 tint = Color(0xFF757575),
             )
         }
@@ -257,7 +259,7 @@ private fun OrderSearchBar(
             onValueChange = onQueryChange,
             modifier = Modifier.weight(1f),
             placeholder = {
-                Text("Search by order no. or table…", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.order_search_placeholder), style = MaterialTheme.typography.bodyMedium)
             },
             leadingIcon = {
                 Icon(Icons.Default.Search, contentDescription = null, tint = Color(0xFF9E9E9E))
@@ -265,7 +267,7 @@ private fun OrderSearchBar(
             trailingIcon = {
                 if (query.isNotBlank()) {
                     IconButton(onClick = { onQueryChange("") }) {
-                        Icon(Icons.Default.Clear, contentDescription = "Clear", tint = Color(0xFF9E9E9E))
+                        Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.cd_clear), tint = Color(0xFF9E9E9E))
                     }
                 }
             },
@@ -279,7 +281,7 @@ private fun OrderSearchBar(
             ),
         )
         TextButton(onClick = onClose) {
-            Text("Cancel", color = Color(0xFFE33E3E))
+            Text(stringResource(R.string.cancel), color = Color(0xFFE33E3E))
         }
     }
 }
@@ -297,10 +299,17 @@ private fun OrderFilterRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(OrderFilter.entries) { filter ->
+            val label = when (filter) {
+                OrderFilter.ALL         -> stringResource(R.string.order_filter_all)
+                OrderFilter.ACTIVE      -> stringResource(R.string.order_filter_active)
+                OrderFilter.PENDING     -> stringResource(R.string.order_filter_pending)
+                OrderFilter.IN_PROGRESS -> stringResource(R.string.order_filter_in_progress)
+                OrderFilter.COMPLETED   -> stringResource(R.string.order_filter_completed)
+            }
             FilterChip(
                 selected = selectedFilter == filter,
                 onClick = { onFilterSelect(filter) },
-                label = { Text(filter.label, style = MaterialTheme.typography.labelMedium) },
+                label = { Text(label, style = MaterialTheme.typography.labelMedium) },
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = Color(0xFFE33E3E),
                     selectedLabelColor = Color.White,
@@ -351,9 +360,18 @@ private fun OrderEmptyState(
     searchQuery: String,
 ) {
     val message = when {
-        searchQuery.isNotBlank() -> "No orders found for \"$searchQuery\""
-        filter == OrderFilter.ACTIVE -> "No active orders right now"
-        else -> "No ${filter.label.lowercase()} orders"
+        searchQuery.isNotBlank() -> stringResource(R.string.order_empty_search, searchQuery)
+        filter == OrderFilter.ACTIVE -> stringResource(R.string.order_empty_active)
+        else -> {
+            val filterLabel = when (filter) {
+                OrderFilter.ALL         -> stringResource(R.string.order_filter_all)
+                OrderFilter.ACTIVE      -> stringResource(R.string.order_filter_active)
+                OrderFilter.PENDING     -> stringResource(R.string.order_filter_pending)
+                OrderFilter.IN_PROGRESS -> stringResource(R.string.order_filter_in_progress)
+                OrderFilter.COMPLETED   -> stringResource(R.string.order_filter_completed)
+            }
+            stringResource(R.string.order_empty_filter, filterLabel.lowercase())
+        }
     }
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -402,9 +420,8 @@ private fun OrderErrorState(
                 fontWeight = FontWeight.Medium,
             )
             TextButton(onClick = onRetry) {
-                Text("Retry", color = Color(0xFFE33E3E))
+                Text(stringResource(R.string.retry), color = Color(0xFFE33E3E))
             }
         }
     }
 }
-

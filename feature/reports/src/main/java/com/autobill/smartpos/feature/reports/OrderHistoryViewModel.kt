@@ -1,5 +1,6 @@
 package com.autobill.smartpos.feature.reports
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.autobill.smartpos.domain.common.Result
@@ -7,6 +8,7 @@ import com.autobill.smartpos.domain.model.Order
 import com.autobill.smartpos.domain.usecase.GetOrdersByDateRangeUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +27,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class OrderHistoryViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val getOrdersByDateRangeUseCase: GetOrdersByDateRangeUseCase,
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
 ) : ViewModel() {
@@ -44,7 +47,7 @@ class OrderHistoryViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading    = false,
-                        errorMessage = "No restaurant session found. Please log in again.",
+                        errorMessage = context.getString(R.string.error_no_restaurant_session),
                     )
                 }
             } else {
@@ -109,7 +112,7 @@ class OrderHistoryViewModel @Inject constructor(
                     it.copy(
                         isLoading    = false,
                         isRefreshing = false,
-                        errorMessage = result.exception.message ?: "Failed to load order history",
+                        errorMessage = result.exception.message ?: context.getString(R.string.error_load_order_history_failed),
                     )
                 }
                 Result.Loading    -> Unit

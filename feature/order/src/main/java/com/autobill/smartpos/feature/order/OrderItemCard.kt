@@ -22,7 +22,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.autobill.smartpos.domain.model.Order
+import com.autobill.smartpos.feature.order.R
 import com.autobill.smartpos.ui.components.badges.OrderStatusBadge
+import androidx.compose.ui.res.stringResource
 
 /**
  * Card representing a single [Order] row in the Order List.
@@ -74,7 +76,7 @@ fun OrderItemCard(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
-                    text = "Table ${order.tableNumber}",
+                    text = stringResource(R.string.order_card_table, order.tableNumber),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color(0xFF424242),
                     fontWeight = FontWeight.SemiBold,
@@ -85,7 +87,8 @@ fun OrderItemCard(
                     color = Color(0xFF9E9E9E),
                 )
                 Text(
-                    text = "${order.items.size} item${if (order.items.size != 1) "s" else ""}",
+                    text = if (order.items.size == 1) stringResource(R.string.order_card_items_count, order.items.size)
+                           else stringResource(R.string.order_card_items_count_plural, order.items.size),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color(0xFF616161),
                 )
