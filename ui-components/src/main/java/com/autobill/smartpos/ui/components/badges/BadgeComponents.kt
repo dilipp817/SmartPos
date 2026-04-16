@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.autobill.smartpos.ui.components.theme.StatusColors
 
 // Status Badge - Display status with color coding
 @Composable
@@ -22,7 +23,7 @@ fun StatusBadge(
     status: String,
     modifier: Modifier = Modifier,
 ) {
-    val (bgColor, textColor) = getStatusColors(status)
+    val (bgColor, textColor) = StatusColors.generalStatusColors(status)
 
     Surface(
         modifier = modifier
@@ -92,15 +93,7 @@ fun OrderStatusBadge(
     status: String,
     modifier: Modifier = Modifier,
 ) {
-    val (bgColor, textColor) = when (status.lowercase()) {
-        "pending" -> Color(0xFF2196F3) to Color.White
-        "confirmed" -> Color(0xFF4CAF50) to Color.White
-        "preparing" -> Color(0xFFFFC107) to Color.Black
-        "ready" -> Color(0xFF9C27B0) to Color.White
-        "completed" -> Color(0xFF4CAF50) to Color.White
-        "cancelled" -> Color(0xFFB00020) to Color.White
-        else -> Color.Gray to Color.White
-    }
+    val (bgColor, textColor) = StatusColors.orderStatusColors(status)
 
     Surface(
         modifier = modifier
@@ -123,14 +116,7 @@ fun TableStatusBadge(
     status: String,
     modifier: Modifier = Modifier,
 ) {
-    val (bgColor, textColor) = when (status.lowercase()) {
-        "available" -> Color(0xFF4CAF50) to Color.White
-        "occupied" -> Color(0xFFF44336) to Color.White
-        "reserved" -> Color(0xFFFFC107) to Color.Black
-        "cleaning" -> Color(0xFF2196F3) to Color.White
-        "maintenance" -> Color(0xFF9E9E9E) to Color.White
-        else -> Color.Gray to Color.White
-    }
+    val (bgColor, textColor) = StatusColors.tableStatusColors(status)
 
     Surface(
         modifier = modifier
@@ -170,20 +156,4 @@ fun NumericBadge(
     }
 }
 
-// Helper function for status colors
-@Composable
-private fun getStatusColors(status: String): Pair<Color, Color> {
-    return when (status.lowercase()) {
-        "available" -> Color(0xFF4CAF50) to Color.White
-        "occupied" -> Color(0xFFF44336) to Color.White
-        "reserved" -> Color(0xFFFFC107) to Color.Black
-        "pending" -> Color(0xFF2196F3) to Color.White
-        "confirmed" -> Color(0xFF4CAF50) to Color.White
-        "completed" -> Color(0xFF9C27B0) to Color.White
-        "unpaid" -> Color(0xFFFF6F00) to Color.White
-        "partial" -> Color(0xFFFFC107) to Color.Black
-        "paid" -> Color(0xFF4CAF50) to Color.White
-        else -> Color.Gray to Color.White
-    }
-}
 

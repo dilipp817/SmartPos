@@ -67,7 +67,11 @@ fun TableCrudDialog(
     onDismiss: () -> Unit,
 ) {
     val isEditMode = editTable != null
-    val title = if (isEditMode) stringResource(R.string.table_crud_title_edit, editTable!!.tableNumber) else stringResource(R.string.table_crud_title_add)
+    val title = if (isEditMode) {
+        stringResource(R.string.table_crud_title_edit, editTable?.tableNumber ?: "")
+    } else {
+        stringResource(R.string.table_crud_title_add)
+    }
 
     var tableNumber by rememberSaveable { mutableStateOf(editTable?.tableNumber ?: "") }
     var floor       by rememberSaveable { mutableIntStateOf(editTable?.floor ?: 1) }

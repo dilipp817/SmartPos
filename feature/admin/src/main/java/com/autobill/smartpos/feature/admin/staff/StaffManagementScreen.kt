@@ -202,7 +202,7 @@ private fun CurrentUserCard(user: User) {
             ProfileRow(icon = Icons.Default.Email,       label = stringResource(R.string.staff_profile_email),       value = user.email)
             ProfileRow(icon = Icons.Default.AdminPanelSettings, label = stringResource(R.string.staff_profile_user_id),  value = stringResource(R.string.staff_profile_user_id_value, user.id))
             if (!user.restaurantId?.toString().isNullOrBlank()) {
-                ProfileRow(icon = Icons.Default.Badge, label = stringResource(R.string.staff_profile_restaurant),  value = stringResource(R.string.staff_profile_restaurant_value, user.restaurantId!!))
+                ProfileRow(icon = Icons.Default.Badge, label = stringResource(R.string.staff_profile_restaurant), value = stringResource(R.string.staff_profile_restaurant_value, user.restaurantId ?: 0L))
             }
             user.deviceId?.takeIf { it.isNotBlank() }?.let { deviceId ->
                 ProfileRow(
@@ -345,3 +345,4 @@ private fun RoleRow(role: String, description: String) {
         )
     }
 }
+

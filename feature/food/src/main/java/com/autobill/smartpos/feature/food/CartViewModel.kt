@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.autobill.smartpos.domain.model.CartItem
 import com.autobill.smartpos.domain.model.Food
+import com.autobill.smartpos.domain.common.TaxConstants
 import com.autobill.smartpos.domain.usecase.AddToCartUseCase
 import com.autobill.smartpos.domain.usecase.ClearCartUseCase
 import com.autobill.smartpos.domain.usecase.DecreaseCartQuantityUseCase
@@ -68,7 +69,7 @@ class CartViewModel @Inject constructor(
     val cartTotals: StateFlow<CartTotals> = cartItems
         .map { items ->
             val subtotal = items.sumOf { it.subtotal }
-            val tax      = subtotal * 0.18
+            val tax      = subtotal * TaxConstants.GST_ESTIMATE_RATE
             CartTotals(
                 itemCount = items.sumOf { it.quantity },
                 subtotal  = subtotal,

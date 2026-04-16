@@ -1,5 +1,7 @@
 package com.autobill.smartpos.feature.food
 
+import com.autobill.smartpos.domain.common.TaxConstants
+
 /**
  * Pre-computed cart display totals — produced by [CartViewModel], consumed by the UI.
  *

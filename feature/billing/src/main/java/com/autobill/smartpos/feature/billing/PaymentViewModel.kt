@@ -1,6 +1,7 @@
 package com.autobill.smartpos.feature.billing
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -50,6 +51,10 @@ class PaymentViewModel @Inject constructor(
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
+
+    companion object {
+        private const val TAG = "PaymentViewModel"
+    }
 
     private val billId: Long            = checkNotNull(savedStateHandle["billId"])
     private val orderId: Long           = checkNotNull(savedStateHandle["orderId"])
@@ -212,7 +217,9 @@ class PaymentViewModel @Inject constructor(
         val rid = restaurantId ?: return
         try {
             freeTableUseCase(rid, tableId)
-        } catch (_: Exception) { /* best-effort — don't block payment success */ }
+        } catch (e: Exception) {
+            Log.w(TAG, "freeTable failed — best-effort, payment already succeeded", e)
+        }
     }
 
     // ── One-shot consumers ────────────────────────────────────────────────────

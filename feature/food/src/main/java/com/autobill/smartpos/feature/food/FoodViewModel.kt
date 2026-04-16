@@ -139,7 +139,7 @@ class FoodViewModel @Inject constructor(
             }
             loadFirstPage()
             // Load categories for the filter chips
-            when (val result = getCategoriesUseCase(restaurantId!!)) {
+            when (val result = getCategoriesUseCase(restaurantId ?: return@launch)) {
                 is Result.Success -> _categories.value = result.data
                 else -> Unit   // non-fatal — filter chips simply stay hidden
             }
@@ -202,7 +202,8 @@ class FoodViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoadingMore.value = true
             try {
-                val nextOffset = currentPagination!!.offset + currentPagination!!.limit
+                val pagination = currentPagination ?: return@launch
+                val nextOffset = pagination.offset + pagination.limit
                 val result = getFoodsPaginatedUseCase(restaurantId = restaurantId, offset = nextOffset, limit = 20)
                 handlePaginationResult(result, append = true)
             } finally {
@@ -214,9 +215,10 @@ class FoodViewModel @Inject constructor(
     private fun handlePaginationResult(result: PaginationResult<Food>, append: Boolean) {
         when (result) {
             is PaginationResult.Success -> {
-                val newPagination = if (append && currentPagination != null) {
-                    currentPagination!!.copy(
-                        data = currentPagination!!.data + result.pagination.data,
+                val existing = currentPagination
+                val newPagination = if (append && existing != null) {
+                    existing.copy(
+                        data = existing.data + result.pagination.data,
                         currentPage = result.pagination.currentPage,
                         hasMore = result.pagination.hasMore,
                     )

@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.autobill.smartpos.ui.R
 import com.autobill.smartpos.ui.components.cards.QuantityControl
+import com.autobill.smartpos.ui.components.theme.StatusColors
 
 // Order Item List Item - Display individual item in order list
 @Composable
@@ -224,11 +225,5 @@ fun TableListItem(
     }
 }
 
-private fun getStatusColor(status: String): Color {
-    return when (status.lowercase()) {
-        "available" -> Color(0xFF4CAF50)
-        "occupied" -> Color(0xFFF44336)
-        "reserved" -> Color(0xFFFFC107)
-        else -> Color.Gray
-    }
-}
+private fun getStatusColor(status: String): Color =
+    StatusColors.tableStatusBackground(status)

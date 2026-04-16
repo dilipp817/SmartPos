@@ -57,13 +57,13 @@ class BillingViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            restaurantId = getRestaurantIdUseCase()
-            if (restaurantId == null) {
+            val rid = restaurantId
+            if (rid == null) {
                 _uiState.update {
                     it.copy(errorMessage = context.getString(R.string.error_session_expired))
                 }
             } else {
-                _uiState.update { it.copy(restaurantId = restaurantId!!) }
+                _uiState.update { it.copy(restaurantId = rid) }
             }
         }
     }

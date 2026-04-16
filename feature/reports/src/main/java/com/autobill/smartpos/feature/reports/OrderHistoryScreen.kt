@@ -1,7 +1,9 @@
 package com.autobill.smartpos.feature.reports
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -390,6 +392,9 @@ private fun historyFormatDate(createdAt: String): String {
         val amPm      = if (timeHour < 12) "AM" else "PM"
         val hour12    = when { timeHour == 0 -> 12; timeHour > 12 -> timeHour - 12; else -> timeHour }
         "$day $month, $hour12:$timeMin $amPm"
-    } catch (_: Exception) { createdAt }
+    } catch (e: Exception) {
+        Log.w("OrderHistoryScreen", "Failed to format date: $createdAt", e)
+        createdAt
+    }
 }
 
