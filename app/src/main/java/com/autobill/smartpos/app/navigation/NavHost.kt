@@ -38,6 +38,7 @@ import com.autobill.smartpos.feature.admin.menu.MenuManagementRoute
 import com.autobill.smartpos.feature.admin.settings.AdminSettingsRoute
 import com.autobill.smartpos.feature.admin.staff.StaffManagementRoute
 import com.autobill.smartpos.feature.admin.inventory.InventoryRoute
+import com.autobill.smartpos.feature.admin.category.CategoryManagementRoute
 
 @Composable
 fun AppNavHost(
@@ -316,6 +317,9 @@ private fun AppNavGraph(
                 onNavigateToInventory = {
                     navController.navigate(Screen.InventoryManagement.route)
                 },
+                onNavigateToCategoryManagement = {
+                    navController.navigate(Screen.CategoryManagement.route)
+                },
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -343,6 +347,13 @@ private fun AppNavGraph(
 
         composable(route = Screen.InventoryManagement.route) { _ ->
             InventoryRoute(
+                onBack   = { navController.popBackStack() },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        composable(route = Screen.CategoryManagement.route) { _ ->
+            CategoryManagementRoute(
                 onBack   = { navController.popBackStack() },
                 modifier = Modifier.fillMaxSize(),
             )

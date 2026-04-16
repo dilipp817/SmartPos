@@ -15,6 +15,7 @@
     <string name="admin_action_sales_reports">Sales\nReports</string>
     <string name="admin_action_staff_management">Staff\nManagement</string>
     <string name="admin_action_inventory_tracking">Inventory\nTracking</string>
+    <string name="admin_action_category_management">Category\nManagement</string>
     <string name="admin_outlet_info">Outlet Info</string>
     <string name="admin_outlet_name_label">Name</string>
     <string name="admin_outlet_address_label">Address</string>
@@ -137,6 +138,28 @@
     <string name="cd_edit">Edit</string>
     <string name="cd_delete">Delete</string>
     <string name="cancel">Cancel</string>
+
+    <!-- ── Category Management ───────────────────────────────────────────── -->
+    <string name="category_mgmt_title">Category Management</string>
+    <string name="category_mgmt_add">Add Category</string>
+    <string name="category_mgmt_empty">No categories yet</string>
+    <string name="category_mgmt_empty_hint">Tap + to add your first category</string>
+    <string name="category_food_count">%1$d food items</string>
+    <string name="category_edit_action">Edit category</string>
+    <string name="category_delete_action">Delete category</string>
+    <string name="category_delete_title">Delete Category</string>
+    <string name="category_delete_message">Delete "%1$s"? Food items in this category will not be deleted, but they will become uncategorised.</string>
+    <string name="category_delete_confirm">Delete</string>
+    <string name="category_form_title_create">Add Category</string>
+    <string name="category_form_title_edit">Edit Category</string>
+    <string name="category_form_name">Category Name *</string>
+    <string name="category_form_description">Description (optional)</string>
+    <string name="category_form_image_url">Image URL (optional)</string>
+    <string name="category_form_display_order">Display Order</string>
+    <string name="category_form_save">Save</string>
+    <string name="category_created_success">Category created successfully</string>
+    <string name="category_updated_success">Category updated successfully</string>
+    <string name="category_deleted_success">Category deleted successfully</string>
 
 </resources>
 

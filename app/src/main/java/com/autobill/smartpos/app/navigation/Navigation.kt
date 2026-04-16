@@ -78,6 +78,9 @@ sealed class Screen(val route: String) {
 
     /** Food availability toggle — inventory tracking (admin / manager). */
     object InventoryManagement : Screen("inventory_management")
+
+    /** Admin-only: Create, edit, delete food categories. */
+    object CategoryManagement : Screen("category_management")
 }
 
 

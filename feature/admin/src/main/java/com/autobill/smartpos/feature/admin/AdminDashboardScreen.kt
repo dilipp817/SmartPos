@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.MenuBook
@@ -60,6 +61,7 @@ fun AdminDashboardScreen(
     onNavigateToReports: () -> Unit,
     onNavigateToStaffManagement: () -> Unit,
     onNavigateToInventory: () -> Unit,
+    onNavigateToCategoryManagement: () -> Unit,
     onDismissError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -191,15 +193,14 @@ fun AdminDashboardScreen(
                         ActionCard(icon = Icons.Default.BarChart, label = stringResource(R.string.admin_action_sales_reports), onClick = onNavigateToReports, modifier = Modifier.weight(1f))
                     }
                     Spacer(Modifier.height(8.dp))
-                    // Row 2: staff & inventory
+                    // Row 2: staff, inventory, categories
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         ActionCard(icon = Icons.Default.People, label = stringResource(R.string.admin_action_staff_management), onClick = onNavigateToStaffManagement, modifier = Modifier.weight(1f))
                         ActionCard(icon = Icons.Default.Inventory2, label = stringResource(R.string.admin_action_inventory_tracking), onClick = onNavigateToInventory, modifier = Modifier.weight(1f))
-                        // Spacer card to keep consistent 3-column grid width
-                        Spacer(Modifier.weight(1f))
+                        ActionCard(icon = Icons.Default.Category, label = stringResource(R.string.admin_action_category_management), onClick = onNavigateToCategoryManagement, modifier = Modifier.weight(1f))
                     }
                 }
 
@@ -312,3 +313,4 @@ private fun SuperAdminBanner(modifier: Modifier = Modifier) {
         }
     }
 }
+
