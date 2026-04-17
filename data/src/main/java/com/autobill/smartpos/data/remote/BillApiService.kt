@@ -24,12 +24,21 @@ interface BillApiService {
         @Body request: CreateBillRequest,
     ): ApiResponse<BillDto>
 
-    /** GET /api/v1/bills?status=ISSUED
-     * ⚠️ status param is REQUIRED — omitting it returns an empty list (backendapi.md §5).
-     * Nullable here only to allow call-site flexibility; always pass a value. */
+    /**
+     * GET /api/v1/bills?status=ISSUED
+     *
+     * ⚠️ `status` is REQUIRED — omitting it (passing null) causes the backend to return
+     * an empty list silently (no error). Always pass an explicit value.
+     *
+     * Valid values: ISSUED | PARTIAL | PAID | CANCELLED
+     * Use [BillStatus.value] at the call site.
+     *
+     * TODO (backend Q&A): Confirm whether a `?status=ALL` or omitting the param should
+     * return all bills, or whether separate calls per status are the intended design.
+     */
     @GET("bills")
     suspend fun getAllBills(
-        @Query("status") status: String? = null,
+        @Query("status") status: String,
     ): ApiResponse<List<BillSummaryDto>>
 
     /** GET /api/v1/bills/{id} */

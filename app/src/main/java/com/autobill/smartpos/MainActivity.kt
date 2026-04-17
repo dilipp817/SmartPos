@@ -28,6 +28,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.autobill.smartpos.app.navigation.AppNavHost
 import com.autobill.smartpos.app.navigation.Screen
+import com.autobill.smartpos.domain.model.isAdmin
+import com.autobill.smartpos.domain.model.isManager
+import com.autobill.smartpos.domain.model.isSuperAdmin
 import com.autobill.smartpos.ui.theme.PrimaryBrand
 import com.autobill.smartpos.ui.theme.SmartPosTheme
 import com.autobill.smartpos.ui.theme.SurfaceSecondary
@@ -123,9 +126,7 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onLogout       = mainViewModel::logout,
                                 canAccessAdmin = state.user?.let {
-                                    it.role == com.autobill.smartpos.domain.model.UserRole.ADMIN ||
-                                    it.role == com.autobill.smartpos.domain.model.UserRole.MANAGER ||
-                                    it.restaurantId == null // super_admin
+                                    it.isAdmin() || it.isManager() || it.isSuperAdmin()
                                 } ?: false,
                             )
                         }

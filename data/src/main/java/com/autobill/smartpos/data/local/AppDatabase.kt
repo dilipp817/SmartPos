@@ -21,20 +21,26 @@ import com.autobill.smartpos.data.local.entity.TableEntity
  * Room Database: AppDatabase
  *
  * Version history:
- *  v1 → initial schema (FoodEntity basic fields)
- *  v2 → added imageUrl, category, description, isAvailable to FoodEntity
- *  v3 → (internal — see git history)
- *  v4 → replaced FoodEntity.category with categoryId + categoryName; added isVegetarian + isSpicy
- *  v5 → added RestaurantEntity, TableEntity, OrderEntity, OrderItemEntity,
- *        BillEntity, PaymentEntity (Item 15 — April 12, 2026)
- *       Deprecated: CustomerEntity, MenuItemEntity, MenuItemVariantEntity (not registered)
- *  v6 → added paidAmount + remainingAmount columns to bills table
- *        (BACKEND_ALIGNMENT.md Item 4 — April 12, 2026)
- *  v7 → added customerId column (nullable) to orders table
- *        (BACKEND_ALIGNMENT.md Q1 — April 12, 2026; always null in v1, used in v2)
- *  v8 → added preparationTime, allergens, calories columns to foods table
- *        (backendapi.md §7 — April 12, 2026)
- *  v9 → added pending_orders table for Phase 9.2 offline queue (April 14, 2026)
+ *  v1  → initial schema (FoodEntity basic fields)
+ *  v2  → added imageUrl, category, description, isAvailable to FoodEntity
+ *  v3  → (internal — see git history)
+ *  v4  → replaced FoodEntity.category with categoryId + categoryName; added isVegetarian + isSpicy
+ *  v5  → added RestaurantEntity, TableEntity, OrderEntity, OrderItemEntity,
+ *         BillEntity, PaymentEntity (Item 15 — April 12, 2026)
+ *         Deprecated: CustomerEntity, MenuItemEntity, MenuItemVariantEntity (not registered)
+ *  v6  → added paidAmount + remainingAmount columns to bills table
+ *         (BACKEND_ALIGNMENT.md Item 4 — April 12, 2026)
+ *  v7  → added customerId column (nullable) to orders table
+ *         (BACKEND_ALIGNMENT.md Q1 — April 12, 2026)
+ *  v8  → added preparationTime, allergens, calories columns to foods table
+ *         (backendapi.md §7 — April 12, 2026)
+ *  v9  → added pending_orders table for Phase 9.2 offline queue (April 14, 2026)
+ *  v10 → replaced RestaurantEntity schema (outlet_name / displayname / address object)
+ *         (MOBILE_GUIDE_REVIEW.md §1.1 — April 16, 2026)
+ *  v11 → removed customerId column from orders table
+ *         (MOBILE_TEAM_RESPONSE.md Point 5 — April 17, 2026)
+ *         customerId was added in v7 for "v2 customer linking"; backend confirmed the
+ *         feature does not exist and is not on the roadmap.
  */
 @Database(
     entities = [
@@ -47,7 +53,7 @@ import com.autobill.smartpos.data.local.entity.TableEntity
         PaymentEntity::class,
         PendingOrderEntity::class,
     ],
-    version = 10,
+    version = 11,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -274,9 +280,8 @@ abstract class AppDatabase : RoomDatabase() {
 
         /**
          * Migration 6 → 7  (BACKEND_ALIGNMENT.md Q1 — April 12, 2026)
-         * Adds customerId column (nullable Long) to the orders table.
-         * Null for all existing rows — always null in v1; backend will populate in v2
-         * when customer-linking ships.
+         * Added customerId column (nullable Long) to the orders table.
+         * ⚠️ This column is REMOVED in Migration 10 → 11 — see below.
          */
         val MIGRATION_6_7 = object : Migration(6, 7) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -360,6 +365,77 @@ abstract class AppDatabase : RoomDatabase() {
                     """.trimIndent(),
                 )
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_restaurants_id` ON `restaurants` (`id`)")
+                db.execSQL("PRAGMA foreign_keys = ON")
+            }
+        }
+
+        /**
+         * Migration 10 → 11  (MOBILE_TEAM_RESPONSE.md Point 5 — April 17, 2026)
+         * Removes the `customerId` column from the `orders` table.
+         *
+         * Background: customerId was added in Migration 6→7 for planned "v2 customer linking".
+         * Backend confirmed the feature does not exist and is not on the roadmap.
+         * The column was removed from OrderEntity — this migration aligns the DB schema.
+         *
+         * SQLite on API 24–33 does NOT support ALTER TABLE ... DROP COLUMN (needs SQLite 3.35,
+         * available from API 34). Use the standard copy-recreate pattern:
+         *   1. Create orders_new without customerId
+         *   2. Copy existing rows
+         *   3. Drop orders (order_items FK child — disable FK enforcement during swap)
+         *   4. Rename orders_new → orders
+         *   5. Recreate indexes and re-enable FK enforcement
+         */
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("PRAGMA foreign_keys = OFF")
+
+                // Create the replacement table — identical to orders minus `customerId`
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `orders_new` (
+                        `id`           INTEGER NOT NULL,
+                        `orderNumber`  TEXT    NOT NULL,
+                        `restaurantId` INTEGER NOT NULL,
+                        `tableId`      INTEGER,
+                        `tableNumber`  TEXT    NOT NULL,
+                        `orderType`    TEXT    NOT NULL,
+                        `status`       TEXT    NOT NULL,
+                        `subtotal`     REAL    NOT NULL,
+                        `totalAmount`  REAL    NOT NULL,
+                        `notes`        TEXT,
+                        `createdAt`    TEXT    NOT NULL,
+                        `updatedAt`    TEXT    NOT NULL,
+                        `version`      INTEGER NOT NULL,
+                        PRIMARY KEY(`id`),
+                        FOREIGN KEY(`restaurantId`) REFERENCES `restaurants`(`id`) ON DELETE CASCADE,
+                        FOREIGN KEY(`tableId`)      REFERENCES `tables`(`id`)      ON DELETE SET NULL
+                    )
+                    """.trimIndent()
+                )
+
+                // Copy all rows — customerId is intentionally excluded
+                db.execSQL(
+                    """
+                    INSERT INTO `orders_new`
+                        (id, orderNumber, restaurantId, tableId, tableNumber,
+                         orderType, status, subtotal, totalAmount, notes,
+                         createdAt, updatedAt, version)
+                    SELECT id, orderNumber, restaurantId, tableId, tableNumber,
+                           orderType, status, subtotal, totalAmount, notes,
+                           createdAt, updatedAt, version
+                    FROM `orders`
+                    """.trimIndent()
+                )
+
+                db.execSQL("DROP TABLE `orders`")
+                db.execSQL("ALTER TABLE `orders_new` RENAME TO `orders`")
+
+                // Recreate indexes
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_orders_restaurantId` ON `orders` (`restaurantId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_orders_tableId`      ON `orders` (`tableId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_orders_status`       ON `orders` (`status`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_orders_createdAt`    ON `orders` (`createdAt`)")
+
                 db.execSQL("PRAGMA foreign_keys = ON")
             }
         }

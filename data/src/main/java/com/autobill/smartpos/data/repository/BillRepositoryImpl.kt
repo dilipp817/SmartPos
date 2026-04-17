@@ -81,7 +81,10 @@ class BillRepositoryImpl @Inject constructor(
     override suspend fun getAllBills(status: BillStatus?): Result<List<Bill>> =
         withContext(ioDispatcher) {
             try {
-                val response = billApiService.getAllBills(status?.value)
+                // status is required by the backend — omitting it returns an empty list.
+                // Default to ISSUED (most common use-case) when no filter is specified.
+                val statusValue = (status ?: BillStatus.ISSUED).value
+                val response = billApiService.getAllBills(statusValue)
                 val dtoList = checkNotNull(response.data) {
                     response.message ?: "Failed to fetch bills"
                 }
