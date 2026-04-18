@@ -130,12 +130,14 @@ class FoodRepositoryImpl @Inject constructor(
 
     override suspend fun searchFoodsPaginated(
         query: String,
-        restaurantId: Long?,  // accepted but not used in search API — scoped by auth token
+        restaurantId: Long?,
         offset: Int,
         limit: Int,
     ): PaginationResult<Food> = withContext(ioDispatcher) {
         try {
-            val response = apiService.searchFoods(query = query, offset = offset, limit = limit)
+            // M-11: always pass restaurantId to prevent cross-tenant data leak
+            val effectiveRestaurantId = restaurantId ?: sessionDataStore.getRestaurantId()
+            val response = apiService.searchFoods(query = query, restaurantId = effectiveRestaurantId, offset = offset, limit = limit)
             val page = response.data
             val items = page?.data.orEmpty()
 

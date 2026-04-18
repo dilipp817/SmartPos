@@ -38,23 +38,7 @@
     <string name="admin_super_admin_view_title">Super Admin View</string>
     <string name="admin_super_admin_view_message">You have cross-outlet access.\nSelect an outlet from Settings to view its dashboard.</string>
 
-    <!-- ── Settings ──────────────────────────────────────────────────────── -->
-    <string name="settings_title">Restaurant Settings</string>
-    <string name="settings_section_outlet">Outlet</string>
-    <string name="settings_section_tax">Tax</string>
-    <string name="settings_field_tax_rate">Tax Rate (%)</string>
-    <string name="settings_toggle_tax_inclusive_label">Tax Inclusive Pricing</string>
-    <string name="settings_toggle_tax_inclusive_sub">Displayed prices already include tax</string>
-    <string name="settings_section_tips">Tips</string>
-    <string name="settings_toggle_tips_label">Enable Tips</string>
-    <string name="settings_toggle_tips_sub">Show tip input on payment screen</string>
-    <string name="settings_field_default_tip">Default Tip (%)</string>
-    <string name="settings_section_printing">Printing</string>
-    <string name="settings_toggle_auto_print_label">Auto Print Bill</string>
-    <string name="settings_toggle_auto_print_sub">Automatically trigger print after bill generation</string>
-    <string name="settings_save_button">Save Settings</string>
-    <string name="settings_saved_success">Settings saved</string>
-    <string name="settings_save_failed">Save failed</string>
+    <!-- ── Settings (old entries removed — M-08 redesign uses new strings above) ── -->
 
     <!-- ── Inventory ──────────────────────────────────────────────────────── -->
     <string name="inventory_title">Inventory Tracking</string>
