@@ -106,7 +106,7 @@ class OrderRepositoryImpl @Inject constructor(
             Result.Success(dto.toDomain())
         } catch (e: HttpException) {
             if (e.code() == 409) {
-                Result.Failure(HttpConflictException("Table is already occupied. Please select a different table."))
+                Result.Failure(HttpConflictException("This table is no longer available. Please refresh."))
             } else {
                 Result.Failure(e)
             }
@@ -233,7 +233,7 @@ class OrderRepositoryImpl @Inject constructor(
             orderDao.upsertItems(dto.items.map { it.toEntity(dto.id) })
             Result.Success(dto.toDomain())
         } catch (e: HttpException) {
-            if (e.code() == 409) Result.Failure(HttpConflictException("Order was modified by another process."))
+            if (e.code() == 409) Result.Failure(HttpConflictException("Data was changed by another user. Please refresh."))
             else Result.Failure(e)
         } catch (e: Exception) {
             Result.Failure(e)
@@ -262,7 +262,7 @@ class OrderRepositoryImpl @Inject constructor(
             orderDao.upsertItems(dto.items.map { it.toEntity(dto.id) })
             Result.Success(dto.toDomain())
         } catch (e: HttpException) {
-            if (e.code() == 409) Result.Failure(HttpConflictException("Order was modified by another process."))
+            if (e.code() == 409) Result.Failure(HttpConflictException("Data was changed by another user. Please refresh."))
             else Result.Failure(e)
         } catch (e: Exception) {
             Result.Failure(e)
@@ -292,7 +292,7 @@ class OrderRepositoryImpl @Inject constructor(
             Result.Success(dto.toDomain())
         } catch (e: HttpException) {
             when (e.code()) {
-                409  -> Result.Failure(HttpConflictException("Order was modified by another process."))
+                409  -> Result.Failure(HttpConflictException("Data was changed by another user. Please refresh."))
                 400  -> Result.Failure(Exception("This item cannot be edited — it is already ${getLockedItemReason(e)}."))
                 else -> Result.Failure(e)
             }
@@ -314,7 +314,7 @@ class OrderRepositoryImpl @Inject constructor(
             orderDao.upsertItems(dto.items.map { it.toEntity(dto.id) })
             Result.Success(dto.toDomain())
         } catch (e: HttpException) {
-            if (e.code() == 409) Result.Failure(HttpConflictException("Order was modified by another process."))
+            if (e.code() == 409) Result.Failure(HttpConflictException("Data was changed by another user. Please refresh."))
             else Result.Failure(e)
         } catch (e: Exception) {
             Result.Failure(e)
@@ -329,7 +329,7 @@ class OrderRepositoryImpl @Inject constructor(
                 orderDao.upsertOrder(dto.toEntity())
                 Result.Success(dto.toDomain())
             } catch (e: HttpException) {
-                if (e.code() == 409) Result.Failure(HttpConflictException("Order was modified by another process."))
+                if (e.code() == 409) Result.Failure(HttpConflictException("Data was changed by another user. Please refresh."))
                 else Result.Failure(e)
             } catch (e: Exception) {
                 Result.Failure(e)
@@ -358,7 +358,7 @@ class OrderRepositoryImpl @Inject constructor(
             orderDao.upsertItems(dto.items.map { it.toEntity(dto.id) })
             Result.Success(dto.toDomain())
         } catch (e: HttpException) {
-            if (e.code() == 409) Result.Failure(HttpConflictException("Order was modified by another process."))
+            if (e.code() == 409) Result.Failure(HttpConflictException("Data was changed by another user. Please refresh."))
             else Result.Failure(e)
         } catch (e: Exception) {
             Result.Failure(e)
@@ -406,6 +406,11 @@ class OrderRepositoryImpl @Inject constructor(
             "locked"
         }
 }
+
+
+
+
+
 
 
 

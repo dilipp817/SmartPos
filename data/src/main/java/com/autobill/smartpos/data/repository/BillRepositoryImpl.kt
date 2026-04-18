@@ -48,7 +48,7 @@ class BillRepositoryImpl @Inject constructor(
             Result.Success(dto.toDomain())
         } catch (e: HttpException) {
             if (e.code() == 409) {
-                Result.Failure(HttpConflictException("A bill already exists for this order."))
+                Result.Failure(HttpConflictException("A bill already exists for this order. Please refresh."))
             } else {
                 Result.Failure(e)
             }

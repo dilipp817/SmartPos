@@ -11,6 +11,7 @@ import com.autobill.smartpos.domain.model.PaymentMethod
 import com.autobill.smartpos.domain.model.PaymentStatus
 import com.autobill.smartpos.domain.usecase.ConfirmCardPaymentUseCase
 import com.autobill.smartpos.domain.usecase.FreeTableUseCase
+import com.autobill.smartpos.domain.usecase.GetBillByIdUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
 import com.autobill.smartpos.domain.usecase.ProcessPaymentUseCase
 import com.autobill.smartpos.domain.util.PaymentReferenceGenerator
@@ -27,6 +28,16 @@ import javax.inject.Inject
  * ViewModel for the Payment screen.
  *
  * Receives [billId], [orderId], [tableId], [totalAmount], [remainingAmount] via [SavedStateHandle].
+ *
+ * ## M-16: Full bill fetch on init
+ * On start, GET /bills/{billId} is called to load the full bill (billItems, cgst, sgst).
+ * The nav-arg [totalAmount] / [remainingAmount] are used as initial values while the fetch
+ * is in flight — they are replaced by the server values once the fetch completes.
+ *
+ * ## M-20: Remaining amount
+ * [bill.remainingAmount] from GET /bills/{id} is used directly (backend computes it from
+ * cumulative payments). Manual computation from GET /payments/bill/{id} is the fallback
+ * if the bill fetch fails.
  *
  * ## Payment flow
  * - CASH / UPI / WALLET: single call with autoProcess=true → SUCCESS → navigate out.
@@ -48,6 +59,7 @@ class PaymentViewModel @Inject constructor(
     private val processPaymentUseCase: ProcessPaymentUseCase,
     private val confirmCardPaymentUseCase: ConfirmCardPaymentUseCase,
     private val freeTableUseCase: FreeTableUseCase,
+    private val getBillByIdUseCase: GetBillByIdUseCase,
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
     private val appPrefsDataStore: AppPrefsDataStore,
     @ApplicationContext private val context: Context,
@@ -95,6 +107,38 @@ class PaymentViewModel @Inject constructor(
             val saved = appPrefsDataStore.getCurrentPaymentRefNumber()
             if (saved != null) {
                 currentReferenceNumber = saved
+            }
+            // M-16: Fetch full bill so we have billItems, cgst/sgst and accurate
+            // remainingAmount (M-20) — nav args are just the initial/fallback values.
+            loadFullBill()
+        }
+    }
+
+    // ── M-16: Full bill fetch ────────────────────────────────────────────────
+
+    /**
+     * GET /bills/{billId} — loads the full bill with line items and accurate
+     * remaining amount. Updates [totalAmount] and [remainingAmount] in the UI
+     * state with server values (overrides nav-arg values).
+     */
+    private fun loadFullBill() {
+        viewModelScope.launch {
+            when (val result = getBillByIdUseCase(billId)) {
+                is Result.Success -> {
+                    val bill = result.data
+                    _uiState.update {
+                        it.copy(
+                            // M-20: use server-computed remainingAmount directly
+                            totalAmount     = bill.totalAmount,
+                            remainingAmount = bill.remainingAmount,
+                        )
+                    }
+                }
+                is Result.Failure -> {
+                    // Non-critical — nav-arg values remain as fallback; log only
+                    Log.w(TAG, "Full bill fetch failed — using nav-arg amounts as fallback", result.exception)
+                }
+                Result.Loading -> Unit
             }
         }
     }
