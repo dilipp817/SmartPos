@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.autobill.smartpos.data.local.AppPrefsDataStore
 import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.model.PaymentMethod
 import com.autobill.smartpos.domain.model.PaymentStatus
@@ -13,7 +14,6 @@ import com.autobill.smartpos.domain.usecase.FreeTableUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
 import com.autobill.smartpos.domain.usecase.ProcessPaymentUseCase
 import com.autobill.smartpos.domain.util.PaymentReferenceGenerator
-import com.autobill.smartpos.feature.billing.R
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,7 +39,7 @@ import javax.inject.Inject
  * [PaymentUiState.paymentSuccess] one-shot triggers the Route to navigate back.
  *
  * ## Idempotency
- * A [referenceNumber] is generated once at payment initiation and reused on retries.
+ * A [currentReferenceNumber] is generated once at payment initiation and reused on retries.
  * A new one is only generated when the returned status is FAILED.
  */
 @HiltViewModel
@@ -49,6 +49,7 @@ class PaymentViewModel @Inject constructor(
     private val confirmCardPaymentUseCase: ConfirmCardPaymentUseCase,
     private val freeTableUseCase: FreeTableUseCase,
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
+    private val appPrefsDataStore: AppPrefsDataStore,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -86,6 +87,14 @@ class PaymentViewModel @Inject constructor(
             restaurantId = getRestaurantIdUseCase()
             if (restaurantId == null) {
                 _uiState.update { it.copy(errorMessage = context.getString(R.string.error_session_expired)) }
+                return@launch
+            }
+            // M-05: Restore any in-flight reference number surviving process death.
+            // If a reference exists in DataStore, a previous payment attempt was interrupted —
+            // reuse the same reference so the backend can deduplicate (contract §7.3).
+            val saved = appPrefsDataStore.getCurrentPaymentRefNumber()
+            if (saved != null) {
+                currentReferenceNumber = saved
             }
         }
     }
@@ -137,6 +146,10 @@ class PaymentViewModel @Inject constructor(
         _uiState.update { it.copy(isProcessing = true, errorMessage = null) }
 
         viewModelScope.launch {
+            // M-05: Persist reference BEFORE the network call.
+            // If the process dies mid-flight, the same reference is reused on next start.
+            appPrefsDataStore.saveCurrentPaymentRefNumber(currentReferenceNumber)
+
             when (val result = processPaymentUseCase(
                 billId          = billId,
                 orderId         = orderId,
@@ -150,13 +163,13 @@ class PaymentViewModel @Inject constructor(
                 is Result.Success -> {
                     val payment = result.data
                     when {
-                        // Auto-processed (CASH/UPI/WALLET) — already SUCCESS
                         payment.status == PaymentStatus.SUCCESS -> {
+                            appPrefsDataStore.clearCurrentPaymentRefNumber() // M-05: terminal success
                             freeTable()
                             _uiState.update { it.copy(isProcessing = false, paymentSuccess = payment) }
                         }
-                        // CARD — PENDING — show confirm dialog
                         payment.status == PaymentStatus.PENDING -> {
+                            // CARD two-step — reference stays in DataStore until confirmed/failed
                             _uiState.update {
                                 it.copy(
                                     isProcessing         = false,
@@ -165,8 +178,8 @@ class PaymentViewModel @Inject constructor(
                                 )
                             }
                         }
-                        // FAILED — generate new reference for next attempt
                         payment.status == PaymentStatus.FAILED -> {
+                            appPrefsDataStore.clearCurrentPaymentRefNumber() // M-05: terminal failure
                             currentReferenceNumber = PaymentReferenceGenerator.generate()
                             _uiState.update {
                                 it.copy(isProcessing = false, errorMessage = context.getString(R.string.error_payment_declined))
@@ -178,9 +191,12 @@ class PaymentViewModel @Inject constructor(
                         }
                     }
                 }
-                is Result.Failure -> _uiState.update {
-                    it.copy(isProcessing = false,
-                        errorMessage = result.exception.message ?: context.getString(R.string.error_payment_failed))
+                is Result.Failure -> {
+                    // Network error — keep reference in DataStore for retry
+                    _uiState.update {
+                        it.copy(isProcessing = false,
+                            errorMessage = result.exception.message ?: context.getString(R.string.error_payment_failed))
+                    }
                 }
                 is Result.Loading -> { /* no-op */ }
             }
@@ -199,6 +215,7 @@ class PaymentViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = confirmCardPaymentUseCase(paymentId)) {
                 is Result.Success -> {
+                    appPrefsDataStore.clearCurrentPaymentRefNumber() // M-05: terminal success
                     freeTable()
                     _uiState.update { it.copy(isConfirmingCard = false, paymentSuccess = result.data) }
                 }
@@ -211,14 +228,21 @@ class PaymentViewModel @Inject constructor(
         }
     }
 
-    // ── Free table ────────────────────────────────────────────────────────────
+    // ── Free table — M-06 + M-07 ─────────────────────────────────────────────
 
+    /**
+     * Explicitly releases the table to AVAILABLE after every successful payment.
+     * The backend does NOT auto-release tables on payment — contract §3.2 (M-06).
+     *
+     * 400 / 409 responses are handled transparently by TableRepositoryImpl.
+     * Any remaining failure is logged but suppressed — payment has already succeeded
+     * and the user must not be blocked.
+     */
     private suspend fun freeTable() {
         val rid = restaurantId ?: return
-        try {
-            freeTableUseCase(rid, tableId)
-        } catch (e: Exception) {
-            Log.w(TAG, "freeTable failed — best-effort, payment already succeeded", e)
+        val result = freeTableUseCase(rid, tableId)
+        if (result is Result.Failure) {
+            Log.w(TAG, "freeTable failed — best-effort, payment already succeeded", result.exception)
         }
     }
 

@@ -15,12 +15,18 @@ android {
     }
 
     buildTypes {
-        debug {
-            buildConfigField("String", "BASE_URL", "\"https://192.168.1.7:8443/\"")
-        }
-        release {
-            buildConfigField("String", "BASE_URL", "\"https://your-production-server.com/\"")
-        }
+        debug { }
+        release { }
+    }
+
+    // NOTE: Flavors are CREATED once in root build.gradle.kts (contract §12.1).
+    // This block does NOT re-declare them — it only adds BASE_URL BuildConfig field
+    // to each already-created flavor. Only the data module needs BASE_URL.
+    productFlavors {
+        getByName("local") { buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080/\"") }
+        getByName("dev")   { buildConfigField("String", "BASE_URL", "\"https://billsmart-api-dev.onrender.com/\"") }
+        getByName("uat")   { buildConfigField("String", "BASE_URL", "\"https://billsmart-api-uat.onrender.com/\"") }
+        getByName("prod")  { buildConfigField("String", "BASE_URL", "\"https://billsmart-api.onrender.com/\"") }
     }
 
     buildFeatures {

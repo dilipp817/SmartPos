@@ -57,8 +57,8 @@ class SettingsViewModel @Inject constructor(
             .onEach { restaurant ->
                 _uiState.update {
                     it.copy(
-                        restaurantName = restaurant?.name     ?: "",
-                        currency       = restaurant?.currency ?: "INR",
+                        restaurantName = restaurant?.outletName ?: "",
+                        currency       = "INR", // Always INR in v1 — contract §8.2
                     )
                 }
             }

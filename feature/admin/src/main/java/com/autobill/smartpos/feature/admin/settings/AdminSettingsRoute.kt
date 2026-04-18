@@ -15,17 +15,18 @@ fun AdminSettingsRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     AdminSettingsScreen(
-        uiState                      = uiState,
-        onBack                       = onBack,
-        onTaxRateChange              = viewModel::onTaxRateChange,
-        onEnableTipsChange           = viewModel::onEnableTipsChange,
-        onDefaultTipPercentageChange = viewModel::onDefaultTipPercentageChange,
-        onAutoPrintBillChange        = viewModel::onAutoPrintBillChange,
-        onTaxInclusiveChange         = viewModel::onTaxInclusiveChange,
-        onSave                       = viewModel::saveSettings,
-        onDismissError               = viewModel::dismissError,
-        onDismissSuccess             = viewModel::dismissSuccess,
-        modifier                     = modifier,
+        uiState               = uiState,
+        onBack                = onBack,
+        onOutletNameChange    = viewModel::onOutletNameChange,
+        onDisplayNameChange   = viewModel::onDisplayNameChange,
+        onOutletManagerChange = viewModel::onOutletManagerChange,
+        onBuildingChange      = viewModel::onBuildingChange,
+        onStreetChange        = viewModel::onStreetChange,
+        onLocationChange      = viewModel::onLocationChange,
+        onZipCodeChange       = viewModel::onZipCodeChange,
+        onSave                = viewModel::saveSettings,
+        onDismissError        = viewModel::dismissError,
+        onDismissSuccess      = viewModel::dismissSuccess,
+        modifier              = modifier,
     )
 }
-

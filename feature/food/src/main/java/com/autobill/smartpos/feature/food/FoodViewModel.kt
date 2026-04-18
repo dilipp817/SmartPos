@@ -106,7 +106,7 @@ class FoodViewModel @Inject constructor(
         observeRestaurantUseCase(),
         sessionUser,
     ) { restaurant, user ->
-        restaurant?.name ?: user?.username ?: context.getString(R.string.brand_name)
+        restaurant?.outletName ?: user?.username ?: context.getString(R.string.brand_name)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), context.getString(R.string.brand_name))
 
     // ========== FILTER STATE ==========

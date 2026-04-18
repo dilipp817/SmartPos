@@ -81,8 +81,8 @@ fun AdminDashboardScreen(
                     Column {
                         Text(stringResource(R.string.admin_dashboard_title), style = MaterialTheme.typography.titleLarge)
                         Text(
-                            text = if (uiState.isSuperAdmin) stringResource(R.string.admin_super_admin_label)
-                                   else "${uiState.restaurant?.name ?: ""}  ${uiState.role.replaceFirstChar { it.uppercase() }}",
+                        text = if (uiState.isSuperAdmin) stringResource(R.string.admin_super_admin_label)
+                               else "${uiState.restaurant?.outletName ?: ""}  ${uiState.role.replaceFirstChar { it.uppercase() }}",
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -211,12 +211,11 @@ fun AdminDashboardScreen(
                         Spacer(Modifier.height(8.dp))
                         ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                OutletInfoRow(stringResource(R.string.admin_outlet_name_label),     r.name)
-                                OutletInfoRow(stringResource(R.string.admin_outlet_address_label),  r.address)
-                                OutletInfoRow(stringResource(R.string.admin_outlet_phone_label),    r.phone)
-                                OutletInfoRow(stringResource(R.string.admin_outlet_currency_label), r.currency)
-                                OutletInfoRow(stringResource(R.string.admin_outlet_tax_rate_label), "${r.taxRate}%")
-                                OutletInfoRow(stringResource(R.string.admin_outlet_tips_label),     if (r.settings.enableTips) stringResource(R.string.admin_tips_enabled) else stringResource(R.string.admin_tips_disabled))
+                                OutletInfoRow(stringResource(R.string.admin_outlet_name_label),    r.outletName)
+                                OutletInfoRow(stringResource(R.string.admin_outlet_display_label), r.displayName)
+                                OutletInfoRow(stringResource(R.string.admin_outlet_manager_label), r.outletManager)
+                                OutletInfoRow(stringResource(R.string.admin_outlet_address_label), r.address.formatted)
+                                // currency always INR; tax always 18%; tips always shown — contract §8.2
                             }
                         }
                     }

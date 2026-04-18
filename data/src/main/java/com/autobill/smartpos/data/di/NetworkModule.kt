@@ -22,6 +22,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import javax.inject.Singleton
+import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
@@ -45,6 +46,10 @@ object NetworkModule {
         unauthorizedInterceptor: UnauthorizedInterceptor,
     ): OkHttpClient {
         val builder = OkHttpClient.Builder()
+            // Render free-tier cold start: 25–35s — contract §12.2
+            .connectTimeout(40, TimeUnit.SECONDS)
+            .readTimeout(40, TimeUnit.SECONDS)
+            .writeTimeout(40, TimeUnit.SECONDS)
 
         // Auth interceptor — attaches Bearer token to every request
         builder.addInterceptor(authInterceptor)

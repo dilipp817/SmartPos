@@ -144,22 +144,35 @@ class TableRepositoryImpl @Inject constructor(
         try {
             patch()
         } catch (e: HttpException) {
-            if (e.code() == 409) {
-                // 409 CONFLICT — re-fetch to get latest state, then retry once
-                try {
-                    // Refresh local cache with current server state
-                    val refreshResponse = apiService.getTableById(restaurantId, tableId)
-                    val refreshedDto = checkNotNull(refreshResponse.data) {
-                        "Table $tableId not found during 409 recovery"
+            when (e.code()) {
+                400 -> {
+                    // 400 means the table is already in the requested status (B-D01).
+                    // Re-fetch current state from server and treat as success.
+                    try {
+                        val refreshResponse = apiService.getTableById(restaurantId, tableId)
+                        val refreshedDto = checkNotNull(refreshResponse.data) {
+                            "Table $tableId not found during 400 recovery"
+                        }
+                        tableDao.upsertAll(listOf(refreshedDto.toEntity()))
+                        Result.Success(refreshedDto.toDomain())
+                    } catch (retryEx: Exception) {
+                        Result.Failure(retryEx)
                     }
-                    tableDao.upsertAll(listOf(refreshedDto.toEntity()))
-                    // Retry the status update with the refreshed state
-                    patch()
-                } catch (retryEx: Exception) {
-                    Result.Failure(retryEx)
                 }
-            } else {
-                Result.Failure(e)
+                409 -> {
+                    // 409 CONFLICT — re-fetch to get latest state, then retry once
+                    try {
+                        val refreshResponse = apiService.getTableById(restaurantId, tableId)
+                        val refreshedDto = checkNotNull(refreshResponse.data) {
+                            "Table $tableId not found during 409 recovery"
+                        }
+                        tableDao.upsertAll(listOf(refreshedDto.toEntity()))
+                        patch()
+                    } catch (retryEx: Exception) {
+                        Result.Failure(retryEx)
+                    }
+                }
+                else -> Result.Failure(e)
             }
         } catch (e: Exception) {
             Result.Failure(e)

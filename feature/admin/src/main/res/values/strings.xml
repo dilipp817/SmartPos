@@ -18,13 +18,23 @@
     <string name="admin_action_category_management">Category\nManagement</string>
     <string name="admin_outlet_info">Outlet Info</string>
     <string name="admin_outlet_name_label">Name</string>
+    <string name="admin_outlet_display_label">Display</string>
+    <string name="admin_outlet_manager_label">Manager</string>
     <string name="admin_outlet_address_label">Address</string>
-    <string name="admin_outlet_phone_label">Phone</string>
-    <string name="admin_outlet_currency_label">Currency</string>
-    <string name="admin_outlet_tax_rate_label">Tax Rate</string>
-    <string name="admin_outlet_tips_label">Tips</string>
-    <string name="admin_tips_enabled">Enabled</string>
-    <string name="admin_tips_disabled">Disabled</string>
+    <!-- Settings redesign (M-08) -->
+    <string name="settings_title">Edit Outlet Info</string>
+    <string name="settings_section_outlet">Outlet Details</string>
+    <string name="settings_field_outlet_name">Outlet Name *</string>
+    <string name="settings_field_display_name">Display Name</string>
+    <string name="settings_field_manager_name">Manager Name</string>
+    <string name="settings_section_address">Address</string>
+    <string name="settings_field_building">Building / Unit</string>
+    <string name="settings_field_street">Street</string>
+    <string name="settings_field_location">City / Location</string>
+    <string name="settings_field_zip_code">ZIP Code</string>
+    <string name="settings_save_button">Save Changes</string>
+    <string name="settings_saved_success">Outlet info updated</string>
+    <string name="settings_save_failed">Update failed. Please try again.</string>
     <string name="admin_super_admin_view_title">Super Admin View</string>
     <string name="admin_super_admin_view_message">You have cross-outlet access.\nSelect an outlet from Settings to view its dashboard.</string>
 
