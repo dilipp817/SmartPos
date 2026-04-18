@@ -8,10 +8,11 @@ import javax.inject.Inject
 /**
  * Use Case: SearchFoods
  * Encapsulates business logic for searching foods by query.
+ * restaurantId is always required (contract M-11) — scopes results to the outlet.
  */
 class SearchFoodsUseCase @Inject constructor(
     private val repository: FoodRepository,
 ) {
-    suspend operator fun invoke(query: String): Result<List<Food>> = repository.searchFoods(query)
+    suspend operator fun invoke(query: String, restaurantId: Long? = null): Result<List<Food>> =
+        repository.searchFoods(query, restaurantId)
 }
-

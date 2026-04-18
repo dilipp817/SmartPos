@@ -217,7 +217,7 @@ class OrderDetailViewModel @Inject constructor(
             _uiState.update { state ->
                 state.copy(addItemDialog = state.addItemDialog?.copy(isSearching = true))
             }
-            when (val result = searchFoodsUseCase(query.trim())) {
+            when (val result = searchFoodsUseCase(query.trim(), restaurantId)) {
                 is Result.Success -> _uiState.update { state ->
                     state.copy(
                         addItemDialog = state.addItemDialog?.copy(

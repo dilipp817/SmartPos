@@ -12,6 +12,7 @@ import com.autobill.smartpos.data.mapper.toEntity
 import com.autobill.smartpos.data.remote.OrderApiService
 import com.autobill.smartpos.data.remote.dto.CreateOrderRequest
 import com.autobill.smartpos.data.remote.dto.OrderItemRequestDto
+import com.autobill.smartpos.data.BuildConfig
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import dagger.assisted.Assisted
@@ -54,6 +55,9 @@ class SyncWorker @AssistedInject constructor(
     private val itemAdapter by lazy { moshi.adapter<List<PendingOrderItem>>(itemListType) }
 
     override suspend fun doWork(): Result {
+        // M-13: offline queue disabled for v1 — worker is inert, returns success immediately
+        if (!BuildConfig.OFFLINE_QUEUE_ENABLED) return Result.success()
+
         // Reset any rows left in SYNCING state (e.g. from a previous crashed run)
         pendingOrderDao.resetSyncing()
 

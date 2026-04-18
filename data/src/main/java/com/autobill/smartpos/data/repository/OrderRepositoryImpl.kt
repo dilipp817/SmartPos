@@ -1,6 +1,7 @@
 package com.autobill.smartpos.data.repository
 
 import android.util.Log
+import com.autobill.smartpos.data.BuildConfig
 import com.autobill.smartpos.data.di.IoDispatcher
 import com.autobill.smartpos.data.local.dao.OrderDao
 import com.autobill.smartpos.data.mapper.toDomain
@@ -63,6 +64,12 @@ class OrderRepositoryImpl @Inject constructor(
     ): Result<Order> = withContext(ioDispatcher) {
         // ── Offline path ──────────────────────────────────────────────────
         if (!connectivityRepository.isCurrentlyOnline()) {
+            // M-13: offline queue is disabled for v1 — surface a clear error to the user
+            if (!BuildConfig.OFFLINE_QUEUE_ENABLED) {
+                return@withContext Result.Failure(
+                    Exception("No internet connection. Please check your network and try again.")
+                )
+            }
             val queueId = offlineQueueRepository.enqueue(
                 restaurantId = restaurantId,
                 tableId      = tableId,

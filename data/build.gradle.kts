@@ -22,11 +22,24 @@ android {
     // NOTE: Flavors are CREATED once in root build.gradle.kts (contract §12.1).
     // This block does NOT re-declare them — it only adds BASE_URL BuildConfig field
     // to each already-created flavor. Only the data module needs BASE_URL.
+    // OFFLINE_QUEUE_ENABLED=false for all v1 flavors (contract M-13).
     productFlavors {
-        getByName("local") { buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080/\"") }
-        getByName("dev")   { buildConfigField("String", "BASE_URL", "\"https://billsmart-api-dev.onrender.com/\"") }
-        getByName("uat")   { buildConfigField("String", "BASE_URL", "\"https://billsmart-api-uat.onrender.com/\"") }
-        getByName("prod")  { buildConfigField("String", "BASE_URL", "\"https://billsmart-api.onrender.com/\"") }
+        getByName("local") {
+            buildConfigField("String",  "BASE_URL",              "\"http://10.0.2.2:8080/\"")
+            buildConfigField("Boolean", "OFFLINE_QUEUE_ENABLED", "false")
+        }
+        getByName("dev") {
+            buildConfigField("String",  "BASE_URL",              "\"https://billsmart-api-dev.onrender.com/\"")
+            buildConfigField("Boolean", "OFFLINE_QUEUE_ENABLED", "false")
+        }
+        getByName("uat") {
+            buildConfigField("String",  "BASE_URL",              "\"https://billsmart-api-uat.onrender.com/\"")
+            buildConfigField("Boolean", "OFFLINE_QUEUE_ENABLED", "false")
+        }
+        getByName("prod") {
+            buildConfigField("String",  "BASE_URL",              "\"https://billsmart-api.onrender.com/\"")
+            buildConfigField("Boolean", "OFFLINE_QUEUE_ENABLED", "false")
+        }
     }
 
     buildFeatures {

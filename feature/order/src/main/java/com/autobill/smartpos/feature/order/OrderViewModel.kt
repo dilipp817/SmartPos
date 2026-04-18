@@ -64,6 +64,13 @@ class OrderViewModel @Inject constructor(
     /** Tracks the last active search debounce job so it can be cancelled on new input. */
     private var searchJob: Job? = null
 
+    /** Polling fallback job — 15 s interval (contract M-09). */
+    private var pollingJob: Job? = null
+
+    companion object {
+        private const val POLLING_INTERVAL_MS = 15_000L
+    }
+
     init {
         observeRolePermissionsUseCase()
             .onEach { perms ->
@@ -199,6 +206,25 @@ class OrderViewModel @Inject constructor(
     fun refresh() {
         _uiState.update { it.copy(isRefreshing = true, errorMessage = null) }
         viewModelScope.launch { loadAll(refreshing = true) }
+    }
+
+    // ── Lifecycle callbacks (called from Route via LifecycleEventEffect) ──────
+
+    /** Start 15s polling when screen is resumed (contract M-09). */
+    fun onResume() {
+        if (pollingJob?.isActive == true) return
+        pollingJob = viewModelScope.launch {
+            while (true) {
+                delay(POLLING_INTERVAL_MS)
+                if (!_uiState.value.isSearchActive) loadAll()
+            }
+        }
+    }
+
+    /** Stop polling when screen is paused to avoid battery drain (contract M-09). */
+    fun onPause() {
+        pollingJob?.cancel()
+        pollingJob = null
     }
 
     // ── Private helpers ──────────────────────────────────────────────────────

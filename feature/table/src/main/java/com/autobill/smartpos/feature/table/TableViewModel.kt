@@ -19,7 +19,9 @@ import com.autobill.smartpos.domain.usecase.UpdateTableStatusUseCase
 import com.autobill.smartpos.domain.usecase.UpdateTableUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -60,6 +62,13 @@ class TableViewModel @Inject constructor(
     val uiState: StateFlow<TableUiState> = _uiState.asStateFlow()
 
     private var restaurantId: Long? = null
+
+    /** Polling fallback job — 30 s interval (contract M-09). */
+    private var pollingJob: Job? = null
+
+    companion object {
+        private const val POLLING_INTERVAL_MS = 30_000L
+    }
 
     init {
         observeRolePermissionsUseCase()
@@ -131,6 +140,25 @@ class TableViewModel @Inject constructor(
     fun refresh() {
         _uiState.update { it.copy(isRefreshing = true, errorMessage = null) }
         viewModelScope.launch { loadAll(refreshing = true) }
+    }
+
+    // ── Lifecycle callbacks (called from Route via LifecycleEventEffect) ──────
+
+    /** Start 30s polling when screen is resumed (contract M-09). */
+    fun onResume() {
+        if (pollingJob?.isActive == true) return
+        pollingJob = viewModelScope.launch {
+            while (true) {
+                delay(POLLING_INTERVAL_MS)
+                loadAll()
+            }
+        }
+    }
+
+    /** Stop polling when screen is paused to avoid battery drain (contract M-09). */
+    fun onPause() {
+        pollingJob?.cancel()
+        pollingJob = null
     }
 
     // ── Status update dialog ─────────────────────────────────────────────────

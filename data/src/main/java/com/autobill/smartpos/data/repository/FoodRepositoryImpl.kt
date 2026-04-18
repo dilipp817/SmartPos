@@ -36,15 +36,13 @@ class FoodRepositoryImpl @Inject constructor(
         try {
             val restaurantId = sessionDataStore.getRestaurantId()
                 ?: return@withContext Result.Failure(Exception("No restaurant ID in session — not logged in"))
-            // GET /foods/restaurant/{restaurantId} — response is PagedDataDto, unwrap .data?.data
-            val items = apiService.getFoodsByRestaurant(
+            // M-14: use GET /foods?restaurant_id= (offset-based) instead of legacy endpoint
+            val items = apiService.getFoods(
                 restaurantId = restaurantId,
-                page = 0,
+                offset = 0,
                 limit = 100,
             ).data?.data.orEmpty()
             foodDao.deleteAll()
-            // Pass restaurantId explicitly — list DTOs don't include restaurant_id in the
-            // response body, so the default (0L) would corrupt every cached entity.
             foodDao.upsertAll(items.map { it.toEntity(restaurantId) })
             Result.Success(items.map { it.toEntity(restaurantId).toDomain() })
         } catch (e: Exception) {
@@ -62,39 +60,36 @@ class FoodRepositoryImpl @Inject constructor(
         sort: String?,
     ): PaginationResult<Food> = withContext(ioDispatcher) {
         try {
-            // Prefer restaurantId passed by caller (from GetRestaurantIdUseCase in ViewModel).
-            // Fall back to SessionDataStore for backward compatibility.
             val effectiveRestaurantId = restaurantId ?: sessionDataStore.getRestaurantId()
                 ?: return@withContext PaginationResult.Failure(Exception("No restaurant ID in session — not logged in"))
-            // GET /foods/restaurant/{id} uses page-based pagination (0-indexed page number).
-            // Domain layer passes offset (item index); convert: page = offset / limit.
-            val page = if (limit > 0) offset / limit else 0
-            val response = apiService.getFoodsByRestaurant(
+            // M-14: use GET /foods with offset-based pagination and full filter support
+            val response = apiService.getFoods(
                 restaurantId = effectiveRestaurantId,
-                page         = page,
+                offset       = offset,
                 limit        = limit,
-                categoryId   = category?.toLongOrNull(),  // String ID → Long for the API
+                sort         = sort,
+                categoryId   = category?.toLongOrNull(),
             )
             val pagedData = response.data
             val items = pagedData?.data.orEmpty()
             foodDao.upsertAll(items.map { it.toEntity() })
 
             PaginationResult.Success(Pagination(
-                data = items.map { it.toEntity().toDomain() },
-                currentPage = pagedData?.pagination?.currentPage ?: page,
-                limit = pagedData?.pagination?.limit ?: limit,
-                total = pagedData?.pagination?.total ?: items.size,
-                hasMore = pagedData?.pagination?.hasNext ?: false,
+                data        = items.map { it.toEntity().toDomain() },
+                currentPage = pagedData?.pagination?.currentPage ?: 0,
+                limit       = pagedData?.pagination?.limit ?: limit,
+                total       = pagedData?.pagination?.total ?: items.size,
+                hasMore     = pagedData?.pagination?.hasNext ?: false,
             ))
         } catch (e: Exception) {
             val cached = foodDao.getAllFoods()
             if (cached.isNotEmpty()) {
                 PaginationResult.Success(Pagination(
-                    data = cached.map { it.toDomain() },
+                    data        = cached.map { it.toDomain() },
                     currentPage = 0,
-                    limit = limit,
-                    total = cached.size,
-                    hasMore = false,
+                    limit       = limit,
+                    total       = cached.size,
+                    hasMore     = false,
                 ))
             } else {
                 PaginationResult.Failure(e)
@@ -116,10 +111,15 @@ class FoodRepositoryImpl @Inject constructor(
 
     override suspend fun searchFoods(
         query: String,
-        restaurantId: Long?,  // accepted but not used in search API — scoped by auth token
+        restaurantId: Long?,
     ): Result<List<Food>> = withContext(ioDispatcher) {
         try {
-            val items = apiService.searchFoods(query = query).data?.data.orEmpty()
+            // M-11: always pass restaurant_id to scope results to the current outlet
+            val effectiveRestaurantId = restaurantId ?: sessionDataStore.getRestaurantId()
+            val items = apiService.searchFoods(
+                query        = query,
+                restaurantId = effectiveRestaurantId,
+            ).data?.data.orEmpty()
             Result.Success(items.map { it.toEntity().toDomain() })
         } catch (e: Exception) {
             val cached = foodDao.searchFoods(query)
