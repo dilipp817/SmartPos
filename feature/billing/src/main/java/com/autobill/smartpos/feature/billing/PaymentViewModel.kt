@@ -278,8 +278,8 @@ class PaymentViewModel @Inject constructor(
      * Explicitly releases the table to AVAILABLE after every successful payment.
      * The backend does NOT auto-release tables on payment — contract §3.2 (M-06).
      *
-     * 400 / 409 responses are handled transparently by TableRepositoryImpl.
-     * Any remaining failure is logged but suppressed — payment has already succeeded
+     * All error responses are handled transparently by TableRepositoryImpl.
+     * Any failure is logged but suppressed — payment has already succeeded
      * and the user must not be blocked.
      */
     private suspend fun freeTable() {
