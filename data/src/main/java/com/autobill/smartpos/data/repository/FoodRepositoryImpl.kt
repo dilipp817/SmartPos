@@ -37,11 +37,13 @@ class FoodRepositoryImpl @Inject constructor(
             val restaurantId = sessionDataStore.getRestaurantId()
                 ?: return@withContext Result.Failure(Exception("No restaurant ID in session — not logged in"))
             // M-14: use GET /foods?restaurant_id= (offset-based) instead of legacy endpoint
+            // Backend confirmed: is_available is not a server-side filter param.
+            // Filter client-side so unavailable/out-of-stock items never appear on the order menu.
             val items = apiService.getFoods(
                 restaurantId = restaurantId,
-                offset = 0,
-                limit = 100,
-            ).data?.data.orEmpty()
+                offset       = 0,
+                limit        = 100,
+            ).data?.data.orEmpty().filter { it.isAvailable }
             foodDao.deleteAll()
             foodDao.upsertAll(items.map { it.toEntity(restaurantId) })
             Result.Success(items.map { it.toEntity(restaurantId).toDomain() })
@@ -63,6 +65,8 @@ class FoodRepositoryImpl @Inject constructor(
             val effectiveRestaurantId = restaurantId ?: sessionDataStore.getRestaurantId()
                 ?: return@withContext PaginationResult.Failure(Exception("No restaurant ID in session — not logged in"))
             // M-14: use GET /foods with offset-based pagination and full filter support
+            // Backend confirmed: is_available is not a server-side filter param.
+            // Filter client-side so unavailable items never appear on the order menu.
             val response = apiService.getFoods(
                 restaurantId = effectiveRestaurantId,
                 offset       = offset,
@@ -71,7 +75,7 @@ class FoodRepositoryImpl @Inject constructor(
                 categoryId   = category?.toLongOrNull(),
             )
             val pagedData = response.data
-            val items = pagedData?.data.orEmpty()
+            val items = pagedData?.data.orEmpty().filter { it.isAvailable }
             foodDao.upsertAll(items.map { it.toEntity() })
 
             PaginationResult.Success(Pagination(

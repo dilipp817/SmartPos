@@ -18,6 +18,7 @@ import com.autobill.smartpos.domain.usecase.ObserveRestaurantUseCase
 import com.autobill.smartpos.domain.usecase.ObserveRolePermissionsUseCase
 import com.autobill.smartpos.domain.usecase.ObserveSessionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -137,12 +138,16 @@ class FoodViewModel @Inject constructor(
                 )
                 return@launch
             }
-            loadFirstPage()
-            // Load categories for the filter chips
-            when (val result = getCategoriesUseCase(restaurantId ?: return@launch)) {
-                is Result.Success -> _categories.value = result.data
-                else -> Unit   // non-fatal — filter chips simply stay hidden
+            // Guide Phase 2: fire foods + categories in parallel
+            val foodsJob      = async { loadFirstPage() }
+            val categoriesJob = async {
+                when (val result = getCategoriesUseCase(restaurantId ?: return@async)) {
+                    is Result.Success -> _categories.value = result.data
+                    else -> Unit   // non-fatal — filter chips simply stay hidden
+                }
             }
+            foodsJob.await()
+            categoriesJob.await()
         }
     }
 
@@ -187,10 +192,10 @@ class FoodViewModel @Inject constructor(
             _isLoadingMore.value = false
             val result = getFoodsPaginatedUseCase(
                 restaurantId = restaurantId,
-                offset = 0,
-                limit = 20,
-                category = _selectedCategory.value,
-                // sort not supported by GET /foods/restaurant/{id} — use search endpoint if needed
+                offset       = 0,
+                limit        = 20,
+                category     = _selectedCategory.value,
+                sort         = _sortOption.value,
             )
             handlePaginationResult(result, append = false)
         }
