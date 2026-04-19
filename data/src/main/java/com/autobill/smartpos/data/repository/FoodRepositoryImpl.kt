@@ -213,7 +213,10 @@ class FoodRepositoryImpl @Inject constructor(
 
     override suspend fun deleteFood(foodId: Long): Result<Unit> = withContext(ioDispatcher) {
         try {
-            apiService.deleteFood(foodId)
+            val response = apiService.deleteFood(foodId)
+            if (!response.isSuccessful) {
+                return@withContext Result.Failure(Exception("Delete failed with HTTP ${response.code()}"))
+            }
             // Remove from local cache
             foodDao.deleteById(foodId)
             Result.Success(Unit)
