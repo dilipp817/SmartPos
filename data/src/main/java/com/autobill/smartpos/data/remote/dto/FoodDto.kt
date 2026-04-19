@@ -73,9 +73,9 @@ data class FoodResponseDto(
     @param:Json(name = "is_spicy")
     val isSpicy: Boolean = false,
     @param:Json(name = "created_at")
-    val createdAt: String,
+    val createdAt: String? = null,
     @param:Json(name = "updated_at")
-    val updatedAt: String,
+    val updatedAt: String? = null,
 )
 
 // DTO: Create Food Request
