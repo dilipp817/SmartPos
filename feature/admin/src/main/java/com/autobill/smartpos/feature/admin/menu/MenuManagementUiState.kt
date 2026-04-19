@@ -20,6 +20,9 @@ data class MenuManagementUiState(
     val successMessage: String? = null,
 )
 
+/** Typed price validation result — UI maps each variant to a stringResource call. */
+enum class PriceValidationError { REQUIRED, INVALID, NEGATIVE }
+
 /** Immutable form state shared between create and edit. */
 data class FoodFormState(
     val name: String = "",
@@ -34,13 +37,14 @@ data class FoodFormState(
     val allergens: String = "",
     val calories: String = "",
 ) {
-    val nameError: String? get() = if (name.isBlank()) "Name is required" else null
-    val priceError: String? get() = when {
-        price.isBlank()            -> "Price is required"
-        price.toDoubleOrNull() == null -> "Invalid price"
-        price.toDouble() < 0       -> "Price must be ≥ 0"
-        else                       -> null
+    /** True when name is blank — UI resolves via stringResource(R.string.validation_name_required). */
+    val hasNameError: Boolean get() = name.isBlank()
+    /** Non-null when price is invalid — UI maps each variant to the appropriate stringResource. */
+    val priceError: PriceValidationError? get() = when {
+        price.isBlank()                -> PriceValidationError.REQUIRED
+        price.toDoubleOrNull() == null -> PriceValidationError.INVALID
+        price.toDouble() < 0           -> PriceValidationError.NEGATIVE
+        else                           -> null
     }
-    val isValid: Boolean get() = nameError == null && priceError == null
+    val isValid: Boolean get() = !hasNameError && priceError == null
 }
-

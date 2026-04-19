@@ -36,7 +36,25 @@ import javax.inject.Singleton
 /**
  * Singleton WebSocket client for SmartPos real-time events.
  *
- * Responsibilities:
+ * ⚠️ TODO (HIGH PRIORITY — MUST DISCUSS WITH BACKEND BEFORE ENABLING):
+ *  The backend confirmed on April 17, 2026 that there is currently NO WebSocket server
+ *  (@EnableWebSocket / STOMP / SockJS is not present). This class is fully implemented
+ *  on the mobile side but the [connect] method is temporarily disabled as a no-op.
+ *
+ *  Real-time order/table push is a critical product feature (KDS screen depends on it).
+ *  Three options need joint design discussion with the backend team:
+ *   1. Polling        — GET /orders/active every 10–15 s (zero backend work, available now)
+ *   2. Server-Sent Events (SSE) — medium effort, backend adds an SSE endpoint
+ *   3. STOMP over WebSocket     — high effort, full WebSocket server needed
+ *
+ *  Action items:
+ *   - [ ] Mobile + Backend: schedule design meeting to agree on approach
+ *   - [ ] Backend: implement chosen real-time transport
+ *   - [ ] Mobile: re-enable [connect] (remove the guard below) once endpoint is confirmed
+ *
+ *  See MOBILE_TEAM_RESPONSE.md Point 3.
+ *
+ * Responsibilities (once enabled):
  *  - Connect to `wss://{host}/api/v1/ws/restaurants/{id}` with Bearer auth
  *  - Parse inbound JSON messages and emit [RealTimeEvent]s on [events]
  *  - Send PING every 30 s to keep the connection alive
@@ -85,11 +103,32 @@ class SmartPosWebSocketManager @Inject constructor(
         // Delays in ms: 1 s, 2 s, 4 s, 8 s, 16 s, then cap at 30 s
         private val RECONNECT_DELAYS = listOf(1_000L, 2_000L, 4_000L, 8_000L, 16_000L, 30_000L)
         private const val PING_INTERVAL_MS = 30_000L
+
+        /**
+         * TODO (HIGH PRIORITY): Flip to `true` once the backend WebSocket endpoint is live.
+         *
+         * The full connect / reconnect / ping implementation below is complete and ready.
+         * It is disabled ONLY because the backend has no WebSocket server yet (April 17, 2026).
+         * Do NOT enable this flag without first confirming the backend endpoint URL with the
+         * backend team and completing the joint design discussion.
+         *
+         * See class-level KDoc for the three options under discussion.
+         */
+        private const val WS_ENABLED = false
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
 
+    /**
+     * TODO (HIGH PRIORITY): Remove the [WS_ENABLED] guard and the log line once the backend
+     * WebSocket endpoint is confirmed and live. The implementation below is complete.
+     */
     fun connect(restaurantId: Long) {
+        if (!WS_ENABLED) {
+            Log.w(TAG, "connect($restaurantId) skipped — WebSocket disabled pending backend implementation. See WS_ENABLED flag.")
+            return
+        }
+
         if (_connectionState.value == ConnectionState.CONNECTED &&
             currentRestaurantId == restaurantId) return   // already connected
 

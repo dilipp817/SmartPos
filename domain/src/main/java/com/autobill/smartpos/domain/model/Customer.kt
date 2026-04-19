@@ -1,20 +1,6 @@
 package com.autobill.smartpos.domain.model
 
-// Domain Model: Customer
-// Independent of database or API structure
-data class Customer(
-    val id: Long,
-    val firstName: String,
-    val lastName: String,
-    val phone: String,
-    val email: String,
-    val address: String,
-    val loyaltyPoints: Int,
-    val totalSpent: Double,
-    val totalOrders: Int,
-    val createdAt: String,
-) {
-    val fullName: String
-        get() = "$firstName $lastName"
-}
-
+// Customer domain model has been deleted per MOBILE_TEAM_RESPONSE.md Point 5 (April 17, 2026).
+// The backend has no Customer entity, DTO, repository, service, or controller.
+// Customer linking is not on the backend roadmap.
+// If it becomes a product requirement in the future, both teams will design it from scratch.

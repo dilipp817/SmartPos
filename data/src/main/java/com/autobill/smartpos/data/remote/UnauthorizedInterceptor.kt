@@ -40,17 +40,18 @@ class UnauthorizedInterceptor @Inject constructor(
         val response = chain.proceed(chain.request())
 
         if (response.code == 401) {
-            // Close response body before doing any I/O to avoid leaking the connection.
-            response.close()
             // Launch on the injected app-lifetime scope — never blocks the OkHttp thread.
             // NonCancellable ensures the session wipe completes even under cancellation.
             appScope.launch(NonCancellable) { sessionDataStore.clearUser() }
 
-            // Re-proceed the original request — now without a token.
-            // The result will be another 401 (or redirect), which propagates back
-            // to the repository as a Result.Failure — but the session is already cleared,
-            // so the UI redirects to Login before the error is even shown.
-            return chain.proceed(chain.request())
+            // Return the 401 response as-is — session is already cleared, and
+            // MainViewModel.sessionState will emit Resolved(null) → Login screen.
+            //
+            // ⚠️ DO NOT close + re-proceed here:
+            //   1. POST/PUT request bodies are single-read streams; re-proceeding after
+            //      the body has been consumed throws IllegalStateException.
+            //   2. The second call would also return 401 (token is gone), wasting a
+            //      round-trip and potentially confusing the caller with a different error.
         }
 
         return response

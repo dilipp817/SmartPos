@@ -36,15 +36,15 @@ class FoodRepositoryImpl @Inject constructor(
         try {
             val restaurantId = sessionDataStore.getRestaurantId()
                 ?: return@withContext Result.Failure(Exception("No restaurant ID in session — not logged in"))
-            // GET /foods/restaurant/{restaurantId} — response is PagedDataDto, unwrap .data?.data
-            val items = apiService.getFoodsByRestaurant(
+            // M-14: use GET /foods?restaurant_id= (offset-based) instead of legacy endpoint
+            // Backend confirmed: is_available is not a server-side filter param.
+            // Filter client-side so unavailable/out-of-stock items never appear on the order menu.
+            val items = apiService.getFoods(
                 restaurantId = restaurantId,
-                page = 0,
-                limit = 100,
-            ).data?.data.orEmpty()
+                offset       = 0,
+                limit        = 100,
+            ).data?.data.orEmpty().filter { it.isAvailable }
             foodDao.deleteAll()
-            // Pass restaurantId explicitly — list DTOs don't include restaurant_id in the
-            // response body, so the default (0L) would corrupt every cached entity.
             foodDao.upsertAll(items.map { it.toEntity(restaurantId) })
             Result.Success(items.map { it.toEntity(restaurantId).toDomain() })
         } catch (e: Exception) {
@@ -62,39 +62,38 @@ class FoodRepositoryImpl @Inject constructor(
         sort: String?,
     ): PaginationResult<Food> = withContext(ioDispatcher) {
         try {
-            // Prefer restaurantId passed by caller (from GetRestaurantIdUseCase in ViewModel).
-            // Fall back to SessionDataStore for backward compatibility.
             val effectiveRestaurantId = restaurantId ?: sessionDataStore.getRestaurantId()
                 ?: return@withContext PaginationResult.Failure(Exception("No restaurant ID in session — not logged in"))
-            // GET /foods/restaurant/{id} uses page-based pagination (0-indexed page number).
-            // Domain layer passes offset (item index); convert: page = offset / limit.
-            val page = if (limit > 0) offset / limit else 0
-            val response = apiService.getFoodsByRestaurant(
+            // M-14: use GET /foods with offset-based pagination and full filter support
+            // Backend confirmed: is_available is not a server-side filter param.
+            // Filter client-side so unavailable items never appear on the order menu.
+            val response = apiService.getFoods(
                 restaurantId = effectiveRestaurantId,
-                page         = page,
+                offset       = offset,
                 limit        = limit,
-                categoryId   = category?.toLongOrNull(),  // String ID → Long for the API
+                sort         = sort,
+                categoryId   = category?.toLongOrNull(),
             )
             val pagedData = response.data
-            val items = pagedData?.data.orEmpty()
-            foodDao.upsertAll(items.map { it.toEntity() })
+            val items = pagedData?.data.orEmpty().filter { it.isAvailable }
+            foodDao.upsertAll(items.map { it.toEntity(effectiveRestaurantId) })
 
             PaginationResult.Success(Pagination(
-                data = items.map { it.toEntity().toDomain() },
-                currentPage = pagedData?.pagination?.currentPage ?: page,
-                limit = pagedData?.pagination?.limit ?: limit,
-                total = pagedData?.pagination?.total ?: items.size,
-                hasMore = pagedData?.pagination?.hasNext ?: false,
+                data        = items.map { it.toEntity(effectiveRestaurantId).toDomain() },
+                currentPage = pagedData?.pagination?.currentPage ?: 0,
+                limit       = pagedData?.pagination?.limit ?: limit,
+                total       = pagedData?.pagination?.total ?: items.size,
+                hasMore     = pagedData?.pagination?.hasNext ?: false,
             ))
         } catch (e: Exception) {
             val cached = foodDao.getAllFoods()
             if (cached.isNotEmpty()) {
                 PaginationResult.Success(Pagination(
-                    data = cached.map { it.toDomain() },
+                    data        = cached.map { it.toDomain() },
                     currentPage = 0,
-                    limit = limit,
-                    total = cached.size,
-                    hasMore = false,
+                    limit       = limit,
+                    total       = cached.size,
+                    hasMore     = false,
                 ))
             } else {
                 PaginationResult.Failure(e)
@@ -116,11 +115,17 @@ class FoodRepositoryImpl @Inject constructor(
 
     override suspend fun searchFoods(
         query: String,
-        restaurantId: Long?,  // accepted but not used in search API — scoped by auth token
+        restaurantId: Long?,
     ): Result<List<Food>> = withContext(ioDispatcher) {
         try {
-            val items = apiService.searchFoods(query = query).data?.data.orEmpty()
-            Result.Success(items.map { it.toEntity().toDomain() })
+            // M-11: always pass restaurant_id to scope results to the current outlet
+            val effectiveRestaurantId = restaurantId ?: sessionDataStore.getRestaurantId()
+                ?: return@withContext Result.Failure(Exception("No restaurant ID in session — not logged in"))
+            val items = apiService.searchFoods(
+                query        = query,
+                restaurantId = effectiveRestaurantId,
+            ).data?.data.orEmpty()
+            Result.Success(items.map { it.toEntity(effectiveRestaurantId).toDomain() })
         } catch (e: Exception) {
             val cached = foodDao.searchFoods(query)
             if (cached.isNotEmpty()) Result.Success(cached.map { it.toDomain() })
@@ -130,17 +135,20 @@ class FoodRepositoryImpl @Inject constructor(
 
     override suspend fun searchFoodsPaginated(
         query: String,
-        restaurantId: Long?,  // accepted but not used in search API — scoped by auth token
+        restaurantId: Long?,
         offset: Int,
         limit: Int,
     ): PaginationResult<Food> = withContext(ioDispatcher) {
         try {
-            val response = apiService.searchFoods(query = query, offset = offset, limit = limit)
+            // M-11: always pass restaurantId to prevent cross-tenant data leak
+            val effectiveRestaurantId = restaurantId ?: sessionDataStore.getRestaurantId()
+                ?: return@withContext PaginationResult.Failure(Exception("No restaurant ID in session — not logged in"))
+            val response = apiService.searchFoods(query = query, restaurantId = effectiveRestaurantId, offset = offset, limit = limit)
             val page = response.data
             val items = page?.data.orEmpty()
 
             PaginationResult.Success(Pagination(
-                data = items.map { it.toEntity().toDomain() },
+                data = items.map { it.toEntity(effectiveRestaurantId).toDomain() },
                 currentPage = page?.pagination?.currentPage ?: 0,
                 limit = page?.pagination?.limit ?: limit,
                 total = page?.pagination?.total ?: items.size,

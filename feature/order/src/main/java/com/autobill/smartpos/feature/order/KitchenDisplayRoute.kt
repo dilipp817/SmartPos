@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /**
@@ -18,6 +20,10 @@ fun KitchenDisplayRoute(
 ) {
     val viewModel: KitchenDisplayViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // M-09: start/stop fallback polling on lifecycle transitions
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.onResume() }
+    LifecycleEventEffect(Lifecycle.Event.ON_PAUSE)  { viewModel.onPause() }
 
     KitchenDisplayScreen(
         uiState                  = uiState,

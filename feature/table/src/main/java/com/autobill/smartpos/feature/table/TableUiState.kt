@@ -80,17 +80,17 @@ enum class TableFilter(val label: String) {
  * Business rules: valid status transitions for a table.
  * Enforced client-side for UX (server enforces its own rules independently).
  *
- * AVAILABLE   → RESERVED, MAINTENANCE
- * OCCUPIED    → CLEANING, MAINTENANCE
+ * AVAILABLE   → OCCUPIED, RESERVED, CLEANING
+ * OCCUPIED    → AVAILABLE, CLEANING
  * RESERVED    → AVAILABLE, OCCUPIED
- * CLEANING    → AVAILABLE, MAINTENANCE
+ * CLEANING    → AVAILABLE
  * MAINTENANCE → AVAILABLE
  */
 fun TableStatus.allowedTransitions(): List<TableStatus> = when (this) {
-    TableStatus.AVAILABLE   -> listOf(TableStatus.RESERVED, TableStatus.MAINTENANCE)
-    TableStatus.OCCUPIED    -> listOf(TableStatus.CLEANING, TableStatus.MAINTENANCE)
+    TableStatus.AVAILABLE   -> listOf(TableStatus.OCCUPIED, TableStatus.RESERVED, TableStatus.CLEANING)
+    TableStatus.OCCUPIED    -> listOf(TableStatus.AVAILABLE, TableStatus.CLEANING)
     TableStatus.RESERVED    -> listOf(TableStatus.AVAILABLE, TableStatus.OCCUPIED)
-    TableStatus.CLEANING    -> listOf(TableStatus.AVAILABLE, TableStatus.MAINTENANCE)
+    TableStatus.CLEANING    -> listOf(TableStatus.AVAILABLE)
     TableStatus.MAINTENANCE -> listOf(TableStatus.AVAILABLE)
 }
 

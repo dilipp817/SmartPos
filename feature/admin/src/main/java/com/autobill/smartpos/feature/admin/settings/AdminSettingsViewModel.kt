@@ -21,6 +21,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * ViewModel for the Edit Outlet Info screen.
+ *
+ * Wires to PATCH /api/v1/restaurants/{id} — contract §8.4.
+ * Removed settings (tax, tips, auto-print) are post-production backlog.
+ */
 @HiltViewModel
 class AdminSettingsViewModel @Inject constructor(
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
@@ -34,22 +40,24 @@ class AdminSettingsViewModel @Inject constructor(
     val uiState: StateFlow<AdminSettingsUiState> = _uiState.asStateFlow()
 
     init {
-        // Populate fields from cached restaurant whenever it updates
         observeRestaurantUseCase()
             .onEach { r ->
                 if (r != null && !_uiState.value.isDirty) {
-                    _uiState.update { it.copy(
-                        restaurant           = r,
-                        taxRate              = r.taxRate.toString(),
-                        enableTips           = r.settings.enableTips,
-                        defaultTipPercentage = r.settings.defaultTipPercentage.toString(),
-                        autoPrintBill        = r.settings.autoPrintBill,
-                        taxInclusive         = r.settings.taxInclusive,
-                    ) }
+                    _uiState.update {
+                        it.copy(
+                            restaurant   = r,
+                            outletName   = r.outletName,
+                            displayName  = r.displayName,
+                            outletManager = r.outletManager,
+                            building     = r.address.building,
+                            street       = r.address.street,
+                            location     = r.address.location,
+                            zipCode      = r.address.zipCode,
+                        )
+                    }
                 }
             }
             .launchIn(viewModelScope)
-
         refresh()
     }
 
@@ -63,45 +71,49 @@ class AdminSettingsViewModel @Inject constructor(
         }
     }
 
-    // ── Field updates — each call marks form as dirty ────────────────────────
+    // ── Field updates ────────────────────────────────────────────────────────
 
-    fun onTaxRateChange(v: String)            = _uiState.update { it.copy(taxRate = v, isDirty = true) }
-    fun onEnableTipsChange(v: Boolean)        = _uiState.update { it.copy(enableTips = v, isDirty = true) }
-    fun onDefaultTipPercentageChange(v: String) = _uiState.update { it.copy(defaultTipPercentage = v, isDirty = true) }
-    fun onAutoPrintBillChange(v: Boolean)     = _uiState.update { it.copy(autoPrintBill = v, isDirty = true) }
-    fun onTaxInclusiveChange(v: Boolean)      = _uiState.update { it.copy(taxInclusive = v, isDirty = true) }
+    fun onOutletNameChange(v: String)    = _uiState.update { it.copy(outletName = v, isDirty = true) }
+    fun onDisplayNameChange(v: String)   = _uiState.update { it.copy(displayName = v, isDirty = true) }
+    fun onOutletManagerChange(v: String) = _uiState.update { it.copy(outletManager = v, isDirty = true) }
+    fun onBuildingChange(v: String)      = _uiState.update { it.copy(building = v, isDirty = true) }
+    fun onStreetChange(v: String)        = _uiState.update { it.copy(street = v, isDirty = true) }
+    fun onLocationChange(v: String)      = _uiState.update { it.copy(location = v, isDirty = true) }
+    fun onZipCodeChange(v: String)       = _uiState.update { it.copy(zipCode = v, isDirty = true) }
 
     // ── Save ─────────────────────────────────────────────────────────────────
 
     fun saveSettings() {
         val state = _uiState.value
         val rid   = state.restaurant?.id ?: return
-        val taxRateValue = state.taxRate.toDoubleOrNull() ?: return
-        val tipPct = state.defaultTipPercentage.toDoubleOrNull()
-
+        if (state.outletName.isBlank()) {
+            _uiState.update { it.copy(error = context.getString(R.string.validation_name_required)) }
+            return
+        }
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, error = null) }
             val result = updateRestaurantSettingsUseCase(
                 restaurantId = rid,
                 request = UpdateRestaurantSettingsRequest(
-                    taxRate              = taxRateValue,
-                    enableTips           = state.enableTips,
-                    defaultTipPercentage = tipPct,
-                    autoPrintBill        = state.autoPrintBill,
-                    taxInclusive         = state.taxInclusive,
+                    outletName    = state.outletName.trim(),
+                    displayName   = state.displayName.trim().ifBlank { null },
+                    outletManager = state.outletManager.trim().ifBlank { null },
+                    building      = state.building.trim().ifBlank { null },
+                    street        = state.street.trim().ifBlank { null },
+                    location      = state.location.trim().ifBlank { null },
+                    zipCode       = state.zipCode.trim().ifBlank { null },
                 ),
             )
             when (result) {
-                is Result.Success -> _uiState.update { it.copy(
-                    isSaving        = false,
-                    isDirty         = false,
-                    successMessage  = context.getString(R.string.settings_saved_success),
-                    restaurant      = result.data,
-                ) }
-                is Result.Failure -> _uiState.update { it.copy(
-                    isSaving = false,
-                    error    = result.exception.message ?: context.getString(R.string.settings_save_failed),
-                ) }
+                is Result.Success -> _uiState.update {
+                    it.copy(isSaving = false, isDirty = false,
+                            successMessage = context.getString(R.string.settings_saved_success),
+                            restaurant = result.data)
+                }
+                is Result.Failure -> _uiState.update {
+                    it.copy(isSaving = false,
+                            error = result.exception.message ?: context.getString(R.string.settings_save_failed))
+                }
                 else -> _uiState.update { it.copy(isSaving = false) }
             }
         }

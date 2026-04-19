@@ -5,6 +5,7 @@ import com.autobill.smartpos.data.mapper.toDomain
 import com.autobill.smartpos.data.remote.PaymentApiService
 import com.autobill.smartpos.data.remote.dto.ProcessPaymentRequest
 import com.autobill.smartpos.data.remote.dto.UpdatePaymentStatusRequest
+import com.autobill.smartpos.domain.common.HttpConflictException
 import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.model.Payment
 import com.autobill.smartpos.domain.model.PaymentMethod
@@ -12,6 +13,7 @@ import com.autobill.smartpos.domain.model.PaymentStatus
 import com.autobill.smartpos.domain.repository.PaymentRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import retrofit2.HttpException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -61,6 +63,13 @@ class PaymentRepositoryImpl @Inject constructor(
                 response.message ?: "Payment failed"
             }
             Result.Success(dto.toDomain())
+        } catch (e: HttpException) {
+            if (e.code() == 409) {
+                // M-12 scenario 4: duplicate referenceNumber with a different amount
+                Result.Failure(HttpConflictException("A payment with this reference already exists."))
+            } else {
+                Result.Failure(e)
+            }
         } catch (e: Exception) {
             Result.Failure(e)
         }

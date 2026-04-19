@@ -55,7 +55,8 @@ class SessionDataStore @Inject constructor(
         val EMAIL       = stringPreferencesKey("email")
         val ROLE        = stringPreferencesKey("role")
         val RESTAURANT_ID = longPreferencesKey("restaurant_id")
-        val EXPIRES_IN  = longPreferencesKey("expires_in")
+        /** Absolute Unix epoch seconds — persisted from login response `expires_at`. */
+        val EXPIRES_AT  = longPreferencesKey("expires_at")
         val DEVICE_ID   = stringPreferencesKey("device_id")
         val DEVICE_TYPE = stringPreferencesKey("device_type")
     }
@@ -82,7 +83,7 @@ class SessionDataStore @Inject constructor(
                 role = prefs[Keys.ROLE] ?: "",
                 restaurantId = prefs[Keys.RESTAURANT_ID],   // null = super_admin
                 token = token,
-                expiresIn = prefs[Keys.EXPIRES_IN] ?: 0L,
+                expiresAt = prefs[Keys.EXPIRES_AT] ?: 0L,
                 deviceId = prefs[Keys.DEVICE_ID],
                 deviceType = prefs[Keys.DEVICE_TYPE],
             )
@@ -99,7 +100,7 @@ class SessionDataStore @Inject constructor(
             prefs[Keys.USERNAME] = user.username
             prefs[Keys.EMAIL]    = user.email
             prefs[Keys.ROLE]     = user.role
-            prefs[Keys.EXPIRES_IN] = user.expiresIn
+            prefs[Keys.EXPIRES_AT] = user.expiresAt
             val restaurantId = user.restaurantId
             if (restaurantId != null) prefs[Keys.RESTAURANT_ID] = restaurantId
             else prefs.remove(Keys.RESTAURANT_ID)
@@ -134,5 +135,14 @@ class SessionDataStore @Inject constructor(
         .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
         .firstOrNull()
         ?.get(Keys.RESTAURANT_ID)
+
+    /**
+     * Return the stored token expiry as an absolute Unix epoch second.
+     * Returns 0 if not stored (e.g. very old session before this field existed).
+     */
+    suspend fun getExpiresAt(): Long = dataStore.data
+        .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
+        .firstOrNull()
+        ?.get(Keys.EXPIRES_AT) ?: 0L
 }
 

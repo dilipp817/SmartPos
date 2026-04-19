@@ -39,6 +39,7 @@ data class OrderUiState(
  * [PENDING]     → GET /orders/status/PENDING
  * [IN_PROGRESS] → GET /orders/status/IN_PROGRESS
  * [COMPLETED]   → GET /orders/status/COMPLETED
+ * [HOLD]        → GET /orders/status/HOLD
  */
 enum class OrderFilter(val label: String) {
     ALL("All"),
@@ -46,6 +47,7 @@ enum class OrderFilter(val label: String) {
     PENDING("Pending"),
     IN_PROGRESS("In Progress"),
     COMPLETED("Completed"),
+    HOLD("Hold"),
 }
 
 /**

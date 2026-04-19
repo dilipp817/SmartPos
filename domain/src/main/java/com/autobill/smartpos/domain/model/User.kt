@@ -12,7 +12,8 @@ data class User(
     val role: String,
     val restaurantId: Long?,   // ← key field for multi-outlet support
     val token: String,
-    val expiresIn: Long,
+    /** Absolute Unix epoch seconds when the token expires (from login `expires_at`). */
+    val expiresAt: Long = 0L,
     val deviceId: String? = null,
     val deviceType: String? = null,
 )

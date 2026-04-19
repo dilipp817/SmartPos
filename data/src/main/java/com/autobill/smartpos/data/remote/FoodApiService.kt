@@ -28,20 +28,35 @@ import retrofit2.http.Query
 interface FoodApiService {
 
     /**
-     * Home screen food list — primary recommended endpoint (backendapi.md §7).
-     * GET /api/v1/foods/restaurant/{restaurantId}
+     * Primary food list — GET /api/v1/foods (contract M-14).
      *
-     * Response shape: ApiResponse<PagedDataDto<FoodListItemDto>>
-     * backendapi.md v1.1 (April 12, 2026): response is PAGINATED — data is a wrapper object,
-     * not a plain array. Unwrap with: response.data?.data.orEmpty()
-     * Pagination metadata: response.data?.pagination
+     * Replaces GET /foods/restaurant/{restaurantId} as the primary endpoint.
+     * Uses offset-based pagination (offset + limit, NOT page + limit).
+     * Supports sort and filter params that the old endpoint silently ignored.
+     * Response shape: ApiResponse<PagedDataDto<FoodListItemDto>> (double-wrapped).
+     */
+    @GET("foods")
+    suspend fun getFoods(
+        @Query("restaurant_id") restaurantId: Long,
+        @Query("offset") offset: Int = 0,
+        @Query("limit") limit: Int = 20,
+        @Query("sort") sort: String? = null,
+        @Query("category_id") categoryId: Long? = null,
+        @Query("is_vegetarian") isVegetarian: Boolean? = null,
+        @Query("is_spicy") isSpicy: Boolean? = null,
+        @Query("is_available") isAvailable: Boolean? = null,
+    ): ApiResponse<PagedDataDto<FoodListItemDto>>
+
+    /**
+     * Legacy food list — kept for reference only; new code must use [getFoods].
+     * GET /api/v1/foods/restaurant/{restaurantId}
      */
     @GET("foods/restaurant/{restaurantId}")
     suspend fun getFoodsByRestaurant(
         @Path("restaurantId") restaurantId: Long,
         @Query("page") page: Int = 0,
         @Query("limit") limit: Int = 20,
-        @Query("category_id") categoryId: Long? = null,  // filter by category (backendapi.md §7)
+        @Query("category_id") categoryId: Long? = null,
     ): ApiResponse<PagedDataDto<FoodListItemDto>>
 
 

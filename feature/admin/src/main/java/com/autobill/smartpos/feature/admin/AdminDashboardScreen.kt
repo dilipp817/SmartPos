@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.MenuBook
@@ -60,6 +61,7 @@ fun AdminDashboardScreen(
     onNavigateToReports: () -> Unit,
     onNavigateToStaffManagement: () -> Unit,
     onNavigateToInventory: () -> Unit,
+    onNavigateToCategoryManagement: () -> Unit,
     onDismissError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -79,8 +81,8 @@ fun AdminDashboardScreen(
                     Column {
                         Text(stringResource(R.string.admin_dashboard_title), style = MaterialTheme.typography.titleLarge)
                         Text(
-                            text = if (uiState.isSuperAdmin) stringResource(R.string.admin_super_admin_label)
-                                   else "${uiState.restaurant?.name ?: ""}  ${uiState.role.replaceFirstChar { it.uppercase() }}",
+                        text = if (uiState.isSuperAdmin) stringResource(R.string.admin_super_admin_label)
+                               else "${uiState.restaurant?.outletName ?: ""}  ${uiState.role.replaceFirstChar { it.uppercase() }}",
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -191,15 +193,14 @@ fun AdminDashboardScreen(
                         ActionCard(icon = Icons.Default.BarChart, label = stringResource(R.string.admin_action_sales_reports), onClick = onNavigateToReports, modifier = Modifier.weight(1f))
                     }
                     Spacer(Modifier.height(8.dp))
-                    // Row 2: staff & inventory
+                    // Row 2: staff, inventory, categories
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         ActionCard(icon = Icons.Default.People, label = stringResource(R.string.admin_action_staff_management), onClick = onNavigateToStaffManagement, modifier = Modifier.weight(1f))
                         ActionCard(icon = Icons.Default.Inventory2, label = stringResource(R.string.admin_action_inventory_tracking), onClick = onNavigateToInventory, modifier = Modifier.weight(1f))
-                        // Spacer card to keep consistent 3-column grid width
-                        Spacer(Modifier.weight(1f))
+                        ActionCard(icon = Icons.Default.Category, label = stringResource(R.string.admin_action_category_management), onClick = onNavigateToCategoryManagement, modifier = Modifier.weight(1f))
                     }
                 }
 
@@ -210,12 +211,11 @@ fun AdminDashboardScreen(
                         Spacer(Modifier.height(8.dp))
                         ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                OutletInfoRow(stringResource(R.string.admin_outlet_name_label),     r.name)
-                                OutletInfoRow(stringResource(R.string.admin_outlet_address_label),  r.address)
-                                OutletInfoRow(stringResource(R.string.admin_outlet_phone_label),    r.phone)
-                                OutletInfoRow(stringResource(R.string.admin_outlet_currency_label), r.currency)
-                                OutletInfoRow(stringResource(R.string.admin_outlet_tax_rate_label), "${r.taxRate}%")
-                                OutletInfoRow(stringResource(R.string.admin_outlet_tips_label),     if (r.settings.enableTips) stringResource(R.string.admin_tips_enabled) else stringResource(R.string.admin_tips_disabled))
+                                OutletInfoRow(stringResource(R.string.admin_outlet_name_label),    r.outletName)
+                                OutletInfoRow(stringResource(R.string.admin_outlet_display_label), r.displayName)
+                                OutletInfoRow(stringResource(R.string.admin_outlet_manager_label), r.outletManager)
+                                OutletInfoRow(stringResource(R.string.admin_outlet_address_label), r.address.formatted)
+                                // currency always INR; tax always 18%; tips always shown — contract §8.2
                             }
                         }
                     }
@@ -312,3 +312,4 @@ private fun SuperAdminBanner(modifier: Modifier = Modifier) {
         }
     }
 }
+

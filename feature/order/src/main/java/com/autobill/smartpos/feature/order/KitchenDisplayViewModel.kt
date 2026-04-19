@@ -54,8 +54,8 @@ class KitchenDisplayViewModel @Inject constructor(
     private var pollingJob: Job? = null
 
     companion object {
-        /** Fallback polling interval when WebSocket is unavailable — 60 s. */
-        private const val POLLING_INTERVAL_MS = 60_000L
+        /** Fallback polling interval when WebSocket is unavailable — 15 s (contract M-09). */
+        private const val POLLING_INTERVAL_MS = 15_000L
     }
 
     init {
@@ -74,6 +74,21 @@ class KitchenDisplayViewModel @Inject constructor(
             observeWebSocketEvents()
             observeConnectionState()
         }
+    }
+
+    // ── Lifecycle callbacks (called from Route via LifecycleEventEffect) ──────
+
+    /** Call from the screen's onResume — starts fallback polling if WS is not CONNECTED. */
+    fun onResume() {
+        val connectionState = _uiState.value.connectionState
+        if (connectionState != ConnectionState.CONNECTED) {
+            startPollingFallback()
+        }
+    }
+
+    /** Call from the screen's onPause — stops fallback polling to avoid battery drain. */
+    fun onPause() {
+        stopPolling()
     }
 
     // ── Real-time event observation ───────────────────────────────────────────

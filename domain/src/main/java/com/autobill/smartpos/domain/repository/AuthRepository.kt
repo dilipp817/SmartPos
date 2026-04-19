@@ -42,5 +42,11 @@ interface AuthRepository {
 
     /** Returns the stored JWT token, or null if not logged in. */
     suspend fun getToken(): String?
+
+    /**
+     * Returns the stored token expiry as an absolute Unix epoch second.
+     * Returns 0 if not stored or not logged in.
+     */
+    suspend fun getExpiresAt(): Long
 }
 

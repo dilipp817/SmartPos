@@ -13,21 +13,23 @@ fun AdminDashboardRoute(
     onNavigateToReports: () -> Unit,
     onNavigateToStaffManagement: () -> Unit,
     onNavigateToInventory: () -> Unit,
+    onNavigateToCategoryManagement: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val viewModel: AdminDashboardViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     AdminDashboardScreen(
-        uiState                      = uiState,
-        onRefresh                    = viewModel::loadStats,
-        onNavigateToMenuManagement   = onNavigateToMenuManagement,
-        onNavigateToSettings         = onNavigateToSettings,
-        onNavigateToReports          = onNavigateToReports,
-        onNavigateToStaffManagement  = onNavigateToStaffManagement,
-        onNavigateToInventory        = onNavigateToInventory,
-        onDismissError               = viewModel::dismissError,
-        modifier                     = modifier,
+        uiState                         = uiState,
+        onRefresh                       = viewModel::loadStats,
+        onNavigateToMenuManagement      = onNavigateToMenuManagement,
+        onNavigateToSettings            = onNavigateToSettings,
+        onNavigateToReports             = onNavigateToReports,
+        onNavigateToStaffManagement     = onNavigateToStaffManagement,
+        onNavigateToInventory           = onNavigateToInventory,
+        onNavigateToCategoryManagement  = onNavigateToCategoryManagement,
+        onDismissError                  = viewModel::dismissError,
+        modifier                        = modifier,
     )
 }
 

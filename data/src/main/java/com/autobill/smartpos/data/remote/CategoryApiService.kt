@@ -24,7 +24,8 @@ import retrofit2.http.Query
 interface CategoryApiService {
 
     /** GET /api/v1/categories?restaurant_id={restaurantId} 🟢 any
-     * Primary endpoint for rendering category filter tabs on the menu screen. */
+     * Primary endpoint for rendering category filter tabs on the menu screen.
+     * Returns all categories — filter client-side if needed. */
     @GET("categories")
     suspend fun getCategoriesByRestaurant(
         @Query("restaurant_id") restaurantId: Long,

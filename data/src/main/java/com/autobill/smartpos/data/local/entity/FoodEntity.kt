@@ -8,11 +8,8 @@ import androidx.room.PrimaryKey
  * Room Entity: Food
  * Maps to "foods" table in Room database
  *
- * Item 13 (DB): replaced category: String? with categoryId: Long? + categoryName: String?;
- *               added isVegetarian + isSpicy columns.
- * Migrated via MIGRATION_3_4 in AppDatabase.
- *
- * v7→v8: added preparationTime, allergens, calories columns (backendapi.md §7)
+ * Schema is part of the v1 production baseline (April 19, 2026).
+ * Add a new MIGRATION_1_2 in AppDatabase for any future schema changes.
  */
 @Entity(
     tableName = "foods",

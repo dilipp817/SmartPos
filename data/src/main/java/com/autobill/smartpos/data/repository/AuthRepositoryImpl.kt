@@ -54,7 +54,7 @@ class AuthRepositoryImpl @Inject constructor(
                 role = data.role,
                 restaurantId = data.restaurantId,  // ← from response, NEVER hardcoded
                 token = data.token,
-                expiresIn = data.expiresIn,
+                expiresAt = data.expiresAt,
                 deviceId = data.deviceId,
                 deviceType = data.deviceType,
             )
@@ -76,7 +76,8 @@ class AuthRepositoryImpl @Inject constructor(
                 role = data.role,
                 restaurantId = data.restaurantId,
                 token = storedToken,
-                expiresIn = 0L,
+                // /auth/me doesn't return expires_at — restore from local storage
+                expiresAt = sessionDataStore.getExpiresAt(),
                 deviceId = data.deviceId,
                 deviceType = data.deviceType,
             )
@@ -92,6 +93,8 @@ class AuthRepositoryImpl @Inject constructor(
                 envelope.error?.message ?: envelope.message ?: "Token validation failed"
             }
             check(data.valid) { "Token is invalid or expired" }
+            // /auth/validate does not return expires_at — restore the value saved at login time.
+            val storedExpiresAt = sessionDataStore.getExpiresAt()
             User(
                 id = data.userId,
                 username = data.username,
@@ -99,7 +102,7 @@ class AuthRepositoryImpl @Inject constructor(
                 role = data.role,
                 restaurantId = data.restaurantId,  // ← recovered from JWT claims
                 token = token,
-                expiresIn = 0L,
+                expiresAt = storedExpiresAt,
             )
         }
     }
@@ -119,5 +122,7 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun getRestaurantId(): Long? = sessionDataStore.getRestaurantId()
 
     override suspend fun getToken(): String? = sessionDataStore.getToken()
+
+    override suspend fun getExpiresAt(): Long = sessionDataStore.getExpiresAt()
 }
 

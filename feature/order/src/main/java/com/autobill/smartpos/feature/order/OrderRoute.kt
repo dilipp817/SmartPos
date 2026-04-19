@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /**
@@ -23,6 +25,10 @@ fun OrderRoute(
     val viewModel: OrderViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    // M-09: 15s polling — start on resume, stop on pause
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.onResume() }
+    LifecycleEventEffect(Lifecycle.Event.ON_PAUSE)  { viewModel.onPause() }
+
     OrderListScreen(
         uiState = uiState,
         modifier = modifier,
@@ -35,4 +41,3 @@ fun OrderRoute(
         onSearchQueryChange = viewModel::onSearchQueryChange,
     )
 }
-

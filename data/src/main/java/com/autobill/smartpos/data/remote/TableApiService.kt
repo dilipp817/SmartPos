@@ -70,15 +70,15 @@ interface TableApiService {
     ): ApiResponse<TableDto>
 
     /**
-     * PATCH /api/v1/restaurants/{restaurantId}/tables/{id}/status?newStatus=OCCUPIED
+     * PATCH /api/v1/restaurants/{restaurantId}/tables/{id}/status?new_status=OCCUPIED
      * Status passed as query param — no body required.
-     * API contract uses camelCase: ?newStatus= (see API_REFERENCE.md §20)
+     * API contract uses snake_case: ?new_status= (FINAL_CONTRACT §3.4)
      */
     @PATCH("restaurants/{restaurantId}/tables/{id}/status")
     suspend fun updateTableStatus(
         @Path("restaurantId") restaurantId: Long,
         @Path("id") id: Long,
-        @Query("newStatus") newStatus: String,
+        @Query("new_status") newStatus: String,
     ): ApiResponse<TableDto>
 
     /** DELETE /api/v1/restaurants/{restaurantId}/tables/{id} */

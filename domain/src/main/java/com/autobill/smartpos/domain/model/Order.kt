@@ -47,8 +47,7 @@ enum class ItemStatus(val value: String) {
 // Item 8 (complete): removed customerId/tax/discount, renamed total→totalAmount,
 //                    added tableNumber + version + subtotal (pre-tax item sum, = totalAmount at order stage)
 // Item 9: OrderType values now UPPERCASE — backend confirmed DINE_IN/TAKEAWAY/DELIVERY
-// Q1 (BACKEND_ALIGNMENT.md April 12, 2026): customerId re-added as nullable for v2 readiness.
-//   Always null in v1 — backend will populate when customer-linking ships in v2.
+// Point 5 (MOBILE_TEAM_RESPONSE.md April 17, 2026): customerId removed — no backend support.
 data class Order(
     val id: Long,
     val restaurantId: Long,
@@ -64,7 +63,6 @@ data class Order(
     val createdAt: String,
     val updatedAt: String,
     val version: Long,
-    val customerId: Long? = null,   // always null in v1; populated in v2 when customer linking ships
 )
 
 // Order type enum — Item 9: values confirmed UPPERCASE by backend (was OFFLINE/ONLINE)

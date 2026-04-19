@@ -19,7 +19,10 @@ import com.autobill.smartpos.domain.usecase.UpdateTableStatusUseCase
 import com.autobill.smartpos.domain.usecase.UpdateTableUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -60,6 +63,13 @@ class TableViewModel @Inject constructor(
     val uiState: StateFlow<TableUiState> = _uiState.asStateFlow()
 
     private var restaurantId: Long? = null
+
+    /** Polling fallback job — 30 s interval (contract M-09). */
+    private var pollingJob: Job? = null
+
+    companion object {
+        private const val POLLING_INTERVAL_MS = 30_000L
+    }
 
     init {
         observeRolePermissionsUseCase()
@@ -102,8 +112,8 @@ class TableViewModel @Inject constructor(
                     val filter = state.selectedFilter
                     val stillVisible = when (filter) {
                         TableFilter.ALL       -> true
-                        TableFilter.AVAILABLE -> updated.status == com.autobill.smartpos.domain.model.TableStatus.AVAILABLE
-                        TableFilter.OCCUPIED  -> updated.status == com.autobill.smartpos.domain.model.TableStatus.OCCUPIED
+                        TableFilter.AVAILABLE -> updated.status == TableStatus.AVAILABLE
+                        TableFilter.OCCUPIED  -> updated.status == TableStatus.OCCUPIED
                     }
                     val newList = if (stillVisible) {
                         val exists = state.tables.any { it.id == updated.id }
@@ -131,6 +141,25 @@ class TableViewModel @Inject constructor(
     fun refresh() {
         _uiState.update { it.copy(isRefreshing = true, errorMessage = null) }
         viewModelScope.launch { loadAll(refreshing = true) }
+    }
+
+    // ── Lifecycle callbacks (called from Route via LifecycleEventEffect) ──────
+
+    /** Start 30s polling when screen is resumed (contract M-09). */
+    fun onResume() {
+        if (pollingJob?.isActive == true) return
+        pollingJob = viewModelScope.launch {
+            while (true) {
+                delay(POLLING_INTERVAL_MS)
+                loadAll()
+            }
+        }
+    }
+
+    /** Stop polling when screen is paused to avoid battery drain (contract M-09). */
+    fun onPause() {
+        pollingJob?.cancel()
+        pollingJob = null
     }
 
     // ── Status update dialog ─────────────────────────────────────────────────
@@ -342,16 +371,20 @@ class TableViewModel @Inject constructor(
 
     private suspend fun loadAll(refreshing: Boolean = false) {
         val rid = restaurantId ?: return
-        // Fetch tables + badge count concurrently
-        val tablesDeferred = viewModelScope.async { loadTables() }
-        val countDeferred = viewModelScope.async {
-            when (val result = getAvailableTableCountUseCase(rid)) {
-                is Result.Success -> _uiState.update { it.copy(availableCount = result.data) }
-                else -> Unit  // badge count failure is non-critical — keep previous value
+        // Fetch tables + badge count concurrently.
+        // coroutineScope ensures these async children are tied to the caller's coroutine
+        // (pollingJob), so onPause() cancellation also cancels any in-flight fetch.
+        coroutineScope {
+            val tablesDeferred = async { loadTables() }
+            val countDeferred = async {
+                when (val result = getAvailableTableCountUseCase(rid)) {
+                    is Result.Success -> _uiState.update { it.copy(availableCount = result.data) }
+                    else -> Unit  // badge count failure is non-critical — keep previous value
+                }
             }
+            tablesDeferred.await()
+            countDeferred.await()
         }
-        tablesDeferred.await()
-        countDeferred.await()
         if (refreshing) _uiState.update { it.copy(isRefreshing = false) }
     }
 
