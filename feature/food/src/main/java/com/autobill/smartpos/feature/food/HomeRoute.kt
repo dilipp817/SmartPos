@@ -53,6 +53,7 @@ fun HomeRoute(
     // Observe cart state — all sourced from CartViewModel
     val cartItems by cartViewModel.cartItems.collectAsStateWithLifecycle()
     val cartTotals by cartViewModel.cartTotals.collectAsStateWithLifecycle()
+    val heldCarts by cartViewModel.heldCarts.collectAsStateWithLifecycle()
 
     // ── String resources ────────────────────────────────────────────────────
     val strNewSale          = stringResource(R.string.new_sale)
@@ -69,6 +70,9 @@ fun HomeRoute(
 
     // Logout confirmation dialog state — prevents accidental logout on POS counters
     var showLogoutDialog by remember { mutableStateOf(false) }
+
+    // Held bills dialog state
+    var showHeldCartsDialog by remember { mutableStateOf(false) }
 
     // Helper function to get current date/time
     fun getCurrentDateTime(): String {
@@ -94,6 +98,8 @@ fun HomeRoute(
                 invoiceNumber = strNewSale,
                 tableNumber = strDefaultTable,
                 dateTime = getCurrentDateTime(),
+                heldCartCount = heldCarts.size,
+                onHoldCart = { cartViewModel.holdCurrentCart() },
                 onChangeInvoice = {},
             ),
             items = cartItemsUI,
@@ -112,6 +118,7 @@ fun HomeRoute(
             // It does not apply at cart stage — hide the button for all roles here.
             canApplyDiscount = false,
             onApplyDiscountClick = {},
+            onShowHeldCarts = { showHeldCartsDialog = true },
         )
     }
 
@@ -250,6 +257,19 @@ fun HomeRoute(
                 viewModel.updateSortOption(sort)
                 showSortDialog = false
             }
+        )
+    }
+
+    // Held bills dialog — cashier can resume or delete a held bill
+    if (showHeldCartsDialog) {
+        HeldCartsDialog(
+            heldCarts = heldCarts,
+            onResume = { id ->
+                cartViewModel.resumeHeldCart(id)
+                showHeldCartsDialog = false
+            },
+            onDelete = { id -> cartViewModel.deleteHeldCart(id) },
+            onDismiss = { showHeldCartsDialog = false },
         )
     }
 

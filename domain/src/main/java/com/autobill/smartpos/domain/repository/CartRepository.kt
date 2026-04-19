@@ -24,4 +24,7 @@ interface CartRepository {
 
     /** Remove all items from cart */
     suspend fun clearCart()
+
+    /** Restore a snapshot of cart items — used when resuming a held bill */
+    suspend fun restoreItems(items: List<CartItem>)
 }

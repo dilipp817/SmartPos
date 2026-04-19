@@ -26,7 +26,13 @@ class DecreaseCartQuantityUseCase @Inject constructor(private val repo: CartRepo
     suspend operator fun invoke(foodId: Long) = repo.decreaseQuantity(foodId)
 }
 
-/** Clear all items from cart */
+/** Remove all items from cart */
 class ClearCartUseCase @Inject constructor(private val repo: CartRepository) {
     suspend operator fun invoke() = repo.clearCart()
 }
+
+/** Restore a snapshot of cart items — used when resuming a held bill */
+class RestoreCartItemsUseCase @Inject constructor(private val repo: CartRepository) {
+    suspend operator fun invoke(items: List<CartItem>) = repo.restoreItems(items)
+}
+

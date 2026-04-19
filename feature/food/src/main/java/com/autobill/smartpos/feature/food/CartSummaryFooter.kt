@@ -8,11 +8,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -60,36 +62,74 @@ fun CartSummaryFooter(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            // Action buttons row — on top to avoid overlap with invoice text
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column {
-                    Text(
-                        text = stringResource(R.string.invoice_number_label, data.invoice.invoiceNumber),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF212121),
-                    )
-                    Text(
-                        text = stringResource(R.string.table_number_label, data.invoice.tableNumber),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Color(0xFF757575),
-                    )
-                }
-                Button(
-                    onClick = data.invoice.onChangeInvoice,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFE33E3E),
-                    ),
-                    modifier = Modifier.height(36.dp),
-                ) {
-                    Text(
-                        text = stringResource(R.string.change_invoice),
-                        style = MaterialTheme.typography.labelSmall,
-                    )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // Hold & New Bill — saves current cart and starts fresh
+                    Button(
+                        onClick = data.invoice.onHoldCart,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFE33E3E),
+                        ),
+                        modifier = Modifier.height(36.dp),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.hold_and_new_bill),
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                    }
+                    // Held Bills button — shows count badge when bills are on hold
+                    if (data.invoice.heldCartCount > 0) {
+                        Box {
+                            OutlinedButton(
+                                onClick = data.onShowHeldCarts,
+                                modifier = Modifier.height(36.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = Color(0xFF212121),
+                                ),
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.held_bills_button),
+                                    style = MaterialTheme.typography.labelSmall,
+                                )
+                            }
+                            // Badge showing count of held bills
+                            Box(
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .align(Alignment.TopEnd)
+                                    .offset(x = 4.dp, y = (-4).dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFE33E3E)),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = data.invoice.heldCartCount.toString(),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color.White,
+                                )
+                            }
+                        }
+                    }
                 }
             }
+
+            // Invoice info — below the buttons, no overlap
+            Text(
+                text = stringResource(R.string.invoice_number_label, data.invoice.invoiceNumber),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF212121),
+            )
+            Text(
+                text = stringResource(R.string.table_number_label, data.invoice.tableNumber),
+                style = MaterialTheme.typography.labelMedium,
+                color = Color(0xFF757575),
+            )
             Text(
                 text = data.invoice.dateTime,
                 style = MaterialTheme.typography.labelSmall,

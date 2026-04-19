@@ -67,4 +67,10 @@ class CartRepositoryImpl @Inject constructor() : CartRepository {
     override suspend fun clearCart() {
         _items.value = LinkedHashMap()
     }
+
+    override suspend fun restoreItems(items: List<CartItem>) {
+        val newMap = LinkedHashMap<Long, CartItem>()
+        items.forEach { newMap[it.foodId] = it }
+        _items.value = newMap
+    }
 }

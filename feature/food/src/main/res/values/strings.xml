@@ -30,6 +30,14 @@
     <string name="invoice_number_label">Invoice No. %1$s</string>
     <string name="table_number_label">Table No. %1$s</string>
     <string name="change_invoice">Change Invoice</string>
+    <string name="hold_and_new_bill">Hold &amp; New Bill</string>
+    <string name="held_bills_button">Held Bills</string>
+    <string name="held_bills_dialog_title">Held Bills</string>
+    <string name="held_bills_dialog_close">Close</string>
+    <string name="held_bills_empty">No bills on hold.</string>
+    <string name="held_bills_resume">Resume</string>
+    <string name="held_bills_delete">Delete</string>
+    <string name="held_bills_item_count">%1$d items · ₹%2$s</string>
     <string name="subtotal">Subtotal</string>
     <!-- Estimated tax shown pre-checkout; actual GST is computed server-side -->
     <string name="est_gst">Est. GST (18%)</string>
