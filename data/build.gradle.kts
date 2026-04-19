@@ -25,19 +25,19 @@ android {
     // OFFLINE_QUEUE_ENABLED=false for all v1 flavors (contract M-13).
     productFlavors {
         getByName("local") {
-            buildConfigField("String",  "BASE_URL",              "\"http://10.0.2.2:8080/\"")
+            buildConfigField("String",  "BASE_URL",              "\"http://10.0.2.2:8080/api/v1/\"")
             buildConfigField("Boolean", "OFFLINE_QUEUE_ENABLED", "false")
         }
         getByName("dev") {
-            buildConfigField("String",  "BASE_URL",              "\"https://billsmart-api-dev.onrender.com/\"")
+            buildConfigField("String",  "BASE_URL",              "\"https://billsmart-uwad.onrender.com/api/v1/\"")
             buildConfigField("Boolean", "OFFLINE_QUEUE_ENABLED", "false")
         }
         getByName("uat") {
-            buildConfigField("String",  "BASE_URL",              "\"https://billsmart-api-uat.onrender.com/\"")
+            buildConfigField("String",  "BASE_URL",              "\"https://billsmart-uwad.onrender.com/api/v1/\"")
             buildConfigField("Boolean", "OFFLINE_QUEUE_ENABLED", "false")
         }
         getByName("prod") {
-            buildConfigField("String",  "BASE_URL",              "\"https://billsmart-api.onrender.com/\"")
+            buildConfigField("String",  "BASE_URL",              "\"https://billsmart-uwad.onrender.com/api/v1/\"")
             buildConfigField("Boolean", "OFFLINE_QUEUE_ENABLED", "false")
         }
     }
