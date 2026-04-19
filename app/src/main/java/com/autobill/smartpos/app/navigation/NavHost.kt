@@ -163,10 +163,8 @@ private fun AppNavGraph(
         ) { _ ->
             CreateOrderRoute(
                 onOrderCreated = { _ ->
-                    // Navigate to Order List after placing an order; clear back-stack up to FoodList
-                    navController.navigate(Screen.OrderList.route) {
-                        popUpTo(Screen.FoodList.route) { inclusive = false }
-                    }
+                    // Return cashier to FoodList (main screen) so they can start a fresh order
+                    navController.popBackStack(Screen.FoodList.route, inclusive = false)
                 },
                 onBack = { navController.popBackStack() },
                 onReselectTable = {
@@ -174,8 +172,8 @@ private fun AppNavGraph(
                     navController.popBackStack(Screen.TableList.route, inclusive = false)
                 },
                 onOrderQueued = {
-                    // Order saved offline — go back to TableList (Phase 9.2)
-                    navController.popBackStack(Screen.TableList.route, inclusive = false)
+                    // Order saved offline — go back to FoodList (Phase 9.2)
+                    navController.popBackStack(Screen.FoodList.route, inclusive = false)
                 },
                 modifier = Modifier.fillMaxSize(),
             )
