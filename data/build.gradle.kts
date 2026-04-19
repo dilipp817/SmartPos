@@ -83,5 +83,12 @@ dependencies {
 
     ksp(libs.androidx.room.compiler)
     ksp(libs.moshi.kotlin.codegen)
+
+    // Chucker — HTTP inspector UI for dev flavor only.
+    // no-op variant for local/uat/prod ensures zero overhead in non-dev builds.
+    "devImplementation"(libs.chucker)
+    "localImplementation"(libs.chucker.no.op)
+    "uatImplementation"(libs.chucker.no.op)
+    "prodImplementation"(libs.chucker.no.op)
 }
 
