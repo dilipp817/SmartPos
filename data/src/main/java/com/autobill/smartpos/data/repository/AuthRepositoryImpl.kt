@@ -3,6 +3,8 @@ package com.autobill.smartpos.data.repository
 import com.autobill.smartpos.data.di.IoDispatcher
 import com.autobill.smartpos.data.local.RestaurantDataStore
 import com.autobill.smartpos.data.local.SessionDataStore
+import com.autobill.smartpos.data.local.dao.RestaurantDao
+import com.autobill.smartpos.data.local.entity.RestaurantEntity
 import com.autobill.smartpos.data.remote.AuthApiService
 import com.autobill.smartpos.data.remote.dto.LoginRequestDto
 import com.autobill.smartpos.domain.model.User
@@ -26,6 +28,7 @@ class AuthRepositoryImpl @Inject constructor(
     private val authApiService: AuthApiService,
     private val sessionDataStore: SessionDataStore,
     private val restaurantDataStore: RestaurantDataStore,
+    private val restaurantDao: RestaurantDao,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : AuthRepository {
 
@@ -109,7 +112,28 @@ class AuthRepositoryImpl @Inject constructor(
 
     override fun observeSession(): Flow<User?> = sessionDataStore.observeUser()
 
-    override suspend fun saveSession(user: User) = sessionDataStore.saveUser(user)
+    override suspend fun saveSession(user: User) {
+        sessionDataStore.saveUser(user)
+        // Upsert a RestaurantEntity row into Room so that TableEntity, OrderEntity,
+        // BillEntity, and PaymentEntity can satisfy their FOREIGN KEY → restaurants(id).
+        // The actual restaurant details (name, address) live in RestaurantDataStore —
+        // this row exists purely as a FK anchor.
+        val rid = user.restaurantId ?: return
+        restaurantDao.upsert(
+            RestaurantEntity(
+                id              = rid,
+                outletName      = "",
+                displayName     = "",
+                outletManager   = "",
+                addressBuilding = "",
+                addressStreet   = "",
+                addressLocation = "",
+                addressZipCode  = "",
+                createdAt       = "",
+                updatedAt       = "",
+            )
+        )
+    }
 
     override suspend fun clearSession() {
         sessionDataStore.clearUser()

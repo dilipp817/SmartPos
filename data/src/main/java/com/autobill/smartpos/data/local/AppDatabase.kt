@@ -5,6 +5,7 @@ import androidx.room.RoomDatabase
 import com.autobill.smartpos.data.local.dao.FoodDao
 import com.autobill.smartpos.data.local.dao.OrderDao
 import com.autobill.smartpos.data.local.dao.PendingOrderDao
+import com.autobill.smartpos.data.local.dao.RestaurantDao
 import com.autobill.smartpos.data.local.dao.TableDao
 import com.autobill.smartpos.data.local.entity.BillEntity
 import com.autobill.smartpos.data.local.entity.FoodEntity
@@ -43,6 +44,7 @@ import com.autobill.smartpos.data.local.entity.TableEntity
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun foodDao(): FoodDao
+    abstract fun restaurantDao(): RestaurantDao
     abstract fun tableDao(): TableDao
     abstract fun orderDao(): OrderDao
     abstract fun pendingOrderDao(): PendingOrderDao

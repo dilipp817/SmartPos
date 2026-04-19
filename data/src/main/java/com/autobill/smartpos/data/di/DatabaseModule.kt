@@ -7,6 +7,7 @@ import com.autobill.smartpos.data.local.AppDatabase
 import com.autobill.smartpos.data.local.dao.FoodDao
 import com.autobill.smartpos.data.local.dao.OrderDao
 import com.autobill.smartpos.data.local.dao.PendingOrderDao
+import com.autobill.smartpos.data.local.dao.RestaurantDao
 import com.autobill.smartpos.data.local.dao.TableDao
 import dagger.Module
 import dagger.Provides
@@ -34,6 +35,10 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideFoodDao(database: AppDatabase): FoodDao = database.foodDao()
+
+    @Provides
+    @Singleton
+    fun provideRestaurantDao(database: AppDatabase): RestaurantDao = database.restaurantDao()
 
     @Provides
     @Singleton
