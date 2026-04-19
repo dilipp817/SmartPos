@@ -60,7 +60,10 @@ class AppPrefsDataStore @Inject constructor(
 
     /** Read the in-flight payment reference number, or null if none is active. */
     suspend fun getCurrentPaymentRefNumber(): String? =
-        dataStore.data.firstOrNull()?.get(Keys.CURRENT_PAYMENT_REF_NUMBER)
+        dataStore.data
+            .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
+            .firstOrNull()
+            ?.get(Keys.CURRENT_PAYMENT_REF_NUMBER)
 
     /** Persist a reference number BEFORE making the payment network call. */
     suspend fun saveCurrentPaymentRefNumber(refNumber: String) {

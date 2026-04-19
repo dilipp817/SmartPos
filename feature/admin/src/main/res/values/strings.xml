@@ -77,6 +77,7 @@
     <string name="validation_price_required">Price is required</string>
     <string name="validation_price_invalid">Invalid price</string>
     <string name="validation_price_negative">Price must be ≥ 0</string>
+    <string name="validation_must_be_number">Must be a number</string>
 
     <!-- ── Food Form dialog ──────────────────────────────────────────────── -->
     <string name="food_form_title_add">Add Menu Item</string>

@@ -90,7 +90,7 @@ class CategoryManagementViewModel @Inject constructor(
 
     // ── Form field updates ────────────────────────────────────────────────────
 
-    fun onNameChange(v: String)         = _formState.update { it.copy(name = v) }
+    fun onNameChange(v: String)         = _formState.update { it.copy(name = v, nameTouched = true) }
     fun onDescriptionChange(v: String)  = _formState.update { it.copy(description = v) }
     fun onImageUrlChange(v: String)     = _formState.update { it.copy(imageUrl = v) }
     fun onDisplayOrderChange(v: String) = _formState.update { it.copy(displayOrder = v) }

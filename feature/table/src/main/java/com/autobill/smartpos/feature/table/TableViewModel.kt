@@ -21,6 +21,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -111,8 +112,8 @@ class TableViewModel @Inject constructor(
                     val filter = state.selectedFilter
                     val stillVisible = when (filter) {
                         TableFilter.ALL       -> true
-                        TableFilter.AVAILABLE -> updated.status == com.autobill.smartpos.domain.model.TableStatus.AVAILABLE
-                        TableFilter.OCCUPIED  -> updated.status == com.autobill.smartpos.domain.model.TableStatus.OCCUPIED
+                        TableFilter.AVAILABLE -> updated.status == TableStatus.AVAILABLE
+                        TableFilter.OCCUPIED  -> updated.status == TableStatus.OCCUPIED
                     }
                     val newList = if (stillVisible) {
                         val exists = state.tables.any { it.id == updated.id }
@@ -370,16 +371,20 @@ class TableViewModel @Inject constructor(
 
     private suspend fun loadAll(refreshing: Boolean = false) {
         val rid = restaurantId ?: return
-        // Fetch tables + badge count concurrently
-        val tablesDeferred = viewModelScope.async { loadTables() }
-        val countDeferred = viewModelScope.async {
-            when (val result = getAvailableTableCountUseCase(rid)) {
-                is Result.Success -> _uiState.update { it.copy(availableCount = result.data) }
-                else -> Unit  // badge count failure is non-critical — keep previous value
+        // Fetch tables + badge count concurrently.
+        // coroutineScope ensures these async children are tied to the caller's coroutine
+        // (pollingJob), so onPause() cancellation also cancels any in-flight fetch.
+        coroutineScope {
+            val tablesDeferred = async { loadTables() }
+            val countDeferred = async {
+                when (val result = getAvailableTableCountUseCase(rid)) {
+                    is Result.Success -> _uiState.update { it.copy(availableCount = result.data) }
+                    else -> Unit  // badge count failure is non-critical — keep previous value
+                }
             }
+            tablesDeferred.await()
+            countDeferred.await()
         }
-        tablesDeferred.await()
-        countDeferred.await()
         if (refreshing) _uiState.update { it.copy(isRefreshing = false) }
     }
 

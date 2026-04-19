@@ -76,10 +76,10 @@ class FoodRepositoryImpl @Inject constructor(
             )
             val pagedData = response.data
             val items = pagedData?.data.orEmpty().filter { it.isAvailable }
-            foodDao.upsertAll(items.map { it.toEntity() })
+            foodDao.upsertAll(items.map { it.toEntity(effectiveRestaurantId) })
 
             PaginationResult.Success(Pagination(
-                data        = items.map { it.toEntity().toDomain() },
+                data        = items.map { it.toEntity(effectiveRestaurantId).toDomain() },
                 currentPage = pagedData?.pagination?.currentPage ?: 0,
                 limit       = pagedData?.pagination?.limit ?: limit,
                 total       = pagedData?.pagination?.total ?: items.size,
@@ -120,11 +120,12 @@ class FoodRepositoryImpl @Inject constructor(
         try {
             // M-11: always pass restaurant_id to scope results to the current outlet
             val effectiveRestaurantId = restaurantId ?: sessionDataStore.getRestaurantId()
+                ?: return@withContext Result.Failure(Exception("No restaurant ID in session — not logged in"))
             val items = apiService.searchFoods(
                 query        = query,
                 restaurantId = effectiveRestaurantId,
             ).data?.data.orEmpty()
-            Result.Success(items.map { it.toEntity().toDomain() })
+            Result.Success(items.map { it.toEntity(effectiveRestaurantId).toDomain() })
         } catch (e: Exception) {
             val cached = foodDao.searchFoods(query)
             if (cached.isNotEmpty()) Result.Success(cached.map { it.toDomain() })
@@ -141,12 +142,13 @@ class FoodRepositoryImpl @Inject constructor(
         try {
             // M-11: always pass restaurantId to prevent cross-tenant data leak
             val effectiveRestaurantId = restaurantId ?: sessionDataStore.getRestaurantId()
+                ?: return@withContext PaginationResult.Failure(Exception("No restaurant ID in session — not logged in"))
             val response = apiService.searchFoods(query = query, restaurantId = effectiveRestaurantId, offset = offset, limit = limit)
             val page = response.data
             val items = page?.data.orEmpty()
 
             PaginationResult.Success(Pagination(
-                data = items.map { it.toEntity().toDomain() },
+                data = items.map { it.toEntity(effectiveRestaurantId).toDomain() },
                 currentPage = page?.pagination?.currentPage ?: 0,
                 limit = page?.pagination?.limit ?: limit,
                 total = page?.pagination?.total ?: items.size,

@@ -74,18 +74,26 @@ fun FoodFormDialog(
                     value         = formState.name,
                     onValueChange = onNameChange,
                     label         = { Text(stringResource(R.string.food_form_field_name)) },
-                    isError       = formState.nameError != null,
-                    supportingText = formState.nameError?.let { { Text(it) } },
+                    isError       = formState.hasNameError,
+                    supportingText = if (formState.hasNameError) {
+                        { Text(stringResource(R.string.validation_name_required)) }
+                    } else null,
                     singleLine    = true,
                     modifier      = Modifier.fillMaxWidth(),
                 )
                 // Price
+                val priceErrorText: String? = when (formState.priceError) {
+                    PriceValidationError.REQUIRED -> stringResource(R.string.validation_price_required)
+                    PriceValidationError.INVALID  -> stringResource(R.string.validation_price_invalid)
+                    PriceValidationError.NEGATIVE -> stringResource(R.string.validation_price_negative)
+                    null                          -> null
+                }
                 OutlinedTextField(
                     value         = formState.price,
                     onValueChange = onPriceChange,
                     label         = { Text(stringResource(R.string.food_form_field_price)) },
                     isError       = formState.priceError != null,
-                    supportingText = formState.priceError?.let { { Text(it) } },
+                    supportingText = priceErrorText?.let { msg -> { Text(msg) } },
                     singleLine    = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier      = Modifier.fillMaxWidth(),

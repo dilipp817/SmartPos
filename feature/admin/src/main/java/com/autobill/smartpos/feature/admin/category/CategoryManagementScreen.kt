@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -123,7 +124,7 @@ private fun CategoryManagementScreen(
                 title = { Text(stringResource(R.string.category_mgmt_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.Category, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },
             )
@@ -336,9 +337,10 @@ private fun CategoryFormDialog(
                     onValueChange   = onNameChange,
                     label           = { Text(stringResource(R.string.category_form_name)) },
                     singleLine      = true,
-                    isError         = formState.nameError != null && formState.name.isNotBlank(),
-                    supportingText  = formState.nameError?.takeIf { formState.name.isNotBlank() }
-                        ?.let { { Text(it) } },
+                    isError         = formState.hasNameError && formState.nameTouched,
+                    supportingText  = if (formState.hasNameError && formState.nameTouched) {
+                        { Text(stringResource(R.string.validation_name_required)) }
+                    } else null,
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.Words,
                         imeAction      = ImeAction.Next,
@@ -378,8 +380,10 @@ private fun CategoryFormDialog(
                     onValueChange   = onOrderChange,
                     label           = { Text(stringResource(R.string.category_form_display_order)) },
                     singleLine      = true,
-                    isError         = formState.displayOrderError != null,
-                    supportingText  = formState.displayOrderError?.let { { Text(it) } },
+                    isError         = formState.hasDisplayOrderError,
+                    supportingText  = if (formState.hasDisplayOrderError) {
+                        { Text(stringResource(R.string.validation_must_be_number)) }
+                    } else null,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction    = ImeAction.Done,

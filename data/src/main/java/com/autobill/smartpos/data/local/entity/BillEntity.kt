@@ -6,10 +6,8 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 // Room Entity: Bill
-// Item 15: removed discountType/discountValue/tableId FK/printedAt/totalTax;
-//          added taxAmount/cgstAmount/sgstAmount/restaurantName/updatedAt;
-//          status now ISSUED | PARTIAL | PAID | CANCELLED (UPPERCASE)
-// Migrated via MIGRATION_4_5 in AppDatabase.
+// Schema is part of the v1 production baseline (April 19, 2026).
+// Add a new MIGRATION_1_2 in AppDatabase for any future schema changes.
 @Entity(
     tableName = "bills",
     foreignKeys = [

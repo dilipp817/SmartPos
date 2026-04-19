@@ -20,10 +20,14 @@ data class CategoryFormState(
     val description: String = "",
     val imageUrl: String = "",
     val displayOrder: String = "0",
+    /** Set to true the first time the user edits the name field; gates error display. */
+    val nameTouched: Boolean = false,
 ) {
-    val nameError: String? get() = if (name.isBlank()) "Name is required" else null
-    val displayOrderError: String? get() =
-        if (displayOrder.isNotBlank() && displayOrder.toIntOrNull() == null) "Must be a number" else null
-    val isValid: Boolean get() = nameError == null && displayOrderError == null
+    /** True when name is blank — UI layer resolves the display string via stringResource(R.string.validation_name_required). */
+    val hasNameError: Boolean get() = name.isBlank()
+    /** True when display order is non-empty but not a valid integer — UI resolves via stringResource(R.string.validation_must_be_number). */
+    val hasDisplayOrderError: Boolean get() =
+        displayOrder.isNotBlank() && displayOrder.toIntOrNull() == null
+    val isValid: Boolean get() = !hasNameError && !hasDisplayOrderError
 }
 

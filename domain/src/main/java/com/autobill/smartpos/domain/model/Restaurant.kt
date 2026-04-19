@@ -13,7 +13,12 @@ data class RestaurantAddress(
             if (building.isNotBlank()) { append(building); append(", ") }
             if (street.isNotBlank()) { append(street); append(", ") }
             if (location.isNotBlank()) { append(location) }
-            if (zipCode.isNotBlank()) { append(" - "); append(zipCode) }
+            if (zipCode.isNotBlank()) {
+                // Only add " - " separator when there is already preceding address content;
+                // avoids "- 560001" when only ZIP is present.
+                if (isNotEmpty()) append(" - ") else Unit
+                append(zipCode)
+            }
         }.trimEnd(',', ' ')
 }
 

@@ -15,7 +15,8 @@ import androidx.room.PrimaryKey
  * Actual restaurant data is read/written via RestaurantDataStore (DataStore Preferences).
  * There is no RestaurantDao — the entity is never directly queried.
  *
- * DB migration: MIGRATION_9_10 in AppDatabase.
+ * Schema is part of the v1 production baseline (April 19, 2026).
+ * Add a new MIGRATION_1_2 in AppDatabase for any future schema changes.
  */
 @Entity(
     tableName = "restaurants",

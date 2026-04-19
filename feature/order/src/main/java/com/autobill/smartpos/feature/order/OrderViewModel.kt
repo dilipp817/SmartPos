@@ -20,6 +20,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -232,18 +233,24 @@ class OrderViewModel @Inject constructor(
     /**
      * Fetches the order list and pending count concurrently using async/await.
      * Both jobs run in parallel; isRefreshing is reset only after both complete.
+     *
+     * Uses coroutineScope { async { } } so the parallel fetches are children of the
+     * caller's coroutine (pollingJob / refresh job). Cancelling pollingJob via onPause()
+     * therefore also cancels any in-flight fetch immediately.
      */
     private suspend fun loadAll(refreshing: Boolean = false) {
         val rid = restaurantId ?: return
-        val ordersDeferred = viewModelScope.async { loadOrders() }
-        val countDeferred  = viewModelScope.async {
-            when (val result = getPendingOrdersCountUseCase(rid)) {
-                is Result.Success -> _uiState.update { it.copy(pendingCount = result.data) }
-                else -> Unit  // badge count failure is non-critical — keep previous value
+        coroutineScope {
+            val ordersDeferred = async { loadOrders() }
+            val countDeferred  = async {
+                when (val result = getPendingOrdersCountUseCase(rid)) {
+                    is Result.Success -> _uiState.update { it.copy(pendingCount = result.data) }
+                    else -> Unit  // badge count failure is non-critical — keep previous value
+                }
             }
+            ordersDeferred.await()
+            countDeferred.await()
         }
-        ordersDeferred.await()
-        countDeferred.await()
         if (refreshing) _uiState.update { it.copy(isRefreshing = false) }
     }
 
