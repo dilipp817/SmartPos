@@ -1,5 +1,6 @@
 package com.autobill.smartpos.data.di
 
+import android.content.Context
 import com.autobill.smartpos.data.BuildConfig
 import com.autobill.smartpos.data.remote.AuthApiService
 import com.autobill.smartpos.data.remote.AuthInterceptor
@@ -11,11 +12,13 @@ import com.autobill.smartpos.data.remote.PaymentApiService
 import com.autobill.smartpos.data.remote.RestaurantApiService
 import com.autobill.smartpos.data.remote.TableApiService
 import com.autobill.smartpos.data.remote.UnauthorizedInterceptor
+import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -44,6 +47,7 @@ object NetworkModule {
     fun provideOkHttpClient(
         authInterceptor: AuthInterceptor,
         unauthorizedInterceptor: UnauthorizedInterceptor,
+        @ApplicationContext context: Context,
     ): OkHttpClient {
         val builder = OkHttpClient.Builder()
             // Render free-tier cold start: 25–35s — contract §12.2
@@ -55,6 +59,8 @@ object NetworkModule {
         builder.addInterceptor(authInterceptor)
         // Unauthorized interceptor — clears session and triggers re-login on 401
         builder.addInterceptor(unauthorizedInterceptor)
+        // Chucker — in-app HTTP inspector (dev flavor: full UI; other flavors: no-op)
+        builder.addInterceptor(ChuckerInterceptor.Builder(context).build())
 
         if (BuildConfig.DEBUG) {
             // Add logging interceptor for debug builds
