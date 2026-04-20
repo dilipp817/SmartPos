@@ -186,8 +186,8 @@ private fun OrderBody(
         ) {
             uiState.table?.let { TableInfoCard(table = it) }
             // For no-table orders (TAKEAWAY / counter-service) the order type was already
-            // chosen on the food screen and cannot be changed here — switching to DINE_IN
-            // without a table would produce an invalid order.  Show a read-only badge instead.
+            // chosen on the food screen and is shown as read-only here. Switching back to
+            // DINE_IN would require table selection when table management is in use.
             if (uiState.isNoTable) {
                 NoTableOrderTypeBadge(orderType = uiState.orderType)
             } else {

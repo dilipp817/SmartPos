@@ -137,8 +137,11 @@ class FoodViewModel @Inject constructor(
 
     /**
      * Reactive PAY_BEFORE_SEAT flag — only meaningful when TABLE_MANAGEMENT=true + DINE_IN.
-     * Passed to CreateOrderViewModel via nav arg so the order can be stamped with the correct
-     * payment_status at creation time.
+     *
+     * Currently exposed for future use. Threading this flag through navigation and stamping
+     * the order with a payment_status at creation time is deferred until the backend adds
+     * payment_status support to POST /restaurants/{restaurantId}/orders.
+     * See FINAL_ORDER_TYPE_CONTRACT.md — Section E (out of scope for this release).
      */
     val isPayBeforeSeat: StateFlow<Boolean> =
         featureFlagRepository.observe(FeatureFlag.PAY_BEFORE_SEAT)

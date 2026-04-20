@@ -42,8 +42,12 @@ interface FeatureFlagRepository {
     // ── Remote update ─────────────────────────────────────────────────────────
 
     /**
-     * Fetch the latest flags from GET /feature-flags and persist them.
-     * Called at app startup (after session recovery) and on every app foreground.
+     * Fetch the latest flags from GET /api/v1/restaurants/{restaurantId}/feature-flags
+     * and persist them. Called at app startup (after session recovery) and on every
+     * app foreground.
+     *
+     * @param restaurantId The authenticated restaurant's ID — scopes the flag response
+     *   to this restaurant. Resolved from [GetRestaurantIdUseCase] before calling.
      *
      * Returns `true` if flags were successfully fetched from the server and persisted.
      * Returns `false` if the request failed, returned empty data, or the backend
