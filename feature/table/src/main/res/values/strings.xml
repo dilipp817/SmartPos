@@ -68,6 +68,8 @@
     <!-- ── Error messages ────────────────────────────────────────────────── -->
     <string name="error_no_restaurant_session">No restaurant assigned to this account. Please log in again.</string>
     <string name="error_update_table_status">Failed to update table status. Please try again.</string>
+    <!-- M-17: per-scenario 409 conflict message for table optimistic lock -->
+    <string name="error_table_conflict">This table was updated by another device. Please refresh.</string>
     <string name="error_create_table">Failed to create table.</string>
     <string name="error_update_table">Failed to update table.</string>
     <string name="error_delete_table">Failed to delete table.</string>

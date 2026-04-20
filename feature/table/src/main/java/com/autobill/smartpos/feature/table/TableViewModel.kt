@@ -3,6 +3,7 @@ package com.autobill.smartpos.feature.table
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.autobill.smartpos.domain.common.HttpConflictException
 import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.model.Table
 import com.autobill.smartpos.domain.model.TableStatus
@@ -220,13 +221,29 @@ class TableViewModel @Inject constructor(
                     refreshAvailableCount(rid)
                 }
                 is Result.Failure -> {
+                    // M-12: roll back optimistic update
                     _uiState.update { state ->
-                        state.copy(
-                            tables = state.tables.map { if (it.id == table.id) table else it },
-                            isUpdatingStatus = false,
-                            statusUpdateError = result.exception.message
-                                ?: context.getString(R.string.error_update_table_status),
-                        )
+                        state.copy(tables = state.tables.map { if (it.id == table.id) table else it })
+                    }
+                    val isConflict = result.exception is HttpConflictException
+                    if (isConflict) {
+                        // M-17: specific conflict message + reload so grid reflects real state
+                        _uiState.update { state ->
+                            state.copy(
+                                isUpdatingStatus   = false,
+                                statusUpdateDialog = null,
+                                statusUpdateError  = context.getString(R.string.error_table_conflict),
+                            )
+                        }
+                        viewModelScope.launch { loadAll() }
+                    } else {
+                        _uiState.update { state ->
+                            state.copy(
+                                isUpdatingStatus = false,
+                                statusUpdateError = result.exception.message
+                                    ?: context.getString(R.string.error_update_table_status),
+                            )
+                        }
                     }
                 }
                 Result.Loading -> Unit

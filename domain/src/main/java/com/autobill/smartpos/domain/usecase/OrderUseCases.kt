@@ -206,10 +206,17 @@ class GetOrdersByDateRangeUseCase @Inject constructor(
 /**
  * Use case: Compute a [SalesReport] from the raw orders returned by the date-range endpoint.
  *
- * Revenue metrics (totalRevenue, averageOrderValue) are based on DELIVERED orders only —
- * they represent confirmed, paid transactions.
- * [SalesReport.orderCount] includes all non-CANCELLED orders so staff can see volume.
- * Top-10 selling items are ranked by quantity across ALL orders in the period.
+ * All metrics use non-CANCELLED orders so the numbers are consistent with each other:
+ *  - totalRevenue      = sum of totalAmount across all active orders
+ *  - orderCount        = count of all non-CANCELLED orders
+ *  - deliveredCount    = count of DELIVERED orders (kept for informational display)
+ *  - averageOrderValue = totalRevenue / orderCount
+ *  - topSellingItems   = ranked by quantity across all active orders
+ *
+ * Previous behaviour restricted revenue to DELIVERED-only, which caused a contradiction:
+ * totalRevenue showed 0.00 while topSellingItems showed real revenue from PENDING /
+ * IN_PROGRESS orders. For a dine-in POS where DELIVERED is rarely the terminal state
+ * (most orders end at COMPLETED), DELIVERED-only filtering is not useful.
  */
 class GetSalesReportUseCase @Inject constructor(
     private val getOrdersByDateRangeUseCase: GetOrdersByDateRangeUseCase,
@@ -222,14 +229,14 @@ class GetSalesReportUseCase @Inject constructor(
         return when (val result = getOrdersByDateRangeUseCase(restaurantId, startDate, endDate)) {
             is Result.Success -> {
                 val orders         = result.data
-                val delivered      = orders.filter { it.status == OrderStatus.DELIVERED }
                 val active         = orders.filter { it.status != OrderStatus.CANCELLED }
-                val totalRevenue   = delivered.sumOf { it.totalAmount }
-                val deliveredCount = delivered.size
+                val delivered      = orders.filter { it.status == OrderStatus.DELIVERED }
+                val totalRevenue   = active.sumOf { it.totalAmount }
                 val orderCount     = active.size
-                val avgOrderValue  = if (deliveredCount > 0) totalRevenue / deliveredCount else 0.0
+                val deliveredCount = delivered.size
+                val avgOrderValue  = if (orderCount > 0) totalRevenue / orderCount else 0.0
 
-                val topItems = orders
+                val topItems = active
                     .flatMap { it.items }
                     .groupBy { it.foodId }
                     .map { (foodId, items) ->

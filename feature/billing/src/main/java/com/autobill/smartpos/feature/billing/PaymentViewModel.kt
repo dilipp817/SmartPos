@@ -5,7 +5,7 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.autobill.smartpos.data.local.AppPrefsDataStore
+import com.autobill.smartpos.domain.common.HttpConflictException
 import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.model.PaymentMethod
 import com.autobill.smartpos.domain.model.PaymentStatus
@@ -29,15 +29,9 @@ import javax.inject.Inject
  *
  * Receives [billId], [orderId], [tableId], [totalAmount], [remainingAmount] via [SavedStateHandle].
  *
- * ## M-16: Full bill fetch on init
- * On start, GET /bills/{billId} is called to load the full bill (billItems, cgst, sgst).
- * The nav-arg [totalAmount] / [remainingAmount] are used as initial values while the fetch
- * is in flight — they are replaced by the server values once the fetch completes.
- *
- * ## M-20: Remaining amount
- * [bill.remainingAmount] from GET /bills/{id} is used directly (backend computes it from
- * cumulative payments). Manual computation from GET /payments/bill/{id} is the fallback
- * if the bill fetch fails.
+ * ## Bill fetch on init (M-16)
+ * GET /bills/{billId} is called on start to load full bill (billItems, cgst, sgst,
+ * remainingAmount). Nav-arg values are used as fallback while the fetch is in flight.
  *
  * ## Payment flow
  * - CASH / UPI / WALLET: single call with autoProcess=true → SUCCESS → navigate out.
@@ -46,12 +40,13 @@ import javax.inject.Inject
  *   2. User taps Confirm → PATCH /payments/{id}/process → SUCCESS → navigate out.
  *
  * ## After success
- * [FreeTableUseCase] is called to mark the table AVAILABLE.
+ * [FreeTableUseCase] marks the table AVAILABLE.
  * [PaymentUiState.paymentSuccess] one-shot triggers the Route to navigate back.
  *
- * ## Idempotency
- * A [currentReferenceNumber] is generated once at payment initiation and reused on retries.
- * A new one is only generated when the returned status is FAILED.
+ * ## Reference number
+ * Generated once per ViewModel instance and reused on retries within the same session.
+ * A cashier is always present — if the app is killed mid-payment they simply retry.
+ * No DataStore persistence needed (that level of idempotency is for autonomous payment SDKs).
  */
 @HiltViewModel
 class PaymentViewModel @Inject constructor(
@@ -61,7 +56,6 @@ class PaymentViewModel @Inject constructor(
     private val freeTableUseCase: FreeTableUseCase,
     private val getBillByIdUseCase: GetBillByIdUseCase,
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
-    private val appPrefsDataStore: AppPrefsDataStore,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -80,7 +74,11 @@ class PaymentViewModel @Inject constructor(
 
     private var restaurantId: Long? = null
 
-    /** Persisted reference number for the current payment attempt. */
+    /**
+     * Reference number lives in ViewModel memory only.
+     * Reused on retries within the same screen session.
+     * Regenerated only when the server returns FAILED or 409 conflict.
+     */
     private var currentReferenceNumber: String = PaymentReferenceGenerator.generate()
 
     private val _uiState = MutableStateFlow(
@@ -101,20 +99,11 @@ class PaymentViewModel @Inject constructor(
                 _uiState.update { it.copy(errorMessage = context.getString(R.string.error_session_expired)) }
                 return@launch
             }
-            // M-05: Restore any in-flight reference number surviving process death.
-            // If a reference exists in DataStore, a previous payment attempt was interrupted —
-            // reuse the same reference so the backend can deduplicate (contract §7.3).
-            val saved = appPrefsDataStore.getCurrentPaymentRefNumber()
-            if (saved != null) {
-                currentReferenceNumber = saved
-            }
-            // M-16: Fetch full bill so we have billItems, cgst/sgst and accurate
-            // remainingAmount (M-20) — nav args are just the initial/fallback values.
             loadFullBill()
         }
     }
 
-    // ── M-16: Full bill fetch ────────────────────────────────────────────────
+    // ── Full bill fetch (M-16) ───────────────────────────────────────────────
 
     /**
      * GET /bills/{billId} — loads the full bill with line items and accurate
@@ -135,7 +124,7 @@ class PaymentViewModel @Inject constructor(
                     }
                 }
                 is Result.Failure -> {
-                    // Non-critical — nav-arg values remain as fallback; log only
+                    // Non-critical — nav-arg values remain as fallback
                     Log.w(TAG, "Full bill fetch failed — using nav-arg amounts as fallback", result.exception)
                 }
                 Result.Loading -> Unit
@@ -190,10 +179,6 @@ class PaymentViewModel @Inject constructor(
         _uiState.update { it.copy(isProcessing = true, errorMessage = null) }
 
         viewModelScope.launch {
-            // M-05: Persist reference BEFORE the network call.
-            // If the process dies mid-flight, the same reference is reused on next start.
-            appPrefsDataStore.saveCurrentPaymentRefNumber(currentReferenceNumber)
-
             when (val result = processPaymentUseCase(
                 billId          = billId,
                 orderId         = orderId,
@@ -208,22 +193,20 @@ class PaymentViewModel @Inject constructor(
                     val payment = result.data
                     when {
                         payment.status == PaymentStatus.SUCCESS -> {
-                            appPrefsDataStore.clearCurrentPaymentRefNumber() // M-05: terminal success
                             freeTable()
                             _uiState.update { it.copy(isProcessing = false, paymentSuccess = payment) }
                         }
                         payment.status == PaymentStatus.PENDING -> {
-                            // CARD two-step — reference stays in DataStore until confirmed/failed
+                            // CARD two-step — reference stays in ViewModel until confirmed/failed
                             _uiState.update {
                                 it.copy(
-                                    isProcessing         = false,
-                                    pendingPayment       = payment,
-                                    showCardConfirmDialog = true,
+                                    isProcessing          = false,
+                                    pendingPayment        = payment,
+                                    showCardConfirmDialog  = true,
                                 )
                             }
                         }
                         payment.status == PaymentStatus.FAILED -> {
-                            appPrefsDataStore.clearCurrentPaymentRefNumber() // M-05: terminal failure
                             currentReferenceNumber = PaymentReferenceGenerator.generate()
                             _uiState.update {
                                 it.copy(isProcessing = false, errorMessage = context.getString(R.string.error_payment_declined))
@@ -236,10 +219,20 @@ class PaymentViewModel @Inject constructor(
                     }
                 }
                 is Result.Failure -> {
-                    // Network error — keep reference in DataStore for retry
-                    _uiState.update {
-                        it.copy(isProcessing = false,
-                            errorMessage = result.exception.message ?: context.getString(R.string.error_payment_failed))
+                    val isConflict = result.exception is HttpConflictException
+                    if (isConflict) {
+                        // M-12 / M-17: duplicate referenceNumber — generate fresh one for next attempt
+                        currentReferenceNumber = PaymentReferenceGenerator.generate()
+                        _uiState.update {
+                            it.copy(isProcessing = false,
+                                errorMessage = context.getString(R.string.error_payment_conflict))
+                        }
+                    } else {
+                        // Network error — keep reference in ViewModel for retry
+                        _uiState.update {
+                            it.copy(isProcessing = false,
+                                errorMessage = result.exception.message ?: context.getString(R.string.error_payment_failed))
+                        }
                     }
                 }
                 is Result.Loading -> { /* no-op */ }
@@ -259,7 +252,6 @@ class PaymentViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = confirmCardPaymentUseCase(paymentId)) {
                 is Result.Success -> {
-                    appPrefsDataStore.clearCurrentPaymentRefNumber() // M-05: terminal success
                     freeTable()
                     _uiState.update { it.copy(isConfirmingCard = false, paymentSuccess = result.data) }
                 }
@@ -272,15 +264,12 @@ class PaymentViewModel @Inject constructor(
         }
     }
 
-    // ── Free table — M-06 + M-07 ─────────────────────────────────────────────
+    // ── Free table (M-06 + M-07) ─────────────────────────────────────────────
 
     /**
      * Explicitly releases the table to AVAILABLE after every successful payment.
-     * The backend does NOT auto-release tables on payment — contract §3.2 (M-06).
-     *
-     * All error responses are handled transparently by TableRepositoryImpl.
-     * Any failure is logged but suppressed — payment has already succeeded
-     * and the user must not be blocked.
+     * Backend does NOT auto-release tables on payment (contract §3.2).
+     * Failure is logged but suppressed — payment already succeeded, cashier is present.
      */
     private suspend fun freeTable() {
         val rid = restaurantId ?: return
