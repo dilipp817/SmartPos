@@ -49,6 +49,7 @@ interface FoodRepository {
     suspend fun searchFoodsPaginated(
         query: String,
         restaurantId: Long? = null,
+        categoryId: Long? = null,
         offset: Int = 0,
         limit: Int = 20,
     ): PaginationResult<Food>

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.autobill.smartpos.domain.common.Result
+import com.autobill.smartpos.domain.model.Order
 import com.autobill.smartpos.domain.model.OrderStatus
 import com.autobill.smartpos.domain.model.RealTimeEvent
 import com.autobill.smartpos.domain.usecase.GetActiveOrdersUseCase
@@ -68,32 +69,32 @@ class OrderViewModel @Inject constructor(
     /** Polling fallback job — 15 s interval (contract M-09). */
     private var pollingJob: Job? = null
 
+    /**
+     * Tracks the in-flight order-list fetch job.
+     * Cancelled whenever the user switches tabs so a slow previous-tab response
+     * cannot overwrite the new tab's data (last-writer-wins race condition fix).
+     */
+    private var loadOrdersJob: Job? = null
+
     companion object {
         private const val POLLING_INTERVAL_MS = 15_000L
     }
 
     init {
         observeRolePermissionsUseCase()
-            .onEach { perms ->
-                _uiState.update { it.copy(canCancelOrders = perms.canCancelOrders) }
-            }
+            .onEach { perms -> _uiState.update { it.copy(canCancelOrders = perms.canCancelOrders) } }
             .launchIn(viewModelScope)
 
         // Phase 9.1: track WebSocket state for the connection banner in OrderListScreen
         observeConnectionStateUseCase()
-            .onEach { state ->
-                _uiState.update { it.copy(connectionState = state) }
-            }
+            .onEach { state -> _uiState.update { it.copy(connectionState = state) } }
             .launchIn(viewModelScope)
 
         viewModelScope.launch {
             restaurantId = getRestaurantIdUseCase()
             if (restaurantId == null) {
                 _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        errorMessage = context.getString(R.string.error_no_restaurant_session),
-                    )
+                    it.copy(isLoading = false, errorMessage = context.getString(R.string.error_no_restaurant_session))
                 }
                 return@launch
             }
@@ -116,24 +117,44 @@ class OrderViewModel @Inject constructor(
                 if (_uiState.value.isSearchActive) return@onEach  // don't disturb search mode
                 when (event) {
                     is RealTimeEvent.OrderCreated -> {
-                        _uiState.update { state ->
-                            state.copy(
-                                orders       = listOf(event.order) + state.orders,
-                                pendingCount = state.pendingCount + 1,
-                            )
+                        // Only prepend if the new order belongs in the current filter tab.
+                        // Without this guard, a new PENDING order would appear in every tab.
+                        if (orderMatchesFilter(event.order, _uiState.value.selectedFilter)) {
+                            _uiState.update { state ->
+                                state.copy(
+                                    orders       = listOf(event.order) + state.orders,
+                                    pendingCount = state.pendingCount + 1,
+                                )
+                            }
+                        } else {
+                            _uiState.update { it.copy(pendingCount = it.pendingCount + 1) }
                         }
                     }
                     is RealTimeEvent.OrderUpdated, is RealTimeEvent.OrderItemUpdated -> {
                         val updated = if (event is RealTimeEvent.OrderUpdated) event.order
                                       else (event as RealTimeEvent.OrderItemUpdated).order
-                        val exists = _uiState.value.orders.any { it.id == updated.id }
-                        if (exists) {
-                            _uiState.update { state ->
-                                state.copy(orders = state.orders.map { if (it.id == updated.id) updated else it })
+                        val currentFilter = _uiState.value.selectedFilter
+                        val existsInList  = _uiState.value.orders.any { it.id == updated.id }
+                        val matchesFilter = orderMatchesFilter(updated, currentFilter)
+
+                        when {
+                            existsInList && matchesFilter -> {
+                                // Update in-place — status unchanged relative to filter
+                                _uiState.update { state ->
+                                    state.copy(orders = state.orders.map { if (it.id == updated.id) updated else it })
+                                }
                             }
-                        } else {
-                            // Order not in current filter view — quietly refresh
-                            viewModelScope.launch { loadOrders() }
+                            existsInList && !matchesFilter -> {
+                                // Order moved to a different status — remove from current tab
+                                _uiState.update { state ->
+                                    state.copy(orders = state.orders.filter { it.id != updated.id })
+                                }
+                            }
+                            !existsInList && matchesFilter -> {
+                                // Order just entered this filter's scope — reload to get full list
+                                viewModelScope.launch { loadOrders(currentFilter) }
+                            }
+                            else -> Unit // not in list, not relevant to current filter
                         }
                     }
                     else -> Unit
@@ -142,21 +163,46 @@ class OrderViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
+    /**
+     * Returns true if [order] should be visible under [filter].
+     * Used to decide whether real-time events should mutate the visible list.
+     */
+    private fun orderMatchesFilter(order: Order, filter: OrderFilter): Boolean = when (filter) {
+        OrderFilter.ALL         -> true
+        OrderFilter.ACTIVE      -> order.status !in setOf(OrderStatus.DELIVERED, OrderStatus.CANCELLED)
+        OrderFilter.PENDING     -> order.status == OrderStatus.PENDING
+        OrderFilter.IN_PROGRESS -> order.status == OrderStatus.IN_PROGRESS
+        OrderFilter.COMPLETED   -> order.status == OrderStatus.COMPLETED
+        OrderFilter.HOLD        -> order.status == OrderStatus.HOLD
+    }
+
     // ── Filter / Search ──────────────────────────────────────────────────────
 
-    /** Switch filter tab and reload immediately. */
+    /**
+     * Switch filter tab and reload.
+     *
+     * Key fixes applied here:
+     *  1. Cancel [loadOrdersJob] — prevents a slow previous-tab response from
+     *     overwriting the new tab's data (last-writer-wins race condition).
+     *  2. Clear [OrderUiState.orders] immediately — no stale orders from the
+     *     previous tab are visible while the new fetch is in-flight.
+     *  3. Pass [filter] directly into [loadOrders] — the filter is captured at
+     *     launch time, not read from mutable state during execution.
+     */
     fun selectFilter(filter: OrderFilter) {
         if (_uiState.value.selectedFilter == filter) return
+        loadOrdersJob?.cancel()
         _uiState.update {
             it.copy(
                 selectedFilter = filter,
-                isLoading = true,
-                errorMessage = null,
-                searchQuery = "",
+                orders         = emptyList(), // clear stale data immediately
+                isLoading      = true,
+                errorMessage   = null,
+                searchQuery    = "",
                 isSearchActive = false,
             )
         }
-        viewModelScope.launch { loadOrders() }
+        loadOrdersJob = viewModelScope.launch { loadOrders(filter) }
     }
 
     /**
@@ -166,7 +212,8 @@ class OrderViewModel @Inject constructor(
     fun onSearchActiveToggle(active: Boolean) {
         if (!active) {
             _uiState.update { it.copy(isSearchActive = false, searchQuery = "", isLoading = true) }
-            viewModelScope.launch { loadOrders() }
+            loadOrdersJob?.cancel()
+            loadOrdersJob = viewModelScope.launch { loadOrders(_uiState.value.selectedFilter) }
         } else {
             _uiState.update { it.copy(isSearchActive = true) }
         }
@@ -181,7 +228,8 @@ class OrderViewModel @Inject constructor(
         searchJob?.cancel()
         if (query.isBlank()) {
             _uiState.update { it.copy(isLoading = true) }
-            viewModelScope.launch { loadOrders() }
+            loadOrdersJob?.cancel()
+            loadOrdersJob = viewModelScope.launch { loadOrders(_uiState.value.selectedFilter) }
             return
         }
         searchJob = viewModelScope.launch {
@@ -194,7 +242,7 @@ class OrderViewModel @Inject constructor(
                 }
                 is Result.Failure -> _uiState.update {
                     it.copy(
-                        isLoading = false,
+                        isLoading    = false,
                         errorMessage = result.exception.message ?: context.getString(R.string.error_search_failed),
                     )
                 }
@@ -240,8 +288,9 @@ class OrderViewModel @Inject constructor(
      */
     private suspend fun loadAll(refreshing: Boolean = false) {
         val rid = restaurantId ?: return
+        val filter = _uiState.value.selectedFilter   // snapshot before parallel execution
         coroutineScope {
-            val ordersDeferred = async { loadOrders() }
+            val ordersDeferred = async { loadOrders(filter) }
             val countDeferred  = async {
                 when (val result = getPendingOrdersCountUseCase(rid)) {
                     is Result.Success -> _uiState.update { it.copy(pendingCount = result.data) }
@@ -254,29 +303,42 @@ class OrderViewModel @Inject constructor(
         if (refreshing) _uiState.update { it.copy(isRefreshing = false) }
     }
 
-    private suspend fun loadOrders() {
+    /**
+     * Fetches orders for [filter] and writes the result to [_uiState].
+     *
+     * The [filter] parameter is intentional — it is captured at the call-site
+     * (before any async work) so that rapid tab switches cannot cause a stale
+     * coroutine to read a newer filter value and clobber the correct result.
+     *
+     * After the network call completes, the result is discarded if [filter] no
+     * longer matches [OrderUiState.selectedFilter] (user switched tabs again
+     * while the request was in flight).
+     */
+    private suspend fun loadOrders(filter: OrderFilter) {
         val rid = restaurantId ?: return
-        val result = when (_uiState.value.selectedFilter) {
+        val result = when (filter) {
             OrderFilter.ALL         -> getAllOrdersUseCase(rid)
             OrderFilter.ACTIVE      -> getActiveOrdersUseCase(rid)
-            // Inline the status mapping — eliminates the need for a force-unwrap (!!)
             OrderFilter.PENDING     -> getOrdersByStatusUseCase(rid, OrderStatus.PENDING)
             OrderFilter.IN_PROGRESS -> getOrdersByStatusUseCase(rid, OrderStatus.IN_PROGRESS)
             OrderFilter.COMPLETED   -> getOrdersByStatusUseCase(rid, OrderStatus.COMPLETED)
             OrderFilter.HOLD        -> getOrdersByStatusUseCase(rid, OrderStatus.HOLD)
         }
-        _uiState.update {
+        _uiState.update { state ->
+            // Guard: if the user switched tabs while this fetch was in-flight, discard the result.
+            // This is the second line of defence after loadOrdersJob?.cancel() in selectFilter.
+            if (state.selectedFilter != filter) return@update state
             when (result) {
-                is Result.Success -> it.copy(
-                    orders = result.data,
-                    isLoading = false,
+                is Result.Success -> state.copy(
+                    orders       = result.data,
+                    isLoading    = false,
                     errorMessage = null,
                 )
-                is Result.Failure -> it.copy(
-                    isLoading = false,
+                is Result.Failure -> state.copy(
+                    isLoading    = false,
                     errorMessage = result.exception.message ?: context.getString(R.string.error_load_orders_failed),
                 )
-                Result.Loading -> it.copy(isLoading = true)
+                Result.Loading -> state.copy(isLoading = true)
             }
         }
     }

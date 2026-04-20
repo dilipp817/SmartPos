@@ -23,11 +23,13 @@ class SearchFoodsPaginatedUseCase @Inject constructor(
     suspend operator fun invoke(
         query: String,
         restaurantId: Long? = null,
+        categoryId: Long? = null,
         offset: Int = 0,
         limit: Int = 20,
     ): PaginationResult<Food> = repository.searchFoodsPaginated(
         query = query,
         restaurantId = restaurantId,
+        categoryId = categoryId,
         offset = offset,
         limit = limit,
     )

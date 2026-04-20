@@ -10,12 +10,17 @@ import com.autobill.smartpos.domain.usecase.ClearCartUseCase
 import com.autobill.smartpos.domain.usecase.DecreaseCartQuantityUseCase
 import com.autobill.smartpos.domain.usecase.GetCartUseCase
 import com.autobill.smartpos.domain.usecase.IncreaseCartQuantityUseCase
+import com.autobill.smartpos.domain.usecase.RestoreCartItemsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.UUID
 import javax.inject.Inject
 
 /**
@@ -43,6 +48,7 @@ class CartViewModel @Inject constructor(
     private val increaseCartQuantityUseCase: IncreaseCartQuantityUseCase,
     private val decreaseCartQuantityUseCase: DecreaseCartQuantityUseCase,
     private val clearCartUseCase: ClearCartUseCase,
+    private val restoreCartItemsUseCase: RestoreCartItemsUseCase,
 ) : ViewModel() {
 
     /**
@@ -105,7 +111,63 @@ class CartViewModel @Inject constructor(
     /** Returns the current quantity of a food item in cart (0 = not in cart). */
     fun getCartQuantity(foodId: Long): Int =
         cartItems.value.find { it.foodId == foodId }?.quantity ?: 0
+
+    // ── Held Bills ────────────────────────────────────────────────────────────
+    // In-memory only — lost on app restart, which is acceptable for short-lived holds.
+
+    private val _heldCarts = MutableStateFlow<List<HeldCart>>(emptyList())
+    val heldCarts: StateFlow<List<HeldCart>> = _heldCarts.asStateFlow()
+
+    private var heldBillCounter = 0
+
+    /**
+     * Hold current cart and start a fresh one.
+     * If current cart is empty, does nothing.
+     */
+    fun holdCurrentCart() {
+        val snapshot = cartItems.value
+        if (snapshot.isEmpty()) return
+        heldBillCounter++
+        val total = snapshot.sumOf { it.subtotal } * (1 + TaxConstants.GST_ESTIMATE_RATE)
+        val held = HeldCart(
+            id = UUID.randomUUID().toString(),
+            items = snapshot,
+            totalAmount = total,
+            label = "Bill #$heldBillCounter",
+        )
+        _heldCarts.update { it + held }
+        viewModelScope.launch { clearCartUseCase() }
+    }
+
+    /**
+     * Resume a held bill.
+     * Option A — auto swap: if current cart is not empty, it goes on hold first,
+     * then the selected held bill is restored. Nothing is lost.
+     */
+    fun resumeHeldCart(heldCartId: String) {
+        val target = _heldCarts.value.find { it.id == heldCartId } ?: return
+        viewModelScope.launch {
+            // Auto-swap: push current cart to hold if it has items
+            val current = cartItems.value
+            if (current.isNotEmpty()) {
+                heldBillCounter++
+                val total = current.sumOf { it.subtotal } * (1 + TaxConstants.GST_ESTIMATE_RATE)
+                val swapped = HeldCart(
+                    id = UUID.randomUUID().toString(),
+                    items = current,
+                    totalAmount = total,
+                    label = "Bill #$heldBillCounter",
+                )
+                _heldCarts.update { list -> (list - target) + swapped }
+            } else {
+                _heldCarts.update { list -> list - target }
+            }
+            restoreCartItemsUseCase(target.items)
+        }
+    }
+
+    /** Delete a held bill without resuming it — customer cancelled or couldn't pay. */
+    fun deleteHeldCart(heldCartId: String) {
+        _heldCarts.update { list -> list.filter { it.id != heldCartId } }
+    }
 }
-
-
-

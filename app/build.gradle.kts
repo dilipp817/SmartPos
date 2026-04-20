@@ -32,6 +32,84 @@ android {
             )
         }
     }
+
+    /**
+     * ─────────────────────────────────────────────────────────────────────────
+     * Client flavors — app-level customisation per client.
+     *
+     * Each client flavor here MUST match a name declared in the root
+     * build.gradle.kts CLIENT_FLAVORS list.
+     *
+     * Per-client customisation available here:
+     *   • applicationId suffix  — each client gets its own Play Store listing
+     *   • resValue "app_name"   — the label shown on the launcher
+     *   • versionName suffix    — e.g. "1.0-acme"
+     *   • signingConfig         — each client can have its own keystore
+     *
+     * Per-client custom resources (icons, splash, colours, strings):
+     *   Place files under app/src/<clientName>/res/
+     *   e.g. app/src/acmeCafe/res/mipmap-xxxhdpi/ic_launcher.png
+     *        app/src/acmeCafe/res/values/colors.xml
+     *   These automatically override the defaults in app/src/main/res/.
+     *
+     * Per-client custom Kotlin/Java source code:
+     *   Place files under app/src/<clientName>/kotlin/
+     *   e.g. app/src/acmeCafe/kotlin/com/autobill/smartpos/ClientConfig.kt
+     *
+     * Per-client custom features in feature modules:
+     *   Place files under feature/<module>/src/<clientName>/
+     * ─────────────────────────────────────────────────────────────────────────
+     */
+    productFlavors {
+        // ── client dimension ────────────────────────────────────────────────
+
+        /**
+         * smartPos — the standard SmartPos build.
+         * Ships to clients who want the default experience with no customisation.
+         * No applicationId suffix so the base package stays clean.
+         */
+        getByName("smartPos") {
+            dimension = "client"
+            // applicationId stays as defaultConfig.applicationId
+            resValue("string", "app_name", "SmartPos")
+        }
+
+        /**
+         * jevnarSweets — Jevnar Sweets client.
+         *
+         * Steps to fully set up a new client (use this as a template):
+         *   1. Duplicate this block with the new client name.
+         *   2. Add the name to CLIENT_FLAVORS in root build.gradle.kts.
+         *   3. Add BASE_URL entries in data/build.gradle.kts CLIENT_BASE_URLS.
+         *   4. Create app/src/<clientName>/res/ with the client's icons & branding.
+         */
+        getByName("jevnarSweets") {
+            dimension = "client"
+            applicationIdSuffix = ".jevnarsweets"      // com.autobill.smartpos.jevnarsweets
+            resValue("string", "app_name", "Jevnar Sweets POS")
+            versionNameSuffix = "-js"
+        }
+
+        // ── environment dimension ────────────────────────────────────────────
+        getByName("dev")  { dimension = "environment" }
+        getByName("uat")  { dimension = "environment" }
+        getByName("prod") { dimension = "environment" }
+    }
+
+    /**
+     * Source sets — per-client resource / code folders.
+     *
+     * app/src/smartPos/     — resources for the standard SmartPos client
+     * app/src/jevnarSweets/ — branding overrides for Jevnar Sweets
+     *
+     * Files here are merged with app/src/main/ at build time.
+     * Client files win over main/ files when names clash.
+     */
+    sourceSets {
+        getByName("smartPos")     { res.srcDirs("src/smartPos/res");     java.srcDirs("src/smartPos/kotlin") }
+        getByName("jevnarSweets") { res.srcDirs("src/jevnarSweets/res"); java.srcDirs("src/jevnarSweets/kotlin") }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11

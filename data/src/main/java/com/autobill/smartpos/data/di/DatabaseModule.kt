@@ -7,6 +7,7 @@ import com.autobill.smartpos.data.local.AppDatabase
 import com.autobill.smartpos.data.local.dao.FoodDao
 import com.autobill.smartpos.data.local.dao.OrderDao
 import com.autobill.smartpos.data.local.dao.PendingOrderDao
+import com.autobill.smartpos.data.local.dao.RestaurantDao
 import com.autobill.smartpos.data.local.dao.TableDao
 import dagger.Module
 import dagger.Provides
@@ -28,12 +29,25 @@ object DatabaseModule {
             AppDatabase::class.java,
             "smartpos.db",
         )
+            // TODO: Replace with explicit migrations before going live.
+            // Most tables (foods, orders, tables, restaurants) are server-data caches and
+            // safe to drop — they are re-fetched from the API on next start.
+            // However, pending_orders holds user-generated offline orders that have not yet
+            // synced to the server (see PendingOrderDao / SyncWorker). Destructive migration
+            // will silently delete those queued orders on any schema version bump.
+            // For now this is acceptable during pre-production development, but before
+            // release, write an explicit migration that preserves the pending_orders table.
+            .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
     }
 
     @Provides
     @Singleton
     fun provideFoodDao(database: AppDatabase): FoodDao = database.foodDao()
+
+    @Provides
+    @Singleton
+    fun provideRestaurantDao(database: AppDatabase): RestaurantDao = database.restaurantDao()
 
     @Provides
     @Singleton

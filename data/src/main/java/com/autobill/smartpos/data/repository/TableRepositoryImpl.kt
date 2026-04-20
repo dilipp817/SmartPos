@@ -6,6 +6,7 @@ import com.autobill.smartpos.data.mapper.toDomain
 import com.autobill.smartpos.data.mapper.toEntity
 import com.autobill.smartpos.data.remote.TableApiService
 import com.autobill.smartpos.data.remote.dto.CreateTableRequest
+import com.autobill.smartpos.domain.common.HttpConflictException
 import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.model.Table
 import com.autobill.smartpos.domain.model.TableStatus
@@ -169,7 +170,9 @@ class TableRepositoryImpl @Inject constructor(
                         tableDao.upsertAll(listOf(refreshedDto.toEntity()))
                         patch()
                     } catch (retryEx: Exception) {
-                        Result.Failure(retryEx)
+                        // Retry also failed — surface as HttpConflictException so ViewModel
+                        // can show the correct per-scenario message (contract M-12 / M-17).
+                        Result.Failure(HttpConflictException("This table was updated by another device. Please refresh."))
                     }
                 }
                 else -> Result.Failure(e)

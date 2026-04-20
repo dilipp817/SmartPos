@@ -1,29 +1,15 @@
 package com.autobill.smartpos.data.local.entity
 
 import androidx.room.Entity
-import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
 // Room Entity: Bill
-// Schema is part of the v1 production baseline (April 19, 2026).
-// Add a new MIGRATION_1_2 in AppDatabase for any future schema changes.
+// ForeignKey constraints to OrderEntity and RestaurantEntity were removed (v2 migration).
+// Bills may be fetched from the server before their parent order is cached locally,
+// which caused foreign key constraint failures. Room is a server-data cache here.
 @Entity(
     tableName = "bills",
-    foreignKeys = [
-        ForeignKey(
-            entity = OrderEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["orderId"],
-            onDelete = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = RestaurantEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["restaurantId"],
-            onDelete = ForeignKey.CASCADE,
-        ),
-    ],
     indices = [
         Index(value = ["orderId"]),
         Index(value = ["restaurantId"]),

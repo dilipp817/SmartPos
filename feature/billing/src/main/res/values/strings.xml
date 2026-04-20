@@ -70,6 +70,8 @@
     <!-- %1$.2f = minimum amount -->
     <string name="error_amount_too_low">Amount must be ≥ ₹%1$.2f</string>
     <string name="error_payment_declined">Payment declined. Please try again.</string>
+    <!-- M-17: per-scenario 409 conflict — duplicate referenceNumber with different amount -->
+    <string name="error_payment_conflict">A payment with this reference already exists. Please refresh and check payment status.</string>
     <!-- %1$s = status value -->
     <string name="error_unexpected_payment_status">Unexpected payment status: %1$s</string>
     <string name="error_payment_failed">Payment failed. Please retry.</string>

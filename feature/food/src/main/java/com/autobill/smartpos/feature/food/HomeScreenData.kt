@@ -113,6 +113,8 @@ data class InvoiceData(
     val invoiceNumber: String = "",
     val tableNumber: String = "",
     val dateTime: String = "",
+    val heldCartCount: Int = 0,
+    val onHoldCart: () -> Unit = {},
     val onChangeInvoice: () -> Unit = {},
 )
 
@@ -137,6 +139,7 @@ data class CartSummaryData(
     /** Show "Apply Discount" button — visible for manager / admin / super_admin only. */
     val canApplyDiscount: Boolean = false,
     val onApplyDiscountClick: () -> Unit = {},
+    val onShowHeldCarts: () -> Unit = {},
 )
 
 /**

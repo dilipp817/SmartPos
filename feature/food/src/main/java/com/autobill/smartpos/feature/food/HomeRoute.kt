@@ -4,6 +4,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -11,6 +12,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.autobill.smartpos.domain.common.UiState
 import java.text.SimpleDateFormat
@@ -38,6 +42,20 @@ fun HomeRoute(
     val viewModel: FoodViewModel = hiltViewModel()
     val cartViewModel: CartViewModel = hiltViewModel()
 
+    // Refresh category list every time this screen becomes visible again (e.g. returning from
+    // admin category management). This ensures newly created/deleted categories show immediately
+    // without requiring an app restart.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_START) {
+                viewModel.refreshCategories()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
     // Observe food state
     val paginatedState by viewModel.paginatedFoodsState.collectAsStateWithLifecycle()
     val isLoadingMore by viewModel.isLoadingMore.collectAsStateWithLifecycle()
@@ -53,6 +71,7 @@ fun HomeRoute(
     // Observe cart state — all sourced from CartViewModel
     val cartItems by cartViewModel.cartItems.collectAsStateWithLifecycle()
     val cartTotals by cartViewModel.cartTotals.collectAsStateWithLifecycle()
+    val heldCarts by cartViewModel.heldCarts.collectAsStateWithLifecycle()
 
     // ── String resources ────────────────────────────────────────────────────
     val strNewSale          = stringResource(R.string.new_sale)
@@ -69,6 +88,9 @@ fun HomeRoute(
 
     // Logout confirmation dialog state — prevents accidental logout on POS counters
     var showLogoutDialog by remember { mutableStateOf(false) }
+
+    // Held bills dialog state
+    var showHeldCartsDialog by remember { mutableStateOf(false) }
 
     // Helper function to get current date/time
     fun getCurrentDateTime(): String {
@@ -94,6 +116,8 @@ fun HomeRoute(
                 invoiceNumber = strNewSale,
                 tableNumber = strDefaultTable,
                 dateTime = getCurrentDateTime(),
+                heldCartCount = heldCarts.size,
+                onHoldCart = { cartViewModel.holdCurrentCart() },
                 onChangeInvoice = {},
             ),
             items = cartItemsUI,
@@ -112,6 +136,7 @@ fun HomeRoute(
             // It does not apply at cart stage — hide the button for all roles here.
             canApplyDiscount = false,
             onApplyDiscountClick = {},
+            onShowHeldCarts = { showHeldCartsDialog = true },
         )
     }
 
@@ -250,6 +275,19 @@ fun HomeRoute(
                 viewModel.updateSortOption(sort)
                 showSortDialog = false
             }
+        )
+    }
+
+    // Held bills dialog — cashier can resume or delete a held bill
+    if (showHeldCartsDialog) {
+        HeldCartsDialog(
+            heldCarts = heldCarts,
+            onResume = { id ->
+                cartViewModel.resumeHeldCart(id)
+                showHeldCartsDialog = false
+            },
+            onDelete = { id -> cartViewModel.deleteHeldCart(id) },
+            onDismiss = { showHeldCartsDialog = false },
         )
     }
 

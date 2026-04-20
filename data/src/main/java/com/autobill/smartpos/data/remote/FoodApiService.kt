@@ -112,5 +112,5 @@ interface FoodApiService {
     @DELETE("foods/{id}")
     suspend fun deleteFood(
         @Path("id") foodId: Long,
-    ): ApiResponse<Unit?>
+    ): retrofit2.Response<Unit>
 }

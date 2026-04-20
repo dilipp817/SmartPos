@@ -20,11 +20,11 @@ import javax.inject.Inject
 
 @HiltViewModel
 class InventoryViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
     private val getFoodsUseCase: GetFoodsUseCase,
     private val getCategoriesUseCase: GetCategoriesUseCase,
     private val updateFoodUseCase: UpdateFoodUseCase,
-    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(InventoryUiState())
@@ -46,12 +46,8 @@ class InventoryViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             when (val result = getFoodsUseCase()) {
-                is Result.Success -> _uiState.update {
-                    it.copy(isLoading = false, foods = result.data)
-                }
-                is Result.Failure -> _uiState.update {
-                    it.copy(isLoading = false, error = result.exception.message)
-                }
+                is Result.Success -> _uiState.update { it.copy(isLoading = false, foods = result.data) }
+                is Result.Failure -> _uiState.update { it.copy(isLoading = false, error = result.exception.message) }
                 else -> _uiState.update { it.copy(isLoading = false) }
             }
         }
@@ -77,10 +73,6 @@ class InventoryViewModel @Inject constructor(
 
     // ── Availability toggle ───────────────────────────────────────────────────
 
-    /**
-     * Toggles [food.isAvailable] by calling PUT /foods/{id}.
-     * Performs an optimistic local update first; rolls back on failure.
-     */
     fun toggleAvailability(foodId: Long) {
         val food = _uiState.value.foods.firstOrNull { it.id == foodId } ?: return
         val newAvailable = !food.isAvailable
@@ -112,7 +104,6 @@ class InventoryViewModel @Inject constructor(
                 allergens       = food.allergens,
                 calories        = food.calories,
             )
-
             when (result) {
                 is Result.Success -> _uiState.update { state ->
                     state.copy(
@@ -132,9 +123,10 @@ class InventoryViewModel @Inject constructor(
                         state.copy(
                             togglingFoodId = null,
                             foods = state.foods.map {
-                                if (it.id == foodId) food else it   // restore original
+                                if (it.id == foodId) it.copy(isAvailable = !newAvailable) else it
                             },
-                            error = result.exception.message ?: context.getString(R.string.inventory_update_availability_failed),
+                            error = result.exception.message
+                                ?: context.getString(R.string.inventory_update_availability_failed),
                         )
                     }
                 }
@@ -142,6 +134,8 @@ class InventoryViewModel @Inject constructor(
             }
         }
     }
+
+    // ── One-shot consumers ────────────────────────────────────────────────────
 
     fun dismissError()   = _uiState.update { it.copy(error = null) }
     fun dismissSuccess() = _uiState.update { it.copy(successMessage = null) }
