@@ -51,15 +51,15 @@ class AuthRepositoryImpl @Inject constructor(
                 envelope.error?.message ?: envelope.message ?: "Login failed"
             }
             User(
-                id = data.id,
-                username = data.username,
-                email = data.email,
-                role = data.role,
-                restaurantId = data.restaurantId,  // ← from response, NEVER hardcoded
-                token = data.token,
-                expiresAt = data.expiresAt,
-                deviceId = data.deviceId,
-                deviceType = data.deviceType,
+                id           = data.id,
+                username     = data.username,
+                email        = data.email,
+                role         = data.role,
+                restaurantId = data.restaurantId,
+                token        = data.token,
+                expiresAt    = data.expiresAt,
+                deviceId     = data.deviceId,
+                deviceType   = data.deviceType,
             )
         }
     }

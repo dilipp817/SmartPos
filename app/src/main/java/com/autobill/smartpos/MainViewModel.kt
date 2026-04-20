@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.autobill.smartpos.data.local.AppPrefsDataStore
 import com.autobill.smartpos.domain.model.User
 import com.autobill.smartpos.domain.repository.AuthRepository
+import com.autobill.smartpos.domain.repository.FeatureFlagRepository
 import com.autobill.smartpos.domain.usecase.ConnectRealTimeUseCase
 import com.autobill.smartpos.domain.usecase.DisconnectRealTimeUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
@@ -56,6 +57,7 @@ class MainViewModel @Inject constructor(
     private val observeConnectivityUseCase: ObserveConnectivityUseCase,
     private val scheduleSyncUseCase: ScheduleSyncUseCase,
     private val authRepository: AuthRepository,
+    private val featureFlagRepository: FeatureFlagRepository,
     appPrefsDataStore: AppPrefsDataStore,
 ) : ViewModel() {
 
@@ -99,6 +101,14 @@ class MainViewModel @Inject constructor(
     private val _sessionExpiredEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val sessionExpiredEvent: SharedFlow<Unit> = _sessionExpiredEvent.asSharedFlow()
 
+    /**
+     * Epoch-ms timestamp of the last successful [refreshFromRemoteApi] call.
+     * Used to throttle foreground refreshes — we don't need to hit the server on
+     * every onResume (notification tray dismiss, Chucker screen, rotation, etc.).
+     */
+    private var lastFlagRefreshMs = 0L
+    private val FLAG_REFRESH_INTERVAL_MS = 15 * 60 * 1_000L  // 15 minutes
+
     init {
         viewModelScope.launch {
             // Run recovery first — validate token, refresh restaurantId, or clear expired session.
@@ -111,6 +121,10 @@ class MainViewModel @Inject constructor(
             // Connect WebSocket after session is confirmed
             val restaurantId = getRestaurantIdUseCase()
             if (restaurantId != null) connectRealTimeUseCase(restaurantId)
+            // Refresh flags after startup — non-blocking, silent on failure.
+            // Stamp the time so the first onResume (which fires right after startup)
+            // doesn't immediately make a second identical call.
+            refreshFlagsIfDue()
         }
 
         // Phase 9.2: re-schedule offline queue sync whenever connectivity is restored.
@@ -159,10 +173,30 @@ class MainViewModel @Inject constructor(
                     // Server returned 401 or network confirms expiry — force logout
                     logoutUseCase()
                     _sessionExpiredEvent.tryEmit(Unit)
+                    return@launch  // don't refresh flags if we just logged out
                 }
-                // On success: server says it's still valid — continue normally
             }
+
+            // Refresh feature flags if enough time has passed since the last fetch.
+            // Throttled to FLAG_REFRESH_INTERVAL_MS — avoids a network call on every
+            // notification-tray dismiss, Chucker open, screen rotation, etc.
+            refreshFlagsIfDue()
         }
+    }
+
+    /**
+     * Refreshes feature flags from the server only if [FLAG_REFRESH_INTERVAL_MS] has
+     * elapsed since the last successful call. Silent on network failure.
+     *
+     * Call sites:
+     *  1. [init] — once on cold start (process creation)
+     *  2. [checkTokenExpiryOnForeground] — on app foreground, throttled to ≤ once per 15 min
+     */
+    private suspend fun refreshFlagsIfDue() {
+        val now = System.currentTimeMillis()
+        if (now - lastFlagRefreshMs < FLAG_REFRESH_INTERVAL_MS) return
+        featureFlagRepository.refreshFromRemoteApi()
+        lastFlagRefreshMs = System.currentTimeMillis()
     }
 
     fun logout() {
