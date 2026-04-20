@@ -4,6 +4,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -11,6 +12,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.autobill.smartpos.domain.common.UiState
 import java.text.SimpleDateFormat
@@ -37,6 +41,20 @@ fun HomeRoute(
     // Get ViewModel instances — FoodViewModel owns food/pagination, CartViewModel owns cart
     val viewModel: FoodViewModel = hiltViewModel()
     val cartViewModel: CartViewModel = hiltViewModel()
+
+    // Refresh category list every time this screen becomes visible again (e.g. returning from
+    // admin category management). This ensures newly created/deleted categories show immediately
+    // without requiring an app restart.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_START) {
+                viewModel.refreshCategories()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     // Observe food state
     val paginatedState by viewModel.paginatedFoodsState.collectAsStateWithLifecycle()

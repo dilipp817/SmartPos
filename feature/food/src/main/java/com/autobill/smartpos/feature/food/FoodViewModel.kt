@@ -14,17 +14,25 @@ import com.autobill.smartpos.domain.model.RolePermissions
 import com.autobill.smartpos.domain.usecase.GetCategoriesUseCase
 import com.autobill.smartpos.domain.usecase.GetFoodsPaginatedUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
+import com.autobill.smartpos.domain.usecase.ObserveCategoriesUseCase
 import com.autobill.smartpos.domain.usecase.ObserveRestaurantUseCase
 import com.autobill.smartpos.domain.usecase.ObserveRolePermissionsUseCase
 import com.autobill.smartpos.domain.usecase.ObserveSessionUseCase
+import com.autobill.smartpos.domain.usecase.SearchFoodsPaginatedUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -50,8 +58,10 @@ import javax.inject.Inject
 class FoodViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val getFoodsPaginatedUseCase: GetFoodsPaginatedUseCase,
+    private val searchFoodsPaginatedUseCase: SearchFoodsPaginatedUseCase,
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
     private val getCategoriesUseCase: GetCategoriesUseCase,
+    private val observeCategoriesUseCase: ObserveCategoriesUseCase,
     private val observeRolePermissionsUseCase: ObserveRolePermissionsUseCase,
     private val observeSessionUseCase: ObserveSessionUseCase,
     observeRestaurantUseCase: ObserveRestaurantUseCase,
@@ -131,6 +141,13 @@ class FoodViewModel @Inject constructor(
     val categories: StateFlow<List<Category>> = _categories.asStateFlow()
 
     init {
+        // Observe category cache — updates whenever any screen mutates categories (create/update/delete).
+        // Using launchIn so the subscription lives for the full ViewModel lifetime.
+        observeCategoriesUseCase()
+            .filterNotNull()
+            .onEach { list -> _categories.value = list }
+            .launchIn(viewModelScope)
+
         viewModelScope.launch {
             restaurantId = getRestaurantIdUseCase()
             if (restaurantId == null) {
@@ -139,20 +156,31 @@ class FoodViewModel @Inject constructor(
                 )
                 return@launch
             }
-            // Guide Phase 2: fire foods + categories truly in parallel.
-            // coroutineScope { async { } } ensures both jobs are children of this coroutine
-            // and that await() waits for the actual suspend work to complete.
             coroutineScope {
                 val foodsJob = async { loadFirstPageInternal() }
                 val categoriesJob = async {
-                    when (val result = getCategoriesUseCase(restaurantId ?: return@async)) {
-                        is Result.Success -> _categories.value = result.data
-                        else -> Unit   // non-fatal — filter chips simply stay hidden
-                    }
+                    // Fetch from network — result is automatically pushed to the cache
+                    // which the observer above will pick up
+                    getCategoriesUseCase(restaurantId ?: return@async)
                 }
                 foodsJob.await()
                 categoriesJob.await()
             }
+        }
+
+        // Debounce search — triggers 400 ms after the user stops typing
+        @OptIn(FlowPreview::class)
+        viewModelScope.launch {
+            _searchQuery
+                .debounce(400L)
+                .collectLatest { query ->
+                    if (restaurantId == null) return@collectLatest
+                    if (query.isBlank()) {
+                        loadFirstPageWithFilters()
+                    } else {
+                        loadSearchPage(query, offset = 0, append = false)
+                    }
+                }
         }
     }
 
@@ -178,6 +206,16 @@ class FoodViewModel @Inject constructor(
         _selectedCategory.value = null
         _sortOption.value = null
         loadFirstPage()
+    }
+
+    /**
+     * Re-fetches the category list from the network and refreshes the shared singleton cache.
+     * Called every time [HomeRoute] enters the STARTED lifecycle state so that categories
+     * created/deleted in the admin screens are reflected immediately when the user returns home.
+     */
+    fun refreshCategories() {
+        val rid = restaurantId ?: return
+        viewModelScope.launch { getCategoriesUseCase(rid) }
     }
 
     // ========== PAGINATION ==========
@@ -212,17 +250,75 @@ class FoodViewModel @Inject constructor(
     fun loadNextPage() {
         if (_isLoadingMore.value) return
         if (currentPagination?.canLoadMore != true) return
+        val query = _searchQuery.value
         viewModelScope.launch {
             _isLoadingMore.value = true
             try {
                 val pagination = currentPagination ?: return@launch
                 val nextOffset = pagination.offset + pagination.limit
-                val result = getFoodsPaginatedUseCase(restaurantId = restaurantId, offset = nextOffset, limit = 20)
+                val result = if (query.isNotBlank()) {
+                    // Use the currently active categoryId (may have been reset to null by fallback)
+                    searchFoodsPaginatedUseCase(
+                        query        = query,
+                        restaurantId = restaurantId,
+                        categoryId   = _selectedCategory.value?.toLongOrNull(),
+                        offset       = nextOffset,
+                        limit        = 20,
+                    )
+                } else {
+                    getFoodsPaginatedUseCase(restaurantId = restaurantId, offset = nextOffset, limit = 20)
+                }
                 handlePaginationResult(result, append = true)
             } finally {
                 _isLoadingMore.value = false
             }
         }
+    }
+
+    /**
+     * Search logic:
+     * 1. If a category is selected → search within that category first.
+     * 2. If the category search returns 0 results → reset to All Categories and search globally.
+     * 3. If no category is selected → search globally from the start.
+     */
+    private suspend fun loadSearchPage(query: String, offset: Int, append: Boolean) {
+        if (!append) {
+            _paginatedFoodsState.value = UiState.Loading
+            _isLoadingMore.value = false
+        }
+
+        val activeCategoryId = _selectedCategory.value?.toLongOrNull()
+
+        if (activeCategoryId != null) {
+            // Step 1: Try current category
+            val categoryResult = searchFoodsPaginatedUseCase(
+                query        = query,
+                restaurantId = restaurantId,
+                categoryId   = activeCategoryId,
+                offset       = offset,
+                limit        = 20,
+            )
+            val hasResults = categoryResult is PaginationResult.Success &&
+                    categoryResult.pagination.data.isNotEmpty()
+
+            if (hasResults) {
+                handlePaginationResult(categoryResult, append = append)
+                return
+            }
+
+            // Step 2: No match in category → fall back to global search
+            _selectedCategory.value = null  // visually deselect category chip
+        }
+
+        // Global search (no category filter)
+        val globalResult = searchFoodsPaginatedUseCase(
+            query        = query,
+            restaurantId = restaurantId,
+            categoryId   = null,
+            offset       = offset,
+            limit        = 20,
+        )
+        handlePaginationResult(globalResult, append = append)
     }
 
     private fun handlePaginationResult(result: PaginationResult<Food>, append: Boolean) {

@@ -136,14 +136,20 @@ class FoodRepositoryImpl @Inject constructor(
     override suspend fun searchFoodsPaginated(
         query: String,
         restaurantId: Long?,
+        categoryId: Long?,
         offset: Int,
         limit: Int,
     ): PaginationResult<Food> = withContext(ioDispatcher) {
         try {
-            // M-11: always pass restaurantId to prevent cross-tenant data leak
             val effectiveRestaurantId = restaurantId ?: sessionDataStore.getRestaurantId()
                 ?: return@withContext PaginationResult.Failure(Exception("No restaurant ID in session — not logged in"))
-            val response = apiService.searchFoods(query = query, restaurantId = effectiveRestaurantId, offset = offset, limit = limit)
+            val response = apiService.searchFoods(
+                query        = query,
+                restaurantId = effectiveRestaurantId,
+                categoryId   = categoryId,
+                offset       = offset,
+                limit        = limit,
+            )
             val page = response.data
             val items = page?.data.orEmpty()
 

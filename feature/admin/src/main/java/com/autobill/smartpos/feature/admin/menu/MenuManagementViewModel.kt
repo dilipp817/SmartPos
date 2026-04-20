@@ -22,13 +22,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MenuManagementViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
     private val getFoodsUseCase: GetFoodsUseCase,
     private val getCategoriesUseCase: GetCategoriesUseCase,
     private val createFoodUseCase: CreateFoodUseCase,
     private val updateFoodUseCase: UpdateFoodUseCase,
     private val deleteFoodUseCase: DeleteFoodUseCase,
-    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MenuManagementUiState())
@@ -166,16 +166,21 @@ class MenuManagementViewModel @Inject constructor(
             }
             when (result) {
                 is Result.Success -> {
-                    _uiState.update { it.copy(isSaving = false, showCreateDialog = false,
-                        editingFood = null,
-                        successMessage = if (editing == null)
+                    _uiState.update { it.copy(
+                        isSaving         = false,
+                        showCreateDialog = false,
+                        editingFood      = null,
+                        successMessage   = if (editing == null)
                             context.getString(R.string.menu_item_created)
                         else
-                            context.getString(R.string.menu_item_updated)) }
+                            context.getString(R.string.menu_item_updated),
+                    ) }
                     loadFoods()
                 }
-                is Result.Failure -> _uiState.update { it.copy(isSaving = false,
-                    error = result.exception.message ?: context.getString(R.string.menu_save_failed)) }
+                is Result.Failure -> _uiState.update { it.copy(
+                    isSaving = false,
+                    error    = result.exception.message ?: context.getString(R.string.menu_save_failed),
+                ) }
                 else -> _uiState.update { it.copy(isSaving = false) }
             }
         }
@@ -189,17 +194,23 @@ class MenuManagementViewModel @Inject constructor(
             _uiState.update { it.copy(isDeleting = true, deletingFood = null, error = null) }
             when (val r = deleteFoodUseCase(food.id)) {
                 is Result.Success -> {
-                    _uiState.update { it.copy(isDeleting = false,
-                        successMessage = context.getString(R.string.menu_item_deleted, food.name)) }
+                    _uiState.update { it.copy(
+                        isDeleting     = false,
+                        successMessage = context.getString(R.string.menu_item_deleted, food.name),
+                    ) }
                     loadFoods()
                 }
-                is Result.Failure -> _uiState.update { it.copy(isDeleting = false,
-                    error = r.exception.message ?: context.getString(R.string.menu_delete_failed)) }
+                is Result.Failure -> _uiState.update { it.copy(
+                    isDeleting = false,
+                    error      = r.exception.message ?: context.getString(R.string.menu_delete_failed),
+                ) }
                 else -> _uiState.update { it.copy(isDeleting = false) }
             }
         }
     }
 
-    fun dismissSuccess() = _uiState.update { it.copy(successMessage = null) }
+    // ── One-shot consumers ────────────────────────────────────────────────────
+
     fun dismissError()   = _uiState.update { it.copy(error = null) }
+    fun dismissSuccess() = _uiState.update { it.copy(successMessage = null) }
 }

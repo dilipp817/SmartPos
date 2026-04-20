@@ -18,7 +18,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.CircularProgressIndicator
@@ -40,9 +39,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
 import com.autobill.smartpos.domain.model.Food
 import com.autobill.smartpos.feature.admin.R
 
@@ -89,39 +88,41 @@ fun MenuManagementScreen(
 
     if (uiState.showCreateDialog || uiState.editingFood != null) {
         FoodFormDialog(
-            formState         = formState,
-            categories        = uiState.categories,
-            isSaving          = uiState.isSaving,
-            isEditMode        = uiState.editingFood != null,
-            onNameChange      = onNameChange,
-            onPriceChange     = onPriceChange,
+            formState           = formState,
+            categories          = uiState.categories,
+            isSaving            = uiState.isSaving,
+            isEditMode          = uiState.editingFood != null,
+            onNameChange        = onNameChange,
+            onPriceChange       = onPriceChange,
             onDescriptionChange = onDescriptionChange,
-            onImageUrlChange  = onImageUrlChange,
-            onCategoryChange  = onCategoryChange,
-            onVegetarianChange = onVegetarianChange,
-            onSpicyChange     = onSpicyChange,
-            onAvailableChange = onAvailableChange,
-            onPrepTimeChange  = onPrepTimeChange,
-            onAllergensChange = onAllergensChange,
-            onCaloriesChange  = onCaloriesChange,
-            onSave            = onSaveFood,
-            onDismiss         = onCloseDialog,
+            onImageUrlChange    = onImageUrlChange,
+            onCategoryChange    = onCategoryChange,
+            onVegetarianChange  = onVegetarianChange,
+            onSpicyChange       = onSpicyChange,
+            onAvailableChange   = onAvailableChange,
+            onPrepTimeChange    = onPrepTimeChange,
+            onAllergensChange   = onAllergensChange,
+            onCaloriesChange    = onCaloriesChange,
+            onSave              = onSaveFood,
+            onDismiss           = onCloseDialog,
         )
     }
 
     uiState.deletingFood?.let { food ->
         AlertDialog(
             onDismissRequest = onCancelDelete,
-            title = { Text(stringResource(R.string.menu_delete_dialog_title, food.name)) },
-            text  = { Text(stringResource(R.string.menu_delete_dialog_message)) },
+            title     = { Text(stringResource(R.string.menu_delete_dialog_title, food.name)) },
+            text      = { Text(stringResource(R.string.menu_delete_dialog_message)) },
             confirmButton = {
-                TextButton(onClick = onConfirmDelete) { Text(stringResource(R.string.menu_delete_confirm), color = MaterialTheme.colorScheme.error) }
+                TextButton(onClick = onConfirmDelete) {
+                    Text(stringResource(R.string.menu_delete_confirm), color = MaterialTheme.colorScheme.error)
+                }
             },
-            dismissButton = { TextButton(onClick = onCancelDelete) { Text(stringResource(R.string.cancel)) } },
+            dismissButton = {
+                TextButton(onClick = onCancelDelete) { Text(stringResource(R.string.cancel)) }
+            },
         )
     }
-
-    // ── Main scaffold ─────────────────────────────────────────────────────────
 
     Scaffold(
         topBar = {
@@ -142,15 +143,19 @@ fun MenuManagementScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = modifier,
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            // Search bar
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+        ) {
             OutlinedTextField(
                 value         = uiState.searchQuery,
                 onValueChange = onSearchQueryChange,
                 placeholder   = { Text(stringResource(R.string.menu_search_placeholder)) },
-                leadingIcon   = { Icon(Icons.Default.Search, null) },
                 singleLine    = true,
-                modifier      = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier      = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
             )
 
             if (uiState.isLoading || uiState.isDeleting) {
@@ -160,11 +165,8 @@ fun MenuManagementScreen(
             } else if (filteredFoods.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
-                        if (uiState.searchQuery.isBlank()) stringResource(R.string.menu_empty_no_items)
-                        else stringResource(R.string.menu_empty_no_results, uiState.searchQuery),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        text = if (uiState.searchQuery.isBlank()) stringResource(R.string.menu_empty_no_items)
+                               else stringResource(R.string.menu_empty_no_results, uiState.searchQuery),
                     )
                 }
             } else {
@@ -174,9 +176,9 @@ fun MenuManagementScreen(
                 ) {
                     items(filteredFoods, key = { it.id }) { food ->
                         FoodItemRow(
-                            food      = food,
-                            onEdit    = { onEditClick(food) },
-                            onDelete  = { onDeleteClick(food) },
+                            food     = food,
+                            onEdit   = { onEditClick(food) },
+                            onDelete = { onDeleteClick(food) },
                         )
                     }
                 }
@@ -194,35 +196,56 @@ private fun FoodItemRow(
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(12.dp).fillMaxWidth(),
+            modifier = Modifier
+                .padding(12.dp)
+                .fillMaxWidth(),
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(food.name,
-                         style = MaterialTheme.typography.titleSmall,
-                         fontWeight = FontWeight.SemiBold)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        food.name,
+                        style      = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                    )
                     if (!food.isAvailable)
-                        Badge(containerColor = MaterialTheme.colorScheme.error) { Text(stringResource(R.string.menu_badge_unavailable)) }
+                        Badge(containerColor = MaterialTheme.colorScheme.error) {
+                            Text(stringResource(R.string.menu_badge_unavailable))
+                        }
                     if (food.isVegetarian)
-                        Badge(containerColor = MaterialTheme.colorScheme.tertiary) { Text(stringResource(R.string.menu_badge_veg)) }
+                        Badge(containerColor = MaterialTheme.colorScheme.tertiary) {
+                            Text(stringResource(R.string.menu_badge_veg))
+                        }
                 }
-                Text("₹${"%.2f".format(food.price)}",
-                     style = MaterialTheme.typography.bodyMedium,
-                     color = MaterialTheme.colorScheme.primary)
+                Text(
+                    "₹${food.price}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
                 food.categoryName?.let {
-                    Text(it, style = MaterialTheme.typography.labelSmall,
-                         color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
             Spacer(Modifier.width(8.dp))
             IconButton(onClick = onEdit, modifier = Modifier.size(36.dp)) {
-                Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.cd_edit),
-                     tint = MaterialTheme.colorScheme.primary)
+                Icon(
+                    Icons.Default.Edit,
+                    contentDescription = stringResource(R.string.cd_edit),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
             }
             IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) {
-                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.cd_delete),
-                     tint = MaterialTheme.colorScheme.error)
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = stringResource(R.string.cd_delete),
+                    tint = MaterialTheme.colorScheme.error,
+                )
             }
         }
     }
