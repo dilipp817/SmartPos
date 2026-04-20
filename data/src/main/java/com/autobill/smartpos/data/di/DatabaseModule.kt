@@ -29,6 +29,9 @@ object DatabaseModule {
             AppDatabase::class.java,
             "smartpos.db",
         )
+            // Room is a server-data read-through cache — destructive migration is safe:
+            // data is re-fetched from the API on next app start.
+            .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
     }
 

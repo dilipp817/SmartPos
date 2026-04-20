@@ -29,7 +29,7 @@
     <!-- ── Order Detail Screen ───────────────────────────────────────────── -->
     <string name="order_detail_default_title">Order Detail</string>
     <!-- %1$d = table number -->
-    <string name="order_detail_table">Table %1$d</string>
+    <string name="order_detail_table">Table %1$s</string>
     <!-- %1$d = item count -->
     <string name="order_detail_items_section">Items (%1$d)</string>
     <string name="order_detail_add_item_button">Add Item</string>
@@ -89,7 +89,7 @@
     <string name="kitchen_empty_in_progress">No items being prepared</string>
     <string name="kitchen_empty_ready">No items waiting to be served</string>
     <!-- %1$d = table number -->
-    <string name="kitchen_table_label">Table %1$d</string>
+    <string name="kitchen_table_label">Table %1$s</string>
     <string name="kitchen_cancel_button">Cancel</string>
 
     <!-- ── Kitchen filter enum labels ────────────────────────────────────── -->

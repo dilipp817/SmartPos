@@ -23,10 +23,14 @@ import com.autobill.smartpos.data.local.entity.TableEntity
  *  v1  → initial production schema (April 19, 2026)
  *        Entities: FoodEntity, RestaurantEntity, TableEntity, OrderEntity,
  *        OrderItemEntity, BillEntity, PaymentEntity, PendingOrderEntity
- *
- * NOTE: versions 1–11 existed during development only (app was never released).
- * Schema was reset to v1 on April 19, 2026 before first production release.
- * Add migrations here when releasing updates to production users.
+ *  v2  → April 20, 2026
+ *        Removed ForeignKey constraints from OrderEntity (restaurantId→RestaurantEntity,
+ *        tableId→TableEntity), BillEntity (orderId→OrderEntity, restaurantId→RestaurantEntity),
+ *        and PaymentEntity (orderId→OrderEntity, billId→BillEntity).
+ *        These FK constraints caused SQLiteConstraintException when server orders/bills
+ *        were cached before their referenced parent rows existed locally.
+ *        Room is a server-data read-through cache — cross-entity FKs are not appropriate.
+ *        Uses fallbackToDestructiveMigration (cache-only DB, data re-fetched on next start).
  */
 @Database(
     entities = [
@@ -39,7 +43,7 @@ import com.autobill.smartpos.data.local.entity.TableEntity
         PaymentEntity::class,
         PendingOrderEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
