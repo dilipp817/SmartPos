@@ -383,7 +383,9 @@ private fun KitchenOrderCardHeader(order: Order) {
                 color      = Color(0xFF212121),
             )
             Text(
-                text  = stringResource(R.string.kitchen_table_label, order.tableNumber),
+                text  = order.tableNumber
+                    ?.let { stringResource(R.string.kitchen_table_label, it) }
+                    ?: stringResource(R.string.kitchen_no_table_label),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color(0xFF757575),
             )

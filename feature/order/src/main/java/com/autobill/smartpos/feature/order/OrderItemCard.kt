@@ -76,7 +76,9 @@ fun OrderItemCard(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
-                    text = stringResource(R.string.order_card_table, order.tableNumber),
+                    text = order.tableNumber
+                        ?.let { stringResource(R.string.order_card_table, it) }
+                        ?: stringResource(R.string.order_card_no_table),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color(0xFF424242),
                     fontWeight = FontWeight.SemiBold,

@@ -314,7 +314,9 @@ private fun OrderHistoryCard(
                     color      = Color(0xFF212121),
                 )
                 Text(
-                    text  = stringResource(R.string.order_history_card_summary, order.tableNumber, order.items.size, order.orderType.value.replace("_", " ")),
+                    text  = order.tableNumber
+                        ?.let { stringResource(R.string.order_history_card_summary, it, order.items.size, order.orderType.value.replace("_", " ")) }
+                        ?: stringResource(R.string.order_history_card_summary_no_table, order.items.size, order.orderType.value.replace("_", " ")),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFF616161),
                 )

@@ -21,7 +21,8 @@
     <string name="order_history_load_button">Load</string>
     <string name="order_history_empty">No orders found for the selected range and filter.</string>
     <!-- %1$d = table number, %2$d = item count, %3$s = order type -->
-    <string name="order_history_card_summary">Table %1$d  ·  %2$d items  ·  %3$s</string>
+    <string name="order_history_card_summary">Table %1$s  ·  %2$d items  ·  %3$s</string>
+    <string name="order_history_card_summary_no_table">%1$d items  ·  %2$s</string>
     <!-- %1$.2f = subtotal -->
     <string name="order_history_subtotal">Subtotal: ₹%1$.2f</string>
     <!-- %1$.2f = tax -->

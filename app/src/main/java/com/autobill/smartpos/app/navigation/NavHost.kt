@@ -229,7 +229,7 @@ private fun AppNavGraph(
             OrderDetailRoute(
                 onBack = { navController.popBackStack() },
                 onBillingClick = { orderId, tableId ->
-                    navController.navigate(Screen.OrderBilling.createRoute(orderId, tableId))
+                    navController.navigate(Screen.OrderBilling.createRoute(orderId, tableId ?: 0L))
                 },
                 modifier = Modifier.fillMaxSize(),
             )
