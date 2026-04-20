@@ -62,7 +62,7 @@ fun AppNavHost(
                         onNavigate = { route ->
                             navController.navigate(route) {
                                 launchSingleTop = true
-                                restoreState = true
+                                restoreState = (route != Screen.OrderList.route)
                                 popUpTo(navController.graph.startDestinationId) { saveState = true }
                             }
                         },
