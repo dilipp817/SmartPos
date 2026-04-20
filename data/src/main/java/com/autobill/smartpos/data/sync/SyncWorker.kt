@@ -102,7 +102,7 @@ class SyncWorker @AssistedInject constructor(
         return try {
             val items = deserializeItems(entity.itemsJson)
             val request = CreateOrderRequest(
-                tableId   = entity.tableId,
+                tableId   = entity.tableId,   // null for TAKEAWAY / no-table orders
                 items     = items,
                 orderType = entity.orderType,
                 notes     = entity.notes,

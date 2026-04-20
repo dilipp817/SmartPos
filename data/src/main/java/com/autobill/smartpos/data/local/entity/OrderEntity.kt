@@ -27,7 +27,7 @@ data class OrderEntity(
     val orderNumber: String,
     val restaurantId: Long,
     val tableId: Long?,
-    val tableNumber: String,
+    val tableNumber: String?, // null for TAKEAWAY / counter-service orders
     val orderType: String,
     val status: String,
     val subtotal: Double,

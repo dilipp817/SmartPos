@@ -29,14 +29,10 @@ object DatabaseModule {
             AppDatabase::class.java,
             "smartpos.db",
         )
-            // TODO: Replace with explicit migrations before going live.
-            // Most tables (foods, orders, tables, restaurants) are server-data caches and
-            // safe to drop — they are re-fetched from the API on next start.
-            // However, pending_orders holds user-generated offline orders that have not yet
-            // synced to the server (see PendingOrderDao / SyncWorker). Destructive migration
-            // will silently delete those queued orders on any schema version bump.
-            // For now this is acceptable during pre-production development, but before
-            // release, write an explicit migration that preserves the pending_orders table.
+            .addMigrations(AppDatabase.MIGRATION_2_3)
+            // Fallback protects against future unhandled version gaps during development.
+            // Before release, every migration must be explicit — pending_orders rows must
+            // never be silently dropped on upgrade (they are offline orders not yet synced).
             .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
     }

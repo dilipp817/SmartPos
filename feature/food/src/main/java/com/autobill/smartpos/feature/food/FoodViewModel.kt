@@ -19,6 +19,8 @@ import com.autobill.smartpos.domain.usecase.ObserveRestaurantUseCase
 import com.autobill.smartpos.domain.usecase.ObserveRolePermissionsUseCase
 import com.autobill.smartpos.domain.usecase.ObserveSessionUseCase
 import com.autobill.smartpos.domain.usecase.SearchFoodsPaginatedUseCase
+import com.autobill.smartpos.domain.featureflag.FeatureFlag
+import com.autobill.smartpos.domain.repository.FeatureFlagRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
@@ -66,6 +68,7 @@ class FoodViewModel @Inject constructor(
     private val observeRolePermissionsUseCase: ObserveRolePermissionsUseCase,
     private val observeSessionUseCase: ObserveSessionUseCase,
     observeRestaurantUseCase: ObserveRestaurantUseCase,
+    private val featureFlagRepository: FeatureFlagRepository,
 ) : ViewModel() {
 
     // ========== FOOD STATE ==========
@@ -121,6 +124,28 @@ class FoodViewModel @Inject constructor(
     ) { restaurant, user ->
         restaurant?.outletName ?: user?.username ?: context.getString(R.string.brand_name)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), context.getString(R.string.brand_name))
+
+    // ========== FEATURE FLAGS ==========
+
+    /**
+     * Reactive TABLE_MANAGEMENT flag — drives whether "Checkout → Table Selection" or
+     * "Place Order" (direct submit) is shown as the primary cart action.
+     */
+    val isTableManagementEnabled: StateFlow<Boolean> =
+        featureFlagRepository.observe(FeatureFlag.TABLE_MANAGEMENT)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), FeatureFlag.TABLE_MANAGEMENT.defaultValue)
+
+    /**
+     * Reactive PAY_BEFORE_SEAT flag — only meaningful when TABLE_MANAGEMENT=true + DINE_IN.
+     *
+     * Currently exposed for future use. Threading this flag through navigation and stamping
+     * the order with a payment_status at creation time is deferred until the backend adds
+     * payment_status support to POST /restaurants/{restaurantId}/orders.
+     * See FINAL_ORDER_TYPE_CONTRACT.md — Section E (out of scope for this release).
+     */
+    val isPayBeforeSeat: StateFlow<Boolean> =
+        featureFlagRepository.observe(FeatureFlag.PAY_BEFORE_SEAT)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), FeatureFlag.PAY_BEFORE_SEAT.defaultValue)
 
     // ========== FILTER STATE ==========
 

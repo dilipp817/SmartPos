@@ -50,7 +50,28 @@ class CreateOrderViewModel @Inject constructor(
         "tableId nav-arg is required for CreateOrderViewModel"
     }
 
-    private val _uiState = MutableStateFlow(CreateOrderUiState())
+    /**
+     * True when there is no table for this order (TAKEAWAY or TABLE_MANAGEMENT=false).
+     * Sentinel value tableId=0 is set by NavHost when "Place Order" is tapped directly.
+     */
+    private val isNoTable: Boolean = tableId == 0L
+
+    /**
+     * Order type pre-set by the cashier on the food screen and passed via nav arg.
+     * Falls back to DINE_IN if the arg is missing or unrecognised.
+     */
+    private val initialOrderType: OrderType = OrderType.fromValue(
+        savedStateHandle["orderType"] ?: OrderType.DINE_IN.value
+    )
+
+    private val _uiState = MutableStateFlow(
+        CreateOrderUiState(
+            orderType     = initialOrderType,
+            isNoTable     = isNoTable,
+            // Skip table-loading spinner for no-table orders so canPlaceOrder is immediately true.
+            isTableLoading = !isNoTable,
+        )
+    )
     val uiState: StateFlow<CreateOrderUiState> = _uiState.asStateFlow()
 
     private var restaurantId: Long? = null
@@ -77,7 +98,8 @@ class CreateOrderViewModel @Inject constructor(
                 }
                 return@launch
             }
-            loadTable()
+            // No table to load for TAKEAWAY / counter-service orders.
+            if (!isNoTable) loadTable()
         }
     }
 
@@ -113,7 +135,7 @@ class CreateOrderViewModel @Inject constructor(
             }
             when (val result = createOrderUseCase(
                 restaurantId = rid,
-                tableId      = tableId,
+                tableId      = if (isNoTable) null else tableId,
                 cartItems    = lineItems,
                 orderType    = state.orderType,
                 notes        = state.notes.trim().takeIf { it.isNotEmpty() },

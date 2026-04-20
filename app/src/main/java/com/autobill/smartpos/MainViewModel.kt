@@ -196,9 +196,10 @@ class MainViewModel @Inject constructor(
      *  2. [checkTokenExpiryOnForeground] — on app foreground, throttled to ≤ once per 15 min
      */
     private suspend fun refreshFlagsIfDue() {
+        val restaurantId = getRestaurantIdUseCase() ?: return  // not logged in — skip
         val now = System.currentTimeMillis()
         if (now - lastFlagRefreshMs < FLAG_REFRESH_INTERVAL_MS) return
-        val success = featureFlagRepository.refreshFromRemoteApi()
+        val success = featureFlagRepository.refreshFromRemoteApi(restaurantId)
         // Only advance the throttle window on actual success — a network failure,
         // 404 (backend not yet implemented), or empty response must not block retries
         // for 15 minutes. The next foreground will try again immediately.

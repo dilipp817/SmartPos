@@ -34,7 +34,7 @@ class OfflineQueueRepositoryImpl @Inject constructor(
 
     override suspend fun enqueue(
         restaurantId: Long,
-        tableId: Long,
+        tableId: Long?,   // null for TAKEAWAY / TABLE_MANAGEMENT=false
         cartItems: List<OrderLineItem>,
         orderType: OrderType,
         notes: String?,
