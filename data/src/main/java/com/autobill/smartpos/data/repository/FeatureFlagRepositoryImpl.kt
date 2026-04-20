@@ -5,6 +5,7 @@ import com.autobill.smartpos.data.featureflag.FeatureFlagOverrideStore
 import com.autobill.smartpos.data.remote.FeatureFlagApiService
 import com.autobill.smartpos.domain.featureflag.FeatureFlag
 import com.autobill.smartpos.domain.repository.FeatureFlagRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -78,14 +80,19 @@ class FeatureFlagRepositoryImpl @Inject constructor(
      * Called at startup and on every app foreground via [MainViewModel].
      * Any failure is swallowed — stale cached values remain in effect.
      */
-    override suspend fun refreshFromRemoteApi() {
-        try {
+    override suspend fun refreshFromRemoteApi(): Boolean {
+        return try {
             val response = apiService.getFeatureFlags()
-            val flags = response.data?.flags ?: return
-            if (flags.isNotEmpty()) remoteStore.updateFromRemote(flags)
-        } catch (_: Exception) {
-            // Network unavailable, server error, or backend hasn't shipped the endpoint yet.
-            // Silently ignore — last persisted values stay in effect.
+            val flags = response.data?.flags
+            if (!flags.isNullOrEmpty()) {
+                remoteStore.updateFromRemote(flags)
+                true   // flags fetched and persisted — advance the throttle window
+            } else {
+                false  // endpoint returned empty/null data — don't advance throttle
+            }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            false      // network error, 404 (not yet implemented), 401, etc. — don't advance throttle
         }
     }
 

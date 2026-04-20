@@ -118,13 +118,16 @@ class MainViewModel @Inject constructor(
             // Load restaurant details in the background so settings and name are available
             // immediately when any screen opens. Non-blocking — navigation already resolved above.
             loadRestaurantDetails()
-            // Connect WebSocket after session is confirmed
+            // Only perform authenticated startup work when recovery confirmed a session.
             val restaurantId = getRestaurantIdUseCase()
-            if (restaurantId != null) connectRealTimeUseCase(restaurantId)
-            // Refresh flags after startup — non-blocking, silent on failure.
-            // Stamp the time so the first onResume (which fires right after startup)
-            // doesn't immediately make a second identical call.
-            refreshFlagsIfDue()
+            if (restaurantId != null) {
+                // Connect WebSocket after session is confirmed.
+                connectRealTimeUseCase(restaurantId)
+                // Refresh flags after startup — non-blocking, silent on failure.
+                // Stamp the time so the first onResume (which fires right after startup)
+                // doesn't immediately make a second identical call.
+                refreshFlagsIfDue()
+            }
         }
 
         // Phase 9.2: re-schedule offline queue sync whenever connectivity is restored.
@@ -195,8 +198,11 @@ class MainViewModel @Inject constructor(
     private suspend fun refreshFlagsIfDue() {
         val now = System.currentTimeMillis()
         if (now - lastFlagRefreshMs < FLAG_REFRESH_INTERVAL_MS) return
-        featureFlagRepository.refreshFromRemoteApi()
-        lastFlagRefreshMs = System.currentTimeMillis()
+        val success = featureFlagRepository.refreshFromRemoteApi()
+        // Only advance the throttle window on actual success — a network failure,
+        // 404 (backend not yet implemented), or empty response must not block retries
+        // for 15 minutes. The next foreground will try again immediately.
+        if (success) lastFlagRefreshMs = System.currentTimeMillis()
     }
 
     fun logout() {

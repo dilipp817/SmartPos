@@ -44,10 +44,13 @@ interface FeatureFlagRepository {
     /**
      * Fetch the latest flags from GET /feature-flags and persist them.
      * Called at app startup (after session recovery) and on every app foreground.
-     * Silent no-op if the user is not logged in or the network call fails —
-     * the last persisted values remain in effect.
+     *
+     * Returns `true` if flags were successfully fetched from the server and persisted.
+     * Returns `false` if the request failed, returned empty data, or the backend
+     * has not yet implemented the endpoint — the throttle window is NOT advanced on false
+     * so the next foreground will retry immediately.
      */
-    suspend fun refreshFromRemoteApi()
+    suspend fun refreshFromRemoteApi(): Boolean
 
     // ── Debug overrides — no-ops in release builds ────────────────────────────
 

@@ -30,11 +30,14 @@ class FeatureFlagsViewModel @Inject constructor(
         repository.observeOverrides(),
     ) { all, overrides ->
         FeatureFlag.entries.map { flag ->
+            val override = overrides[flag]
             FlagRowState(
                 flag           = flag,
                 resolvedValue  = all[flag] ?: flag.defaultValue,
-                override       = overrides[flag],
-                hasRemoteValue = false,  // extended later when remote-config source is added
+                override       = override,
+                // True when the resolved value comes from the remote config (present in
+                // the merged map) rather than a local override or a hardcoded default.
+                hasRemoteValue = override == null && all.containsKey(flag),
             )
         }
     }.stateIn(

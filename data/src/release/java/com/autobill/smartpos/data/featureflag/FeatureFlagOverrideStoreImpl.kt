@@ -17,7 +17,7 @@ import javax.inject.Singleton
 class FeatureFlagOverrideStoreImpl @Inject constructor() : FeatureFlagOverrideStore {
 
     override fun observeOverrides(): Flow<Map<FeatureFlag, Boolean?>> =
-        flowOf(FeatureFlag.entries.associateWith { null })
+        flowOf(emptyMap())
 
     override suspend fun setOverride(flag: FeatureFlag, enabled: Boolean) = Unit
 
