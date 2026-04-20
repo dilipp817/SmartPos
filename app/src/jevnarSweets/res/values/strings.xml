@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Jevnar Sweets client — string overrides.
+    See acmeCafe/res/values/strings.xml for documentation.
+-->
+<resources>
+    <!-- Add Food Court specific string overrides here -->
+</resources>
+
