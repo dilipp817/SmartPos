@@ -25,6 +25,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -35,6 +38,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.autobill.smartpos.domain.model.OrderType
 
 /**
  * Cart Summary Sidebar - ODRfast Design
@@ -210,18 +214,54 @@ fun CartSummaryFooter(
             }
         }
 
-        // Accept Payment Button
+        // ── Order Type Selector ──────────────────────────────────────────
+        // Dine-In / Take Away toggle — customer preference chosen here, before checkout.
+        val orderTypes = listOf(OrderType.DINE_IN, OrderType.TAKEAWAY)
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            orderTypes.forEachIndexed { index, type ->
+                SegmentedButton(
+                    selected = data.selectedOrderType == type,
+                    onClick  = { data.onOrderTypeChange(type) },
+                    shape    = SegmentedButtonDefaults.itemShape(index = index, count = orderTypes.size),
+                    colors   = SegmentedButtonDefaults.colors(
+                        activeContainerColor  = Color(0xFFE33E3E),
+                        activeContentColor    = Color.White,
+                        inactiveContainerColor = Color.White,
+                        inactiveContentColor  = Color(0xFF212121),
+                    ),
+                ) {
+                    Text(
+                        text  = stringResource(
+                            if (type == OrderType.DINE_IN) R.string.order_type_dine_in
+                            else R.string.order_type_take_away
+                        ),
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                }
+            }
+        }
+
+        // ── Primary action button (context-aware) ─────────────────────────
+        // TABLE_MANAGEMENT=false or TAKEAWAY → "Place Order" (submit immediately)
+        // TABLE_MANAGEMENT=true  + DINE_IN   → "Checkout"   (go to table selection)
+        val showPlaceOrder = !data.isTableManagementEnabled ||
+                data.selectedOrderType == OrderType.TAKEAWAY
+        val cartHasItems = data.itemCount > 0
         Button(
-            onClick = data.onAcceptPayment,
+            onClick = if (showPlaceOrder) data.onPlaceOrder else data.onCheckout,
+            enabled = cartHasItems,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFFE33E3E),
+                disabledContainerColor = Color(0xFFE0E0E0),
             ),
         ) {
             Text(
-                text = stringResource(R.string.accept_payment),
+                text  = stringResource(
+                    if (showPlaceOrder) R.string.action_place_order else R.string.action_checkout
+                ),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
             )

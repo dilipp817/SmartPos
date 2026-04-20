@@ -93,7 +93,7 @@ fun OrderItemEntity.toDomain(): OrderItem = OrderItem(
 fun OrderEntity.toDomain(items: List<OrderItemEntity> = emptyList()): Order = Order(
     id           = id,
     restaurantId = restaurantId,
-    tableId      = tableId ?: 0L,
+    tableId      = tableId,
     tableNumber  = tableNumber,
     orderNumber  = orderNumber,
     status       = OrderStatus.fromValue(status),

@@ -8,11 +8,12 @@ import com.autobill.smartpos.domain.common.TaxConstants
 /**
  * UI state for the Create Order confirmation screen.
  *
- * [table]          — the table selected in Phase 4; null while loading
+ * [table]          — the table selected in Phase 4; null while loading OR when isNoTable=true
+ * [isNoTable]      — true when tableId=0 (TAKEAWAY or TABLE_MANAGEMENT=false order — no table needed)
  * [cartItems]      — local cart snapshot (read-only on this screen)
- * [orderType]      — DINE_IN / TAKEAWAY / DELIVERY; defaults to DINE_IN
+ * [orderType]      — DINE_IN / TAKEAWAY / DELIVERY; pre-set from nav arg
  * [notes]          — optional kitchen/table notes
- * [isTableLoading] — true while fetching table details from cache
+ * [isTableLoading] — true while fetching table details from cache (always false when isNoTable=true)
  * [isSubmitting]   — true while POST /orders is in-flight
  * [isOffline]      — true when ConnectivityMonitor reports no internet (Phase 9.2)
  * [errorMessage]   — non-null when submission failed (shown inline)
@@ -22,6 +23,7 @@ import com.autobill.smartpos.domain.common.TaxConstants
  */
 data class CreateOrderUiState(
     val table: Table? = null,
+    val isNoTable: Boolean = false,
     val cartItems: List<CartItem> = emptyList(),
     val orderType: OrderType = OrderType.DINE_IN,
     val notes: String = "",
@@ -42,6 +44,10 @@ data class CreateOrderUiState(
     /** Estimated total — preview only. */
     val estimatedTotal: Double get() = subtotal + estimatedTax
 
-    /** True when cart is non-empty and no request is in-flight. */
-    val canPlaceOrder: Boolean get() = cartItems.isNotEmpty() && !isSubmitting && !isTableLoading
+    /**
+     * True when the cart is non-empty and no request is in-flight.
+     * For no-table orders [isNoTable=true] we skip table loading entirely,
+     * so [isTableLoading] is always false and does not block submission.
+     */
+    val canPlaceOrder: Boolean get() = cartItems.isNotEmpty() && !isSubmitting && (isNoTable || !isTableLoading)
 }

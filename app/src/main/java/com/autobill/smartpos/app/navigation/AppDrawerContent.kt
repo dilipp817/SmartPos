@@ -68,7 +68,10 @@ private val drawerNavItems = listOf(
     DrawerNavItem(
         icon = Icons.Default.TableBar,
         label = "Tables",
-        navigateTo = Screen.TableList.route,
+        // Navigate with DINE_IN as default — the cashier landing here from the drawer
+        // is managing tables, not mid-checkout. If they select a table it will create
+        // a DINE_IN order (the standard table-service case).
+        navigateTo = Screen.TableList.createRoute("DINE_IN"),
         activeRoutes = setOf(Screen.TableList.route, Screen.CreateOrder.route),
     ),
     DrawerNavItem(

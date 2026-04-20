@@ -51,8 +51,8 @@ enum class ItemStatus(val value: String) {
 data class Order(
     val id: Long,
     val restaurantId: Long,
-    val tableId: Long,
-    val tableNumber: String,
+    val tableId: Long?,       // null for TAKEAWAY / TABLE_MANAGEMENT=false orders
+    val tableNumber: String?, // null when no table assigned
     val orderNumber: String,
     val status: OrderStatus,
     val orderType: OrderType,

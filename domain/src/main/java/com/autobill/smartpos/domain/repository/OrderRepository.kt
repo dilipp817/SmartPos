@@ -25,7 +25,7 @@ interface OrderRepository {
      */
     suspend fun createOrder(
         restaurantId: Long,
-        tableId: Long,
+        tableId: Long?,   // null for TAKEAWAY / TABLE_MANAGEMENT=false (no table assigned)
         cartItems: List<OrderLineItem>,
         orderType: OrderType,
         notes: String?,

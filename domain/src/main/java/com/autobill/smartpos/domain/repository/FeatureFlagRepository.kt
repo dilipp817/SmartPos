@@ -50,7 +50,7 @@ interface FeatureFlagRepository {
      * has not yet implemented the endpoint — the throttle window is NOT advanced on false
      * so the next foreground will retry immediately.
      */
-    suspend fun refreshFromRemoteApi(): Boolean
+    suspend fun refreshFromRemoteApi(restaurantId: Long): Boolean
 
     // ── Debug overrides — no-ops in release builds ────────────────────────────
 

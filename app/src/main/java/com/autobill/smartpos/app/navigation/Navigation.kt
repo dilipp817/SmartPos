@@ -11,9 +11,15 @@ sealed class Screen(val route: String) {
     object FoodDetail : Screen("food_detail/{foodId}") {
         fun createRoute(foodId: Long) = "food_detail/$foodId"
     }
-    object TableList : Screen("table_list")
-    object CreateOrder : Screen("create_order/{tableId}") {
-        fun createRoute(tableId: Long) = "create_order/$tableId"
+    object TableList : Screen("table_list/{orderType}") {
+        fun createRoute(orderType: String) = "table_list/$orderType"
+    }
+    object CreateOrder : Screen("create_order/{tableId}/{orderType}") {
+        /**
+         * [tableId] = 0L means no table (TAKEAWAY or TABLE_MANAGEMENT=false).
+         * [orderType] is the OrderType.value string (e.g. "DINE_IN", "TAKEAWAY").
+         */
+        fun createRoute(tableId: Long, orderType: String) = "create_order/$tableId/$orderType"
     }
     object OrderList : Screen("order_list")
     object OrderDetail : Screen("order_detail/{orderId}") {

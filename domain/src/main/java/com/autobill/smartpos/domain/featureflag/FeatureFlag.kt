@@ -133,6 +133,23 @@ enum class FeatureFlag(
         description  = "Enable table list, table selection, and table CRUD — disable for counter-service restaurants",
     ),
 
+    /**
+     * When TABLE_MANAGEMENT is enabled and the customer chooses Dine-In, controls whether
+     * payment is collected upfront at the counter (before seating) or post-meal via the
+     * Billing screen.
+     *
+     * false (default) — sit → eat → pay at end (standard table-service model)
+     * true            — pay at counter → then seat (fast-casual / canteen model)
+     *
+     * Only evaluated when [TABLE_MANAGEMENT] = true and order type = DINE_IN.
+     * Has no effect on TAKEAWAY orders or counter-service restaurants.
+     */
+    PAY_BEFORE_SEAT(
+        key          = "is_pay_before_seat_enabled",
+        defaultValue = false,
+        description  = "Collect payment upfront at the counter before the customer is seated (dine-in). When disabled, payment is collected after the meal via the Billing screen.",
+    ),
+
     // Scenario 4 uses REALTIME_UPDATES + KITCHEN_DISPLAY above.
     // Scenario 2 uses BILL_PRINTING above.
 }

@@ -8,6 +8,8 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -17,6 +19,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.autobill.smartpos.domain.common.UiState
+import com.autobill.smartpos.domain.model.OrderType
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -34,7 +37,8 @@ import java.util.Locale
 fun HomeRoute(
     modifier: Modifier = Modifier,
     onFoodClick: (Long) -> Unit = {},
-    onCheckoutClick: () -> Unit = {},
+    onCheckoutClick: (OrderType) -> Unit = {},
+    onPlaceOrderClick: (OrderType) -> Unit = {},
     onLogout: () -> Unit = {},
     onNavigateToMenuManagement: () -> Unit = {},
 ) {
@@ -67,6 +71,18 @@ fun HomeRoute(
     val categories by viewModel.categories.collectAsStateWithLifecycle()
     // Real restaurant name — sourced from GET /restaurants/{id} cache populated by MainViewModel
     val restaurantName by viewModel.restaurantName.collectAsStateWithLifecycle()
+
+    // Feature flags that drive checkout button behaviour
+    val isTableManagementEnabled by viewModel.isTableManagementEnabled.collectAsStateWithLifecycle()
+
+    // Order type — customer preference selected here, before checkout.
+    // rememberSaveable preserves the selection across configuration changes (screen rotation).
+    var selectedOrderType by rememberSaveable(
+        stateSaver = Saver(
+            save    = { it.value },                   // persist as the raw String value
+            restore = { OrderType.fromValue(it) },    // restore from String → enum
+        )
+    ) { mutableStateOf(OrderType.DINE_IN) }
 
     // Observe cart state — all sourced from CartViewModel
     val cartItems by cartViewModel.cartItems.collectAsStateWithLifecycle()
@@ -128,12 +144,18 @@ fun HomeRoute(
             total = "₹${String.format(Locale.US, "%.2f", cartTotals.total)}",
             onQuantityIncrease = { foodId -> foodId.toLongOrNull()?.let { cartViewModel.increaseQuantity(it) } },
             onQuantityDecrease = { foodId -> foodId.toLongOrNull()?.let { cartViewModel.decreaseQuantity(it) } },
-            onAcceptPayment = onCheckoutClick,
+            // ── Order type ────────────────────────────────────────────────────
+            selectedOrderType = selectedOrderType,
+            onOrderTypeChange = { selectedOrderType = it },
+            isTableManagementEnabled = isTableManagementEnabled,
+            // ── Primary action callbacks ──────────────────────────────────────
+            // CartSummaryFooter decides which button to show; HomeRoute decides where to go.
+            onPlaceOrder = { onPlaceOrderClick(selectedOrderType) },
+            onCheckout   = { onCheckoutClick(selectedOrderType) },
             onClear = { cartViewModel.clearCart() },
             onReset = { viewModel.resetFilters() },
             onPrint = {},
             // Discount is applied at bill-generation time in BillingScreen (POST /generate-bill?discount=X).
-            // It does not apply at cart stage — hide the button for all roles here.
             canApplyDiscount = false,
             onApplyDiscountClick = {},
             onShowHeldCarts = { showHeldCartsDialog = true },

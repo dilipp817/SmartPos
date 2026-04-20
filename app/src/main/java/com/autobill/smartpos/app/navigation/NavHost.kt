@@ -44,8 +44,8 @@ import com.autobill.smartpos.feature.admin.category.CategoryManagementRoute
 fun AppNavHost(
     startDestination: String,
     onLogout: () -> Unit,
-    canAccessAdmin: Boolean = false,
     modifier: Modifier = Modifier,
+    canAccessAdmin: Boolean = false,
     navController: NavHostController = rememberNavController(),
 ) {
     val currentEntry by navController.currentBackStackEntryAsState()
@@ -123,8 +123,13 @@ private fun AppNavGraph(
                 onFoodClick = { foodId ->
                     navController.navigate(Screen.FoodDetail.createRoute(foodId))
                 },
-                onCheckoutClick = {
-                    navController.navigate(Screen.TableList.route)
+                onCheckoutClick = { orderType ->
+                    // DINE_IN + TABLE_MANAGEMENT=true → go to table selection
+                    navController.navigate(Screen.TableList.createRoute(orderType.value))
+                },
+                onPlaceOrderClick = { orderType ->
+                    // TAKEAWAY or TABLE_MANAGEMENT=false → create order directly (no table)
+                    navController.navigate(Screen.CreateOrder.createRoute(0L, orderType.value))
                 },
                 onLogout = onLogout,
                 onNavigateToMenuManagement = {
@@ -145,21 +150,28 @@ private fun AppNavGraph(
             )
         }
 
-        // Table List / Selection Screen — user selects an available table before creating an order
-        composable(route = Screen.TableList.route) { _ ->
+        // Table List / Selection Screen — user selects an available table before creating a Dine-In order
+        composable(
+            route = Screen.TableList.route,
+            arguments = listOf(navArgument("orderType") { type = NavType.StringType }),
+        ) { entry ->
+            val orderType = entry.arguments?.getString("orderType") ?: "DINE_IN"
             TableRoute(
                 onTableSelected = { tableId ->
-                    navController.navigate(Screen.CreateOrder.createRoute(tableId))
+                    navController.navigate(Screen.CreateOrder.createRoute(tableId, orderType))
                 },
                 onBack = { navController.popBackStack() },
                 modifier = Modifier.fillMaxSize(),
             )
         }
 
-        // Create Order — receives tableId from TableList
+        // Create Order — receives tableId + orderType; tableId=0 means no table (TAKEAWAY)
         composable(
             route = Screen.CreateOrder.route,
-            arguments = listOf(navArgument("tableId") { type = NavType.LongType }),
+            arguments = listOf(
+                navArgument("tableId")   { type = NavType.LongType },
+                navArgument("orderType") { type = NavType.StringType },
+            ),
         ) { _ ->
             CreateOrderRoute(
                 onOrderCreated = { _ ->
@@ -168,8 +180,16 @@ private fun AppNavGraph(
                 },
                 onBack = { navController.popBackStack() },
                 onReselectTable = {
-                    // Pop back to TableList so user can pick a different table
-                    navController.popBackStack(Screen.TableList.route, inclusive = false)
+                    // Table-based orders: pop back to TableList to re-select.
+                    // No-table orders (TAKEAWAY): TableList is not in the back stack —
+                    // fall back to FoodList. In practice a 409 should never fire for
+                    // tableId=0, but we guard it here for safety.
+                    // popBackStack returns true if TableList was found and popped,
+                    // false if it wasn't in the stack (TAKEAWAY / no-table order).
+                    val popped = navController.popBackStack(Screen.TableList.route, inclusive = false)
+                    if (!popped) {
+                        navController.popBackStack(Screen.FoodList.route, inclusive = false)
+                    }
                 },
                 onOrderQueued = {
                     // Order saved offline — go back to FoodList (Phase 9.2)

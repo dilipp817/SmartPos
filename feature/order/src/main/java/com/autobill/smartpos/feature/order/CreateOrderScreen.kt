@@ -67,12 +67,16 @@ import com.autobill.smartpos.feature.order.R
  * │  └──────────────────────┘  │                                 │  │
  * │                            │ Notes: _____________________   │  │
  * │  Order Type:               │                                 │  │
- * │  [DINE_IN] [TAKEAWAY]      │ Subtotal:            ₹490.00  │  │
- * │  [DELIVERY]                │ Est. GST (18%):       ₹88.20  │  │
- * │                            │ Est. Total:          ₹578.20  │  │
- * │                            │    [  Place Order  ]           │  │
+ * │  isNoTable=false:          │ Subtotal:            ₹490.00  │  │
+ * │    [DINE_IN] [TAKEAWAY]   │ Est. GST (18%):       ₹88.20  │  │
+ * │  isNoTable=true:           │ Est. Total:          ₹578.20  │  │
+ * │    [TAKEAWAY] (read-only) │    [  Place Order  ]           │  │
  * │                            └─────────────────────────────────┘  │
  * └─────────────────────────────────────────────────────────────────┘
+ *
+ * [isNoTable] = true when tableId=0 (TAKEAWAY or TABLE_MANAGEMENT=false).
+ * In that case the OrderTypeSelector is replaced by [NoTableOrderTypeBadge] to
+ * prevent the cashier switching back to DINE_IN without a table.
  */
 @Composable
 fun CreateOrderScreen(
@@ -181,10 +185,17 @@ private fun OrderBody(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             uiState.table?.let { TableInfoCard(table = it) }
-            OrderTypeSelector(
-                selected = uiState.orderType,
-                onSelect = onOrderTypeSelect,
-            )
+            // For no-table orders (TAKEAWAY / counter-service) the order type was already
+            // chosen on the food screen and cannot be changed here — switching to DINE_IN
+            // without a table would produce an invalid order.  Show a read-only badge instead.
+            if (uiState.isNoTable) {
+                NoTableOrderTypeBadge(orderType = uiState.orderType)
+            } else {
+                OrderTypeSelector(
+                    selected = uiState.orderType,
+                    onSelect = onOrderTypeSelect,
+                )
+            }
         }
 
         // ── Right column — items + notes + totals + submit ────────────────
@@ -328,6 +339,43 @@ private fun TableInfoCard(table: Table) {
                 style = MaterialTheme.typography.labelSmall,
                 color = Color(0xFF2E7D32),
                 fontWeight = FontWeight.SemiBold,
+            )
+        }
+    }
+}
+
+/**
+ * Read-only order type indicator shown when [CreateOrderUiState.isNoTable] is true.
+ * The cashier already chose the order type on the food screen — it cannot be changed
+ * here because switching to DINE_IN without a table would produce an invalid order.
+ */
+@Composable
+private fun NoTableOrderTypeBadge(orderType: OrderType) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color.White)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.create_order_type_label),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFF424242),
+        )
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color(0xFFFFF3F3))
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+        ) {
+            Text(
+                text = orderType.value.replace("_", " "),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFFE33E3E),
             )
         }
     }

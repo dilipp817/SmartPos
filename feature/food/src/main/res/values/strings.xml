@@ -45,6 +45,14 @@
     <string name="apply_discount">Apply Discount</string>
     <string name="total_amount">Total Amount</string>
     <string name="accept_payment">Accept Payment</string>
+    <!-- Order type selector — shown in cart sidebar above the primary action button -->
+    <string name="order_type_dine_in">Dine-In</string>
+    <string name="order_type_take_away">Take Away</string>
+    <!-- Primary action button — label depends on order type + TABLE_MANAGEMENT flag -->
+    <!-- Shown when TABLE_MANAGEMENT=false OR order type = Take Away -->
+    <string name="action_place_order">Place Order</string>
+    <!-- Shown when TABLE_MANAGEMENT=true AND order type = Dine-In -->
+    <string name="action_checkout">Checkout →</string>
     <string name="clear">Clear</string>
     <string name="reset">Reset</string>
     <string name="print">Print</string>

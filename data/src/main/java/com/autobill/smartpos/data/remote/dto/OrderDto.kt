@@ -17,11 +17,12 @@ data class OrderItemRequestDto(
 
 // DTO: Create Order Request
 // POST /api/v1/restaurants/{restaurantId}/orders
+// table_id is nullable — null for TAKEAWAY / TABLE_MANAGEMENT=false orders (FINAL_ORDER_TYPE_CONTRACT.md C1)
 // customerId removed — backend has no Customer entity (MOBILE_TEAM_RESPONSE.md Point 5, April 17, 2026)
 @JsonClass(generateAdapter = true)
 data class CreateOrderRequest(
     @param:Json(name = "table_id")
-    val tableId: Long,
+    val tableId: Long?,   // null for TAKEAWAY / TABLE_MANAGEMENT=false orders
     @param:Json(name = "items")
     val items: List<OrderItemRequestDto>,
     @param:Json(name = "order_type")
@@ -64,9 +65,9 @@ data class OrderDto(
     @param:Json(name = "restaurant_id")
     val restaurantId: Long,
     @param:Json(name = "table_id")
-    val tableId: Long,
+    val tableId: Long?,          // null for TAKEAWAY / TABLE_MANAGEMENT=false orders
     @param:Json(name = "table_number")
-    val tableNumber: String,
+    val tableNumber: String?,    // null when no table assigned
     @param:Json(name = "order_number")
     val orderNumber: String,
     @param:Json(name = "status")

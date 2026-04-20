@@ -1,6 +1,7 @@
 package com.autobill.smartpos.feature.food
 
 import androidx.compose.runtime.Immutable
+import com.autobill.smartpos.domain.model.OrderType
 
 /**
  * Home Screen Data Models - ODRfast Design
@@ -132,7 +133,15 @@ data class CartSummaryData(
     val total: String = "₹0.00",     // Pre-formatted
     val onQuantityIncrease: (String) -> Unit = {},
     val onQuantityDecrease: (String) -> Unit = {},
-    val onAcceptPayment: () -> Unit = {},
+    // ── Order type (selected on this screen before checkout) ──────────────
+    val selectedOrderType: OrderType = OrderType.DINE_IN,
+    val onOrderTypeChange: (OrderType) -> Unit = {},
+    // ── Feature-flag driven button logic ─────────────────────────────────
+    // TABLE_MANAGEMENT=false or TAKEAWAY → "Place Order" (submit immediately, no table)
+    // TABLE_MANAGEMENT=true  + DINE_IN   → "Checkout"   (proceed to table selection)
+    val isTableManagementEnabled: Boolean = true,
+    val onPlaceOrder: () -> Unit = {},   // TAKEAWAY or TABLE_MANAGEMENT=false
+    val onCheckout: () -> Unit = {},     // DINE_IN + TABLE_MANAGEMENT=true
     val onClear: () -> Unit = {},
     val onReset: () -> Unit = {},
     val onPrint: () -> Unit = {},

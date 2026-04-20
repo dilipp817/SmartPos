@@ -28,7 +28,7 @@ class CreateOrderUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(
         restaurantId: Long,
-        tableId: Long,
+        tableId: Long?,   // null for TAKEAWAY / TABLE_MANAGEMENT=false
         cartItems: List<OrderLineItem>,
         orderType: OrderType,
         notes: String?,

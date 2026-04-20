@@ -19,6 +19,8 @@ import com.autobill.smartpos.domain.usecase.ObserveRestaurantUseCase
 import com.autobill.smartpos.domain.usecase.ObserveRolePermissionsUseCase
 import com.autobill.smartpos.domain.usecase.ObserveSessionUseCase
 import com.autobill.smartpos.domain.usecase.SearchFoodsPaginatedUseCase
+import com.autobill.smartpos.domain.featureflag.FeatureFlag
+import com.autobill.smartpos.domain.repository.FeatureFlagRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
@@ -66,6 +68,7 @@ class FoodViewModel @Inject constructor(
     private val observeRolePermissionsUseCase: ObserveRolePermissionsUseCase,
     private val observeSessionUseCase: ObserveSessionUseCase,
     observeRestaurantUseCase: ObserveRestaurantUseCase,
+    private val featureFlagRepository: FeatureFlagRepository,
 ) : ViewModel() {
 
     // ========== FOOD STATE ==========
@@ -121,6 +124,25 @@ class FoodViewModel @Inject constructor(
     ) { restaurant, user ->
         restaurant?.outletName ?: user?.username ?: context.getString(R.string.brand_name)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), context.getString(R.string.brand_name))
+
+    // ========== FEATURE FLAGS ==========
+
+    /**
+     * Reactive TABLE_MANAGEMENT flag — drives whether "Checkout → Table Selection" or
+     * "Place Order" (direct submit) is shown as the primary cart action.
+     */
+    val isTableManagementEnabled: StateFlow<Boolean> =
+        featureFlagRepository.observe(FeatureFlag.TABLE_MANAGEMENT)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), FeatureFlag.TABLE_MANAGEMENT.defaultValue)
+
+    /**
+     * Reactive PAY_BEFORE_SEAT flag — only meaningful when TABLE_MANAGEMENT=true + DINE_IN.
+     * Passed to CreateOrderViewModel via nav arg so the order can be stamped with the correct
+     * payment_status at creation time.
+     */
+    val isPayBeforeSeat: StateFlow<Boolean> =
+        featureFlagRepository.observe(FeatureFlag.PAY_BEFORE_SEAT)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), FeatureFlag.PAY_BEFORE_SEAT.defaultValue)
 
     // ========== FILTER STATE ==========
 

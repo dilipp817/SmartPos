@@ -3,21 +3,22 @@ package com.autobill.smartpos.data.remote
 import com.autobill.smartpos.data.remote.dto.ApiResponse
 import com.autobill.smartpos.data.remote.dto.FeatureFlagResponseDto
 import retrofit2.http.GET
+import retrofit2.http.Path
 
 /**
  * Retrofit service for fetching feature flags from the backend.
  *
  * Requires a valid Bearer token (sent automatically by AuthInterceptor).
- * Returns per-restaurant flags — the server scopes the response to the
- * restaurant associated with the authenticated user's token.
+ * Returns per-restaurant flags scoped to the given restaurantId.
  *
- * Endpoint to implement on the backend:
- *   GET /api/v1/feature-flags
- *   Response: { "data": { "flags": { "offline_order_queue": false, ... } } }
+ * Endpoint: GET /api/v1/restaurants/{restaurantId}/feature-flags
+ * Contract: FINAL_ORDER_TYPE_CONTRACT.md — Section C3 (April 21, 2026)
  */
 interface FeatureFlagApiService {
 
-    @GET("feature-flags")
-    suspend fun getFeatureFlags(): ApiResponse<FeatureFlagResponseDto>
+    @GET("restaurants/{restaurantId}/feature-flags")
+    suspend fun getFeatureFlags(
+        @Path("restaurantId") restaurantId: Long,
+    ): ApiResponse<FeatureFlagResponseDto>
 }
 

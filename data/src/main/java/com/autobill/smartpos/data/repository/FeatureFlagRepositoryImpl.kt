@@ -76,13 +76,13 @@ class FeatureFlagRepositoryImpl @Inject constructor(
     // ── Remote update ─────────────────────────────────────────────────────────
 
     /**
-     * Fetches GET /feature-flags and persists the result.
+     * Fetches GET /api/v1/restaurants/{restaurantId}/feature-flags and persists the result.
      * Called at startup and on every app foreground via [MainViewModel].
      * Any failure is swallowed — stale cached values remain in effect.
      */
-    override suspend fun refreshFromRemoteApi(): Boolean {
+    override suspend fun refreshFromRemoteApi(restaurantId: Long): Boolean {
         return try {
-            val response = apiService.getFeatureFlags()
+            val response = apiService.getFeatureFlags(restaurantId)
             val flags = response.data?.flags
             if (!flags.isNullOrEmpty()) {
                 remoteStore.updateFromRemote(flags)

@@ -57,7 +57,7 @@ class OrderRepositoryImpl @Inject constructor(
      */
     override suspend fun createOrder(
         restaurantId: Long,
-        tableId: Long,
+        tableId: Long?,   // null for TAKEAWAY / TABLE_MANAGEMENT=false
         cartItems: List<OrderLineItem>,
         orderType: OrderType,
         notes: String?,

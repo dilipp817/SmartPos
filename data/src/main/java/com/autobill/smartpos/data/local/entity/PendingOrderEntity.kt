@@ -24,7 +24,7 @@ data class PendingOrderEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val restaurantId: Long,
-    val tableId: Long,
+    val tableId: Long?,              // null for TAKEAWAY / TABLE_MANAGEMENT=false orders
     val orderType: String,           // DINE_IN | TAKEAWAY | DELIVERY
     val notes: String?,
     val itemsJson: String,           // JSON: List<PendingOrderItem>
