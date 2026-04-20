@@ -114,10 +114,10 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun saveSession(user: User) {
         sessionDataStore.saveUser(user)
-        // Upsert a RestaurantEntity row into Room so that TableEntity, OrderEntity,
-        // BillEntity, and PaymentEntity can satisfy their FOREIGN KEY → restaurants(id).
+        // Upsert a RestaurantEntity row into Room so entities that still reference
+        // restaurants(id) can satisfy their FOREIGN KEY constraint (currently TableEntity).
         // The actual restaurant details (name, address) live in RestaurantDataStore —
-        // this row exists purely as a FK anchor.
+        // this row exists purely as a FK anchor for tables.
         val rid = user.restaurantId ?: return
         restaurantDao.upsert(
             RestaurantEntity(

@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.launchIn
@@ -168,10 +169,13 @@ class FoodViewModel @Inject constructor(
             }
         }
 
-        // Debounce search — triggers 400 ms after the user stops typing
+        // Debounce search — triggers 400 ms after the user stops typing.
+        // drop(1) skips the initial MutableStateFlow("") emission so we don't
+        // duplicate the loadFirstPageInternal() call already made in the init block above.
         @OptIn(FlowPreview::class)
         viewModelScope.launch {
             _searchQuery
+                .drop(1)
                 .debounce(400L)
                 .collectLatest { query ->
                     if (restaurantId == null) return@collectLatest

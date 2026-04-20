@@ -220,7 +220,7 @@ private fun FoodItemRow(
                         }
                 }
                 Text(
-                    "₹${food.price}",
+                    "₹%.2f".format(food.price),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )

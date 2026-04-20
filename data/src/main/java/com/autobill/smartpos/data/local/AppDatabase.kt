@@ -29,8 +29,11 @@ import com.autobill.smartpos.data.local.entity.TableEntity
  *        and PaymentEntity (orderId→OrderEntity, billId→BillEntity).
  *        These FK constraints caused SQLiteConstraintException when server orders/bills
  *        were cached before their referenced parent rows existed locally.
- *        Room is a server-data read-through cache — cross-entity FKs are not appropriate.
- *        Uses fallbackToDestructiveMigration (cache-only DB, data re-fetched on next start).
+ *        Much of this database mirrors server data, so cross-entity FKs on cached rows
+ *        are not appropriate. However, this database is not cache-only: it also stores
+ *        durable offline data in PendingOrderEntity for the pending order queue.
+ *        Because pending orders cannot be re-fetched from the API after local loss,
+ *        destructive migration is not safe while that queue remains stored in Room.
  */
 @Database(
     entities = [

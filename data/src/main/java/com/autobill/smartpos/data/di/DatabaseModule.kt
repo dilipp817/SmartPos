@@ -29,8 +29,14 @@ object DatabaseModule {
             AppDatabase::class.java,
             "smartpos.db",
         )
-            // Room is a server-data read-through cache — destructive migration is safe:
-            // data is re-fetched from the API on next app start.
+            // TODO: Replace with explicit migrations before going live.
+            // Most tables (foods, orders, tables, restaurants) are server-data caches and
+            // safe to drop — they are re-fetched from the API on next start.
+            // However, pending_orders holds user-generated offline orders that have not yet
+            // synced to the server (see PendingOrderDao / SyncWorker). Destructive migration
+            // will silently delete those queued orders on any schema version bump.
+            // For now this is acceptable during pre-production development, but before
+            // release, write an explicit migration that preserves the pending_orders table.
             .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
     }

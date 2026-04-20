@@ -20,7 +20,7 @@
     <string name="order_filter_hold">On Hold</string>
 
     <!-- ── Order Item Card ───────────────────────────────────────────────── -->
-    <!-- %1$d = table number -->
+    <!-- %1$s = table number -->
     <string name="order_card_table">Table %1$s</string>
     <!-- %1$d = item count -->
     <string name="order_card_items_count">%1$d item</string>
@@ -28,7 +28,7 @@
 
     <!-- ── Order Detail Screen ───────────────────────────────────────────── -->
     <string name="order_detail_default_title">Order Detail</string>
-    <!-- %1$d = table number -->
+    <!-- %1$s = table number -->
     <string name="order_detail_table">Table %1$s</string>
     <!-- %1$d = item count -->
     <string name="order_detail_items_section">Items (%1$d)</string>
@@ -88,7 +88,7 @@
     <string name="kitchen_empty_pending">No pending items</string>
     <string name="kitchen_empty_in_progress">No items being prepared</string>
     <string name="kitchen_empty_ready">No items waiting to be served</string>
-    <!-- %1$d = table number -->
+    <!-- %1$s = table number -->
     <string name="kitchen_table_label">Table %1$s</string>
     <string name="kitchen_cancel_button">Cancel</string>
 

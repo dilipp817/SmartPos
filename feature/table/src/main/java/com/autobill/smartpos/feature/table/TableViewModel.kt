@@ -227,12 +227,15 @@ class TableViewModel @Inject constructor(
                     }
                     val isConflict = result.exception is HttpConflictException
                     if (isConflict) {
-                        // M-17: specific conflict message + reload so grid reflects real state
+                        // M-17: specific conflict message shown inline in the dialog.
+                        // Keep statusUpdateDialog open so the ⚠️ error slot is visible —
+                        // nulling it out would close the dialog before the user sees the message.
+                        // loadAll() runs in the background so the grid reflects real server state
+                        // once the user dismisses the dialog.
                         _uiState.update { state ->
                             state.copy(
-                                isUpdatingStatus   = false,
-                                statusUpdateDialog = null,
-                                statusUpdateError  = context.getString(R.string.error_table_conflict),
+                                isUpdatingStatus  = false,
+                                statusUpdateError = context.getString(R.string.error_table_conflict),
                             )
                         }
                         viewModelScope.launch { loadAll() }
