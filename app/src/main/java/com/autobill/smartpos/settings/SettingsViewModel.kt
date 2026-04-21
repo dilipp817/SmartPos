@@ -179,8 +179,8 @@ class SettingsViewModel @Inject constructor(
                 is Result.Failure -> {
                     val msg = when (val err = result.exception.toPrintError()) {
                         PrintError.NoPrinterConfigured -> context.getString(R.string.print_error_no_printer)
-                        PrintError.BluetoothDisabled   -> context.getString(R.string.app_print_error_bluetooth_disabled)
-                        PrintError.ConnectionFailed    -> context.getString(R.string.app_print_error_connection_failed)
+                        PrintError.BluetoothDisabled   -> context.getString(R.string.print_error_bluetooth_disabled)
+                        PrintError.ConnectionFailed    -> context.getString(R.string.print_error_connection_failed)
                         is PrintError.Unknown          -> err.message
                     }
                     _uiState.update { it.copy(isTestPrinting = false, testPrintResult = msg) }

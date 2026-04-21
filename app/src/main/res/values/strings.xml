@@ -4,6 +4,6 @@
     <!-- ── Printer / Settings ────────────────────────────────────────────── -->
     <string name="print_test_success">Test receipt printed successfully ✓</string>
     <string name="print_error_no_printer">No printer selected. Tap \"Select\" to choose one.</string>
-    <string name="app_print_error_bluetooth_disabled">Please enable Bluetooth to print.</string>
-    <string name="app_print_error_connection_failed">Could not connect to printer. Check it is switched on and nearby.</string>
+    <string name="print_error_bluetooth_disabled">Please enable Bluetooth to print.</string>
+    <string name="print_error_connection_failed">Could not connect to printer. Check it is switched on and nearby.</string>
 </resources>
