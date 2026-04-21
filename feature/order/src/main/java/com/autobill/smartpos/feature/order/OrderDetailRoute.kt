@@ -16,7 +16,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 @Composable
 fun OrderDetailRoute(
     onBack: () -> Unit,
-    onBillingClick: (orderId: Long, tableId: Long) -> Unit,
+    onBillingClick: (orderId: Long, tableId: Long?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val viewModel: OrderDetailViewModel = hiltViewModel()

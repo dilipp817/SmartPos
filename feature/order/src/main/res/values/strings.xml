@@ -22,6 +22,7 @@
     <!-- ── Order Item Card ───────────────────────────────────────────────── -->
     <!-- %1$s = table number -->
     <string name="order_card_table">Table %1$s</string>
+    <string name="order_card_no_table">Take Away</string>
     <!-- %1$d = item count -->
     <string name="order_card_items_count">%1$d item</string>
     <string name="order_card_items_count_plural">%1$d items</string>
@@ -30,6 +31,7 @@
     <string name="order_detail_default_title">Order Detail</string>
     <!-- %1$s = table number -->
     <string name="order_detail_table">Table %1$s</string>
+    <string name="order_detail_no_table">Take Away</string>
     <!-- %1$d = item count -->
     <string name="order_detail_items_section">Items (%1$d)</string>
     <string name="order_detail_add_item_button">Add Item</string>
@@ -90,6 +92,7 @@
     <string name="kitchen_empty_ready">No items waiting to be served</string>
     <!-- %1$s = table number -->
     <string name="kitchen_table_label">Table %1$s</string>
+    <string name="kitchen_no_table_label">Take Away</string>
     <string name="kitchen_cancel_button">Cancel</string>
 
     <!-- ── Kitchen filter enum labels ────────────────────────────────────── -->

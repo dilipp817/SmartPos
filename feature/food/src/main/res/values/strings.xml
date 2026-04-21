@@ -101,6 +101,12 @@
     <string name="error_no_restaurant_assigned">No restaurant assigned to this account. Please log in with a counter or manager account.</string>
     <string name="error_load_food_details_title">Couldn\'t load food details</string>
 
+    <!-- ── Order placement feedback (snackbar — non-blocking) ────────────── -->
+    <string name="snack_order_placed">✓ Order placed</string>
+    <string name="snack_order_failed">Failed to place order</string>
+    <!-- %1$s = error detail message -->
+    <string name="cart_order_error">Order failed: %1$s</string>
+
     <!-- ── Content descriptions (accessibility) ──────────────────────────── -->
     <string name="cd_back">Back</string>
     <string name="cd_increase">Increase</string>

@@ -28,18 +28,9 @@ import javax.inject.Inject
  *
  * Single responsibility: manage cart state and expose pre-computed display totals.
  * Deliberately isolated from food-list concerns — [FoodViewModel] handles pagination.
+ * Order placement is handled by [PlaceOrderViewModel].
  *
- * Testability: only 5 constructor params, all interfaces.
- *
- *   val vm = CartViewModel(
- *       getCartUseCase       = FakeGetCartUseCase(flowOf(listOf(pizzaItem))),
- *       addToCartUseCase     = FakeAddToCartUseCase(),
- *       increaseCartQuantityUseCase  = FakeIncreaseCartQuantityUseCase(),
- *       decreaseCartQuantityUseCase  = FakeDecreaseCartQuantityUseCase(),
- *       clearCartUseCase     = FakeClearCartUseCase(),
- *   )
- *   assertEquals(1, vm.cartItems.value.size)
- *   assertEquals(18.0, vm.cartTotals.value.tax, 0.001)  // 18% of 100
+ * Testability: 6 constructor params, all interfaces.
  */
 @HiltViewModel
 class CartViewModel @Inject constructor(
@@ -171,3 +162,4 @@ class CartViewModel @Inject constructor(
         _heldCarts.update { list -> list.filter { it.id != heldCartId } }
     }
 }
+

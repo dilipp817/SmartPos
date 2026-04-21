@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.autobill.smartpos.domain.model.OrderType
+import androidx.compose.material3.CircularProgressIndicator
 
 /**
  * Cart Summary Sidebar - ODRfast Design
@@ -249,7 +250,7 @@ fun CartSummaryFooter(
         val cartHasItems = data.itemCount > 0
         Button(
             onClick = if (showPlaceOrder) data.onPlaceOrder else data.onCheckout,
-            enabled = cartHasItems,
+            enabled = cartHasItems && !data.isPlacingOrder,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
@@ -258,12 +259,30 @@ fun CartSummaryFooter(
                 disabledContainerColor = Color(0xFFE0E0E0),
             ),
         ) {
+            if (data.isPlacingOrder) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(22.dp),
+                    color = Color.White,
+                    strokeWidth = 2.dp,
+                )
+            } else {
+                Text(
+                    text  = stringResource(
+                        if (showPlaceOrder) R.string.action_place_order else R.string.action_checkout
+                    ),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+        }
+
+        // Inline error from a failed quick order attempt
+        if (data.placeOrderError != null) {
             Text(
-                text  = stringResource(
-                    if (showPlaceOrder) R.string.action_place_order else R.string.action_checkout
-                ),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
+                text     = stringResource(R.string.cart_order_error, data.placeOrderError),
+                style    = MaterialTheme.typography.bodySmall,
+                color    = MaterialTheme.colorScheme.error,
+                modifier = Modifier.fillMaxWidth(),
             )
         }
 

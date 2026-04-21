@@ -285,7 +285,11 @@ private fun OrderDetailTopBar(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(stringResource(R.string.order_detail_table, order.tableNumber), style = MaterialTheme.typography.bodyMedium,
+                Text(
+                    text = order.tableNumber
+                        ?.let { stringResource(R.string.order_detail_table, it) }
+                        ?: stringResource(R.string.order_detail_no_table),
+                    style = MaterialTheme.typography.bodyMedium,
                     color = Color(0xFF424242), fontWeight = FontWeight.SemiBold)
                 Text("·", style = MaterialTheme.typography.bodySmall, color = Color(0xFF9E9E9E))
                 Text(order.orderType.value.replace("_", " "),

@@ -52,12 +52,11 @@ fun CreateOrderRoute(
     }
 
     CreateOrderScreen(
-        uiState           = uiState,
-        onOrderTypeSelect = viewModel::selectOrderType,
-        onNotesChange     = viewModel::updateNotes,
-        onPlaceOrder      = viewModel::placeOrder,
-        onBack            = onBack,
-        onReselectTable   = onReselectTable,
-        modifier          = modifier,
+        uiState         = uiState,
+        onNotesChange   = viewModel::updateNotes,
+        onPlaceOrder    = viewModel::placeOrder,
+        onBack          = onBack,
+        onReselectTable = onReselectTable,
+        modifier        = modifier,
     )
 }

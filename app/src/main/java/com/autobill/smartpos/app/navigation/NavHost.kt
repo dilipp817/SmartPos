@@ -127,10 +127,6 @@ private fun AppNavGraph(
                     // DINE_IN + TABLE_MANAGEMENT=true → go to table selection
                     navController.navigate(Screen.TableList.createRoute(orderType.value))
                 },
-                onPlaceOrderClick = { orderType ->
-                    // TAKEAWAY or TABLE_MANAGEMENT=false → create order directly (no table)
-                    navController.navigate(Screen.CreateOrder.createRoute(0L, orderType.value))
-                },
                 onLogout = onLogout,
                 onNavigateToMenuManagement = {
                     navController.navigate(Screen.MenuManagement.route)
@@ -229,7 +225,9 @@ private fun AppNavGraph(
             OrderDetailRoute(
                 onBack = { navController.popBackStack() },
                 onBillingClick = { orderId, tableId ->
-                    navController.navigate(Screen.OrderBilling.createRoute(orderId, tableId))
+                    // -1L is the sentinel for "no table" (TAKEAWAY / no table-management).
+                    // PaymentViewModel skips freeTable() when tableId == -1L.
+                    navController.navigate(Screen.OrderBilling.createRoute(orderId, tableId ?: -1L))
                 },
                 modifier = Modifier.fillMaxSize(),
             )

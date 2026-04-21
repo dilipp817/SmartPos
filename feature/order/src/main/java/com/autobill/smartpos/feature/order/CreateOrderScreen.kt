@@ -66,22 +66,22 @@ import com.autobill.smartpos.feature.order.R
  * │  │ AVAILABLE           │  │  • Naan x1             ₹50.00  │  │
  * │  └──────────────────────┘  │                                 │  │
  * │                            │ Notes: _____________________   │  │
- * │  Order Type:               │                                 │  │
- * │  isNoTable=false:          │ Subtotal:            ₹490.00  │  │
- * │    [DINE_IN] [TAKEAWAY]   │ Est. GST (18%):       ₹88.20  │  │
- * │  isNoTable=true:           │ Est. Total:          ₹578.20  │  │
- * │    [TAKEAWAY] (read-only) │    [  Place Order  ]           │  │
+ * │  Order Type: [DINE IN]     │                                 │  │
+ * │  (read-only badge)         │ Subtotal:            ₹490.00  │  │
+ * │                            │ Est. GST (18%):       ₹88.20  │  │
+ * │                            │ Est. Total:          ₹578.20  │  │
+ * │                            │    [  Place Order  ]           │  │
  * │                            └─────────────────────────────────┘  │
  * └─────────────────────────────────────────────────────────────────┘
  *
- * [isNoTable] = true when tableId=0 (TAKEAWAY or TABLE_MANAGEMENT=false).
- * In that case the OrderTypeSelector is replaced by [NoTableOrderTypeBadge] to
- * prevent the cashier switching back to DINE_IN without a table.
+ * Order type is **always read-only** on this screen — it was chosen on the food
+ * selection screen and cannot be changed here without invalidating the table
+ * reservation or losing the no-table contract. [NoTableOrderTypeBadge] is used
+ * for both DINE_IN (table selected) and TAKEAWAY (no table) cases.
  */
 @Composable
 fun CreateOrderScreen(
     uiState: CreateOrderUiState,
-    onOrderTypeSelect: (OrderType) -> Unit,
     onNotesChange: (String) -> Unit,
     onPlaceOrder: () -> Unit,
     onBack: () -> Unit,
@@ -126,10 +126,9 @@ fun CreateOrderScreen(
             uiState.isTableLoading -> CenteredLoading(stringResource(R.string.create_order_loading_table))
             uiState.tableConflict  -> TableConflictBanner(onReselectTable = onReselectTable)
             else -> OrderBody(
-                uiState           = uiState,
-                onOrderTypeSelect = onOrderTypeSelect,
-                onNotesChange     = onNotesChange,
-                onPlaceOrder      = onPlaceOrder,
+                uiState       = uiState,
+                onNotesChange = onNotesChange,
+                onPlaceOrder  = onPlaceOrder,
             )
         }
     }
@@ -169,7 +168,6 @@ private fun OrderHeader(onBack: () -> Unit) {
 @Composable
 private fun OrderBody(
     uiState: CreateOrderUiState,
-    onOrderTypeSelect: (OrderType) -> Unit,
     onNotesChange: (String) -> Unit,
     onPlaceOrder: () -> Unit,
 ) {
@@ -185,17 +183,13 @@ private fun OrderBody(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             uiState.table?.let { TableInfoCard(table = it) }
-            // For no-table orders (TAKEAWAY / counter-service) the order type was already
-            // chosen on the food screen and is shown as read-only here. Switching back to
-            // DINE_IN would require table selection when table management is in use.
-            if (uiState.isNoTable) {
-                NoTableOrderTypeBadge(orderType = uiState.orderType)
-            } else {
-                OrderTypeSelector(
-                    selected = uiState.orderType,
-                    onSelect = onOrderTypeSelect,
-                )
-            }
+            // Order type was chosen on the food screen and is always read-only here.
+            // - isNoTable=true  → TAKEAWAY / counter-service (no table)
+            // - isNoTable=false → DINE_IN with a selected table
+            // In both cases switching order type here would put the order in an
+            // inconsistent state (e.g. switching to DINE_IN without a table, or
+            // switching to TAKEAWAY after a table was reserved).
+            NoTableOrderTypeBadge(orderType = uiState.orderType)
         }
 
         // ── Right column — items + notes + totals + submit ────────────────
@@ -381,76 +375,6 @@ private fun NoTableOrderTypeBadge(orderType: OrderType) {
     }
 }
 
-@Composable
-private fun OrderTypeSelector(
-    selected: OrderType,
-    onSelect: (OrderType) -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color.White)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Text(
-            text = stringResource(R.string.create_order_type_label),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF424242),
-        )
-        // DELIVERY is disabled — backend has no delivery fields (address, phone, rider ID).
-        // Both teams must design and ship it together. See MOBILE_TEAM_RESPONSE.md Point 1.
-        OrderType.entries
-            .filter { it != OrderType.DELIVERY }
-            .forEach { type ->
-                OrderTypeChip(
-                    label = type.value.replace("_", " "),
-                    isSelected = selected == type,
-                    onClick = { onSelect(type) },
-                )
-            }
-    }
-}
-
-@Composable
-private fun OrderTypeChip(
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .border(
-                width = 1.dp,
-                color = if (isSelected) Color(0xFFE33E3E) else Color(0xFFE0E0E0),
-                shape = RoundedCornerShape(10.dp),
-            )
-            .background(if (isSelected) Color(0xFFFFF3F3) else Color.White)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (isSelected) Color(0xFFE33E3E) else Color(0xFF424242),
-        )
-        if (isSelected) {
-            Icon(
-                Icons.Default.Check,
-                contentDescription = null,
-                tint = Color(0xFFE33E3E),
-                modifier = Modifier.size(18.dp),
-            )
-        }
-    }
-}
 
 @Composable
 private fun CartItemRow(item: CartItem) {

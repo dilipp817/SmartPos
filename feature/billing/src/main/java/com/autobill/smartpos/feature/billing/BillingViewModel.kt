@@ -50,9 +50,9 @@ class BillingViewModel @Inject constructor(
     private val orderId: Long = checkNotNull(savedStateHandle["orderId"]) {
         "orderId nav-arg is required for BillingViewModel"
     }
-    private val tableId: Long = checkNotNull(savedStateHandle["tableId"]) {
-        "tableId nav-arg is required for BillingViewModel"
-    }
+    // -1L is the sentinel for "no table" (TAKEAWAY / TABLE_MANAGEMENT=false).
+    // BillingRoute passes it through to PaymentViewModel which skips freeTable() accordingly.
+    private val tableId: Long = savedStateHandle["tableId"] ?: -1L
 
     private val _uiState = MutableStateFlow(BillingUiState(orderId = orderId, tableId = tableId))
     val uiState: StateFlow<BillingUiState> = _uiState.asStateFlow()
