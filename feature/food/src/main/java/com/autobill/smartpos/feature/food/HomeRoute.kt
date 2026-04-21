@@ -1,5 +1,6 @@
 package com.autobill.smartpos.feature.food
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
@@ -364,10 +365,10 @@ fun HomeRoute(
             }
         },
         containerColor = Color.Transparent,
-    ) { _ ->
+    ) { paddingValues ->
         HomeScreen(
             data     = homeScreenData,
-            modifier = modifier,
+            modifier = modifier.padding(paddingValues),
         )
     }
 }
