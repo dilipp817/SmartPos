@@ -37,9 +37,10 @@ sealed class Screen(val route: String) {
     /**
      * Order-specific bill generation screen.
      * Navigate here from Order Detail → "Generate Bill".
-     * Requires [orderId] and [tableId] so the table can be freed after payment.
+     * [tableId] = -1L means no table (TAKEAWAY / TABLE_MANAGEMENT=false) — table will NOT be freed after payment.
      */
     object OrderBilling : Screen("order_billing/{orderId}/{tableId}") {
+        /** Pass [tableId] = -1L for TAKEAWAY / no-table orders. */
         fun createRoute(orderId: Long, tableId: Long) = "order_billing/$orderId/$tableId"
     }
 
@@ -47,6 +48,7 @@ sealed class Screen(val route: String) {
      * Payment screen.
      * [totalAmount] and [remainingAmount] are passed as String because
      * NavType does not support Double — PaymentViewModel parses them back.
+     * [tableId] = -1L means no table — [PaymentViewModel] will skip [FreeTableUseCase].
      */
     object Payment : Screen("payment/{billId}/{orderId}/{tableId}/{totalAmount}/{remainingAmount}") {
         fun createRoute(

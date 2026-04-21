@@ -101,10 +101,16 @@ fun HomeRoute(
     val strOrderPlaced    = stringResource(R.string.snack_order_placed)
     val strOrderFailed    = stringResource(R.string.snack_order_failed)
 
+    // Tracks whether the most recently queued snackbar is a success or error.
+    // Set synchronously before showSnackbar so the Scaffold can colour the snackbar
+    // correctly without parsing the message text.
+    var lastSnackbarIsSuccess by remember { mutableStateOf(true) }
+
     // Non-blocking success snackbar — auto-dismisses, cashier can start next order immediately
     LaunchedEffect(placeOrderState.orderPlaced) {
         if (placeOrderState.orderPlaced) {
             placeOrderViewModel.onOrderPlacedConsumed()
+            lastSnackbarIsSuccess = true
             snackbarHostState.showSnackbar(
                 message  = strOrderPlaced,
                 duration = SnackbarDuration.Short,
@@ -117,6 +123,7 @@ fun HomeRoute(
         val error = placeOrderState.errorMessage
         if (error != null) {
             placeOrderViewModel.clearError()
+            lastSnackbarIsSuccess = false
             snackbarHostState.showSnackbar(
                 message  = "$strOrderFailed: $error",
                 duration = SnackbarDuration.Long,
@@ -356,11 +363,10 @@ fun HomeRoute(
     Scaffold(
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState) { data ->
-                val isSuccess = data.visuals.message.startsWith("✓")
                 Snackbar(
-                    snackbarData    = data,
-                    containerColor  = if (isSuccess) Color(0xFF388E3C) else Color(0xFFC62828),
-                    contentColor    = Color.White,
+                    snackbarData   = data,
+                    containerColor = if (lastSnackbarIsSuccess) Color(0xFF388E3C) else Color(0xFFC62828),
+                    contentColor   = Color.White,
                 )
             }
         },

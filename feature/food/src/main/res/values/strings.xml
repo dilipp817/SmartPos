@@ -104,6 +104,8 @@
     <!-- ── Order placement feedback (snackbar — non-blocking) ────────────── -->
     <string name="snack_order_placed">✓ Order placed</string>
     <string name="snack_order_failed">Failed to place order</string>
+    <!-- %1$s = error detail message -->
+    <string name="cart_order_error">Order failed: %1$s</string>
 
     <!-- ── Content descriptions (accessibility) ──────────────────────────── -->
     <string name="cd_back">Back</string>

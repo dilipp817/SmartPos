@@ -279,9 +279,9 @@ fun CartSummaryFooter(
         // Inline error from a failed quick order attempt
         if (data.placeOrderError != null) {
             Text(
-                text  = "⚠ ${data.placeOrderError}",
-                style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFFC62828),
+                text     = stringResource(R.string.cart_order_error, data.placeOrderError),
+                style    = MaterialTheme.typography.bodySmall,
+                color    = MaterialTheme.colorScheme.error,
                 modifier = Modifier.fillMaxWidth(),
             )
         }

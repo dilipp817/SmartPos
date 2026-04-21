@@ -56,12 +56,20 @@ class PlaceOrderViewModel @Inject constructor(
     fun placeOrder(orderType: OrderType) {
         if (_state.value.isSubmitting) return
 
-        viewModelScope.launch {
-            val restaurantId = getRestaurantIdUseCase() ?: return@launch
-            val cartItems    = getCartUseCase().first()
-            if (cartItems.isEmpty()) return@launch
+        // Set isSubmitting synchronously — before any suspension point — so rapid
+        // double-taps cannot launch a second coroutine while the first is in-flight.
+        _state.update { it.copy(isSubmitting = true, errorMessage = null) }
 
-            _state.update { it.copy(isSubmitting = true, errorMessage = null) }
+        viewModelScope.launch {
+            val restaurantId = getRestaurantIdUseCase() ?: run {
+                _state.update { it.copy(isSubmitting = false) }
+                return@launch
+            }
+            val cartItems = getCartUseCase().first()
+            if (cartItems.isEmpty()) {
+                _state.update { it.copy(isSubmitting = false) }
+                return@launch
+            }
 
             val lineItems = cartItems.map { OrderLineItem(foodId = it.foodId, quantity = it.quantity) }
 
@@ -82,7 +90,11 @@ class PlaceOrderViewModel @Inject constructor(
                         _state.update { it.copy(isSubmitting = false, orderPlaced = true) }
                     } else {
                         _state.update {
-                            it.copy(isSubmitting = false, errorMessage = result.exception.message)
+                            it.copy(
+                                isSubmitting = false,
+                                errorMessage = result.exception.message
+                                    ?: "Failed to place order. Please try again.",
+                            )
                         }
                     }
                 }

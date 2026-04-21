@@ -225,7 +225,9 @@ private fun AppNavGraph(
             OrderDetailRoute(
                 onBack = { navController.popBackStack() },
                 onBillingClick = { orderId, tableId ->
-                    navController.navigate(Screen.OrderBilling.createRoute(orderId, tableId ?: 0L))
+                    // -1L is the sentinel for "no table" (TAKEAWAY / no table-management).
+                    // PaymentViewModel skips freeTable() when tableId == -1L.
+                    navController.navigate(Screen.OrderBilling.createRoute(orderId, tableId ?: -1L))
                 },
                 modifier = Modifier.fillMaxSize(),
             )

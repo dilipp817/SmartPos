@@ -270,8 +270,11 @@ class PaymentViewModel @Inject constructor(
      * Explicitly releases the table to AVAILABLE after every successful payment.
      * Backend does NOT auto-release tables on payment (contract §3.2).
      * Failure is logged but suppressed — payment already succeeded, cashier is present.
+     *
+     * Skipped entirely when [tableId] == -1L (TAKEAWAY / no-table order).
      */
     private suspend fun freeTable() {
+        if (tableId == -1L) return   // no table to release for TAKEAWAY / no-table orders
         val rid = restaurantId ?: return
         val result = freeTableUseCase(rid, tableId)
         if (result is Result.Failure) {
