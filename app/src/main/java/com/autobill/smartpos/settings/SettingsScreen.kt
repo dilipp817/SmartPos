@@ -23,6 +23,7 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Print
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
@@ -35,6 +36,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -71,6 +73,10 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onToggleDarkTheme: () -> Unit,
     onLogout: () -> Unit,
+    onSelectPrinterClick: () -> Unit,
+    onPrinterSelected: (com.autobill.smartpos.domain.printer.PrinterDevice) -> Unit,
+    onDismissPrinterPicker: () -> Unit,
+    onTestPrint: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
@@ -196,6 +202,69 @@ fun SettingsScreen(
                 }
             }
 
+            // ── Printer section ─────────────────────────────────────────────
+            item {
+                SettingsSectionCard(
+                    icon  = Icons.Default.Print,
+                    title = "Printer",
+                ) {
+                    Row(
+                        modifier             = Modifier.fillMaxWidth(),
+                        verticalAlignment    = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text  = uiState.selectedPrinter?.name ?: "No printer selected",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = if (uiState.selectedPrinter != null) FontWeight.Medium else FontWeight.Normal,
+                                color = if (uiState.selectedPrinter != null)
+                                    MaterialTheme.colorScheme.onSurface
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(
+                                text  = "ESC/POS Bluetooth Thermal Printer",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        OutlinedButton(
+                            onClick = onSelectPrinterClick,
+                            shape   = RoundedCornerShape(8.dp),
+                        ) {
+                            Text(if (uiState.selectedPrinter != null) "Change" else "Select")
+                        }
+                    }
+                    // Test Print button — visible only when a printer is saved
+                    if (uiState.selectedPrinter != null) {
+                        OutlinedButton(
+                            onClick  = onTestPrint,
+                            enabled  = !uiState.isTestPrinting,
+                            shape    = RoundedCornerShape(8.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            if (uiState.isTestPrinting) {
+                                CircularProgressIndicator(
+                                    modifier    = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Printing…")
+                            } else {
+                                Icon(
+                                    Icons.Default.Print,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Test Print")
+                            }
+                        }
+                    }
+                }
+            }
+
             // ── Appearance section ──────────────────────────────────────────
             item {
                 SettingsSectionCard(
@@ -314,6 +383,58 @@ fun SettingsScreen(
                     Text("Cancel")
                 }
             },
+        )
+    }
+
+    // ── Printer Picker Dialog ──────────────────────────────────────────────────
+    if (uiState.showPrinterPickerDialog) {
+        AlertDialog(
+            onDismissRequest = onDismissPrinterPicker,
+            title = { Text("Select Printer", fontWeight = FontWeight.Bold) },
+            text  = {
+                Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                    if (!uiState.isBluetoothEnabled) {
+                        Text(
+                            text  = "Bluetooth is turned off.\n\nPlease enable Bluetooth in your device settings, then tap \"Select\" again.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    } else if (uiState.pairedDevices.isEmpty()) {
+                        Text(
+                            text  = "No paired Bluetooth devices found.\n\nPair your thermal printer via Android Settings → Bluetooth, then return here.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    } else {
+                        uiState.pairedDevices.forEach { device ->
+                            Row(
+                                modifier          = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                RadioButton(
+                                    selected  = uiState.selectedPrinter?.macAddress == device.macAddress,
+                                    onClick   = { onPrinterSelected(device) },
+                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text  = device.name,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = onDismissPrinterPicker) { Text("Close") }
+            },
+            shape          = RoundedCornerShape(16.dp),
+            containerColor = MaterialTheme.colorScheme.surface,
         )
     }
 }

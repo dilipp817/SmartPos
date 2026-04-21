@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Print
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Search
@@ -94,6 +95,7 @@ fun OrderDetailScreen(
     onStatusUpdate: (OrderStatus) -> Unit,
     // Billing
     onBillingClick: () -> Unit,
+    onPrintClick: () -> Unit,
     // Add Item
     onAddItemClick: () -> Unit,
     onDismissAddItemDialog: () -> Unit,
@@ -140,6 +142,12 @@ fun OrderDetailScreen(
         }
     }
 
+    LaunchedEffect(uiState.printResultMessage) {
+        uiState.printResultMessage?.let {
+            snackbarHostState.showSnackbar(it)
+        }
+    }
+
     Box(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -182,6 +190,7 @@ fun OrderDetailScreen(
                         onRemoveItem  = onRemoveItem,
                         onCancelOrder = onShowCancelDialog,
                         onBillingClick = onBillingClick,
+                        onPrintClick   = onPrintClick,
                     )
                 }
             }
@@ -347,6 +356,7 @@ private fun OrderDetailContent(
     onRemoveItem: (Long) -> Unit,
     onCancelOrder: () -> Unit,
     onBillingClick: () -> Unit,
+    onPrintClick: () -> Unit,
 ) {
     val order = uiState.order ?: return
     LazyColumn(
@@ -411,13 +421,29 @@ private fun OrderDetailContent(
                     colors   = ButtonDefaults.buttonColors(containerColor = Color(0xFF1B5E20)),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Icon(
-                        Icons.Default.Receipt,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
+                    Icon(Icons.Default.Receipt, null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(R.string.order_detail_generate_bill), fontWeight = FontWeight.SemiBold)
+                }
+            }
+
+            // Print receipt button (available whenever there is an order)
+            item {
+                OutlinedButton(
+                    onClick  = onPrintClick,
+                    enabled  = !uiState.isPrinting,
+                    shape    = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    if (uiState.isPrinting) {
+                        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Printing…")
+                    } else {
+                        Icon(Icons.Default.Print, null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Print Receipt", fontWeight = FontWeight.SemiBold)
+                    }
                 }
             }
         }

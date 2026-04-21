@@ -48,6 +48,7 @@ fun HomeRoute(
     onCheckoutClick: (OrderType) -> Unit = {},
     onLogout: () -> Unit = {},
     onNavigateToMenuManagement: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {},
 ) {
     val viewModel: FoodViewModel = hiltViewModel()
     val cartViewModel: CartViewModel = hiltViewModel()
@@ -131,6 +132,24 @@ fun HomeRoute(
         }
     }
 
+    // Print result snackbar (after TAKEAWAY order placed + print tapped)
+    LaunchedEffect(placeOrderState.printResultMessage) {
+        val msg = placeOrderState.printResultMessage
+        if (msg != null) {
+            placeOrderViewModel.onPrintResultConsumed()
+            lastSnackbarIsSuccess = !msg.lowercase().contains("fail") && !msg.lowercase().contains("error")
+            snackbarHostState.showSnackbar(message = msg, duration = SnackbarDuration.Short)
+        }
+    }
+
+    // One-shot: no printer configured → navigate to Settings so user can set up a printer
+    LaunchedEffect(placeOrderState.navigateToPrinterSettings) {
+        if (placeOrderState.navigateToPrinterSettings) {
+            placeOrderViewModel.onNavigateToPrinterSettingsConsumed()
+            onNavigateToSettings()
+        }
+    }
+
     // ── String resources ────────────────────────────────────────────────────
     val strNewSale          = stringResource(R.string.new_sale)
     val strDefaultTable     = stringResource(R.string.cart_default_table_number)
@@ -196,7 +215,11 @@ fun HomeRoute(
             onCheckout   = { onCheckoutClick(selectedOrderType) },
             onClear = { cartViewModel.clearCart() },
             onReset = { viewModel.resetFilters() },
-            onPrint = {},
+            onPrint = {
+                if (placeOrderState.lastOrder != null) {
+                    placeOrderViewModel.printLastOrder()
+                }
+            },
             // Discount is applied at bill-generation time in BillingScreen (POST /generate-bill?discount=X).
             canApplyDiscount = false,
             onApplyDiscountClick = {},

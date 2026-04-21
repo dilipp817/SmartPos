@@ -9,8 +9,13 @@ import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.usecase.CancelBillUseCase
 import com.autobill.smartpos.domain.usecase.GenerateBillUseCase
 import com.autobill.smartpos.domain.usecase.GetBillByIdUseCase
+import com.autobill.smartpos.domain.usecase.GetOrderByIdUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
 import com.autobill.smartpos.domain.usecase.ObserveRolePermissionsUseCase
+import com.autobill.smartpos.domain.printer.PrintError
+import com.autobill.smartpos.domain.printer.PrintJobFactory
+import com.autobill.smartpos.domain.printer.toPrintError
+import com.autobill.smartpos.domain.usecase.PrintBillUseCase
 import com.autobill.smartpos.feature.billing.R
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -43,6 +48,9 @@ class BillingViewModel @Inject constructor(
     private val generateBillUseCase: GenerateBillUseCase,
     private val getBillByIdUseCase: GetBillByIdUseCase,
     private val cancelBillUseCase: CancelBillUseCase,
+    private val getOrderByIdUseCase: GetOrderByIdUseCase,
+    private val printBillUseCase: PrintBillUseCase,
+    private val printJobFactory: PrintJobFactory,
     observeRolePermissionsUseCase: ObserveRolePermissionsUseCase,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
@@ -196,6 +204,52 @@ class BillingViewModel @Inject constructor(
     fun onNavigateToPaymentConsumed() {
         _uiState.update { it.copy(navigateToPayment = false) }
     }
+
+    // ── Print ─────────────────────────────────────────────────────────────────
+
+    /**
+     * Print the current bill receipt.
+     * Fetches the full [Order] (for order type + table number) then builds the
+     * [PrintJob] using server-computed tax values from the [Bill].
+     */
+    fun printBill() {
+        val bill = _uiState.value.bill ?: return
+        if (_uiState.value.isPrinting) return
+        _uiState.update { it.copy(isPrinting = true, printResultMessage = null) }
+        viewModelScope.launch {
+            val rid = getRestaurantIdUseCase() ?: run {
+                _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.error_session_expired)) }
+                return@launch
+            }
+            val orderResult = getOrderByIdUseCase(rid, orderId)
+            if (orderResult is Result.Failure) {
+                _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.print_error_load_order)) }
+                return@launch
+            }
+            val order = (orderResult as Result.Success).data
+            val job = printJobFactory.fromBillAndOrder(bill, order)
+            when (val result = printBillUseCase(job)) {
+                is Result.Success ->
+                    _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.print_success)) }
+                is Result.Failure -> {
+                    when (val err = result.exception.toPrintError()) {
+                        PrintError.NoPrinterConfigured ->
+                            _uiState.update { it.copy(isPrinting = false, navigateToPrinterSettings = true) }
+                        PrintError.BluetoothDisabled ->
+                            _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.print_error_bluetooth_disabled)) }
+                        PrintError.ConnectionFailed ->
+                            _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.print_error_connection_failed)) }
+                        is PrintError.Unknown ->
+                            _uiState.update { it.copy(isPrinting = false, printResultMessage = err.message) }
+                    }
+                }
+                else -> Unit
+            }
+        }
+    }
+
+    fun onPrintResultConsumed() = _uiState.update { it.copy(printResultMessage = null) }
+    fun onNavigateToPrinterSettingsConsumed() = _uiState.update { it.copy(navigateToPrinterSettings = false) }
 
     // ── One-shot consumers ───────────────────────────────────────────────────
 
