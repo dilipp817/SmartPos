@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.first
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -30,7 +31,7 @@ import javax.inject.Singleton
  *  | Restaurant name | [ObserveRestaurantUseCase] |
  *  | Address         | [ObserveRestaurantUseCase] |
  *  | Cashier name    | [ObserveSessionUseCase]    |
- *  | Timestamp       | Device clock (IST)         |
+   Timestamp        Device clock (IST / Asia/Kolkata, always)
  *  | Items / totals  | Passed-in [Order] / [Bill] |
  */
 @Singleton
@@ -109,7 +110,9 @@ class PrintJobFactory @Inject constructor(
     }
 
     private fun currentTimestamp(): String =
-        SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.ENGLISH).format(Date())
+        SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.ENGLISH)
+            .also { it.timeZone = TimeZone.getTimeZone("Asia/Kolkata") }
+            .format(Date())
 
     /** Aggregates the data sources that are the same for every receipt variant. */
     private data class PrintContext(

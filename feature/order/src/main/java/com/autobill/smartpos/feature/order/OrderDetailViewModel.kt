@@ -520,15 +520,15 @@ class OrderDetailViewModel @Inject constructor(
             val job = printJobFactory.fromOrder(order)
             when (val result = printBillUseCase(job)) {
                 is Result.Success ->
-                    _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.print_success)) }
+                    _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.order_print_success)) }
                 is Result.Failure -> {
                     when (val err = result.exception.toPrintError()) {
                         PrintError.NoPrinterConfigured ->
                             _uiState.update { it.copy(isPrinting = false, navigateToPrinterSettings = true) }
                         PrintError.BluetoothDisabled ->
-                            _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.print_error_bluetooth_disabled)) }
+                            _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.order_print_error_bluetooth_disabled)) }
                         PrintError.ConnectionFailed ->
-                            _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.print_error_connection_failed)) }
+                            _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.order_print_error_connection_failed)) }
                         is PrintError.Unknown ->
                             _uiState.update { it.copy(isPrinting = false, printResultMessage = err.message) }
                     }

@@ -69,7 +69,7 @@ class ReceiptBuilder @Inject constructor() {
         writeln(EscPosCommands.DIVIDER_HEAVY)
 
         // ── Order meta ────────────────────────────────────────────────────────
-        val tableLabel = if (job.tableNumber != null) "Table: ${job.tableNumber}" else "Takeaway"
+        val tableLabel = if (job.tableNumber != null) "Table: ${job.tableNumber}" else ""
         writeln("  ${job.orderType.padEnd(20)}$tableLabel")
         writeln("  ${job.timestamp}")
         writeln("  Order: #${job.orderNumber}")

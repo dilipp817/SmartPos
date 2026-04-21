@@ -50,12 +50,6 @@ fun BillingRoute(
         }
     }
 
-    // One-shot: show print result snackbar
-    LaunchedEffect(uiState.printResultMessage) {
-        uiState.printResultMessage?.let {
-            viewModel.onPrintResultConsumed()
-        }
-    }
 
     // One-shot: no printer configured → take user to Settings
     LaunchedEffect(uiState.navigateToPrinterSettings) {

@@ -158,7 +158,7 @@ fun BillingScreen(
                                         strokeWidth = 2.dp,
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Printing…")
+                                    Text(stringResource(R.string.billing_printing))
                                 } else {
                                     Icon(
                                         Icons.Default.Print,
@@ -166,7 +166,7 @@ fun BillingScreen(
                                         modifier = Modifier.size(18.dp),
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Print Receipt", fontWeight = FontWeight.SemiBold)
+                                    Text(stringResource(R.string.billing_print_button_label), fontWeight = FontWeight.SemiBold)
                                 }
                             }
                         }

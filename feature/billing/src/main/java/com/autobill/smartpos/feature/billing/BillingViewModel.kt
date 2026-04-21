@@ -223,22 +223,22 @@ class BillingViewModel @Inject constructor(
             }
             val orderResult = getOrderByIdUseCase(rid, orderId)
             if (orderResult is Result.Failure) {
-                _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.print_error_load_order)) }
+                _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.billing_print_error_load_order)) }
                 return@launch
             }
             val order = (orderResult as Result.Success).data
             val job = printJobFactory.fromBillAndOrder(bill, order)
             when (val result = printBillUseCase(job)) {
                 is Result.Success ->
-                    _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.print_success)) }
+                    _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.billing_print_success)) }
                 is Result.Failure -> {
                     when (val err = result.exception.toPrintError()) {
                         PrintError.NoPrinterConfigured ->
                             _uiState.update { it.copy(isPrinting = false, navigateToPrinterSettings = true) }
                         PrintError.BluetoothDisabled ->
-                            _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.print_error_bluetooth_disabled)) }
+                            _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.billing_print_error_bluetooth_disabled)) }
                         PrintError.ConnectionFailed ->
-                            _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.print_error_connection_failed)) }
+                            _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.billing_print_error_connection_failed)) }
                         is PrintError.Unknown ->
                             _uiState.update { it.copy(isPrinting = false, printResultMessage = err.message) }
                     }

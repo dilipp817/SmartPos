@@ -13,9 +13,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.autobill.smartpos.R
+import kotlinx.coroutines.launch
 
 /**
  * Navigation entry point for the Settings screen.
@@ -32,6 +36,8 @@ fun SettingsRoute(
     val viewModel: SettingsViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val btPermissionDeniedMsg = stringResource(R.string.bt_permission_denied)
 
     // One-shot: show test-print result as snackbar
     LaunchedEffect(uiState.testPrintResult) {
@@ -42,13 +48,20 @@ fun SettingsRoute(
         }
     }
 
-    // Request BLUETOOTH_CONNECT (API 31+) then open the picker.
+    // Request BLUETOOTH_CONNECT (API 31+) then open the picker only if granted.
     val btPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
-    ) { _ ->
-        // Open picker regardless of result — getPairedDevices() handles missing permission
-        // gracefully by returning an empty list and logging a warning.
-        viewModel.openPrinterPicker()
+    ) { granted ->
+        if (granted) {
+            viewModel.openPrinterPicker()
+        } else {
+            scope.launch {
+                snackbarHostState.showSnackbar(
+                    message  = btPermissionDeniedMsg,
+                    duration = SnackbarDuration.Long,
+                )
+            }
+        }
     }
 
     Scaffold(

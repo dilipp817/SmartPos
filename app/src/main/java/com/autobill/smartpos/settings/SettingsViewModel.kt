@@ -31,6 +31,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 import javax.inject.Inject
 
 /**
@@ -153,7 +154,9 @@ class SettingsViewModel @Inject constructor(
         _uiState.update { it.copy(isTestPrinting = true, testPrintResult = null) }
         viewModelScope.launch {
             val state = _uiState.value
-            val now = SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.getDefault()).format(Date())
+            val now = SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.ENGLISH)
+                .also { it.timeZone = TimeZone.getTimeZone("Asia/Kolkata") }
+                .format(Date())
             val job = PrintJob(
                 restaurantName    = state.restaurantName.ifEmpty { "SmartPos Restaurant" },
                 restaurantAddress = "Test Receipt — Printer Alignment Check",

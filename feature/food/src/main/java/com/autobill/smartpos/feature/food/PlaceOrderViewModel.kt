@@ -122,17 +122,17 @@ class PlaceOrderViewModel @Inject constructor(
             val job = printJobFactory.fromOrder(order)
             when (val result = printBillUseCase(job)) {
                 is Result.Success ->
-                    _state.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.print_success)) }
+                    _state.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.food_print_success), printResultSuccess = true) }
                 is Result.Failure -> {
                     when (val err = result.exception.toPrintError()) {
                         PrintError.NoPrinterConfigured ->
                             _state.update { it.copy(isPrinting = false, navigateToPrinterSettings = true) }
                         PrintError.BluetoothDisabled ->
-                            _state.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.print_error_bluetooth_disabled)) }
+                            _state.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.food_print_error_bluetooth_disabled), printResultSuccess = false) }
                         PrintError.ConnectionFailed ->
-                            _state.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.print_error_connection_failed)) }
+                            _state.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.food_print_error_connection_failed), printResultSuccess = false) }
                         is PrintError.Unknown ->
-                            _state.update { it.copy(isPrinting = false, printResultMessage = err.message) }
+                            _state.update { it.copy(isPrinting = false, printResultMessage = err.message, printResultSuccess = false) }
                     }
                 }
                 else -> Unit
@@ -164,6 +164,8 @@ data class PlaceOrderState(
     val isPrinting: Boolean = false,
     /** One-shot: non-null after a print attempt. */
     val printResultMessage: String? = null,
+    /** True when the last print attempt succeeded, false when it failed. */
+    val printResultSuccess: Boolean = true,
     /** One-shot: true when print fails because no printer is configured → navigate to Settings. */
     val navigateToPrinterSettings: Boolean = false,
 )

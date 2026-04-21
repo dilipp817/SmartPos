@@ -137,7 +137,7 @@ fun HomeRoute(
         val msg = placeOrderState.printResultMessage
         if (msg != null) {
             placeOrderViewModel.onPrintResultConsumed()
-            lastSnackbarIsSuccess = !msg.lowercase().contains("fail") && !msg.lowercase().contains("error")
+            lastSnackbarIsSuccess = placeOrderState.printResultSuccess
             snackbarHostState.showSnackbar(message = msg, duration = SnackbarDuration.Short)
         }
     }

@@ -119,6 +119,7 @@ fun OrderDetailScreen(
     onSuccessMessageConsumed: () -> Unit,
     onConflictMessageConsumed: () -> Unit,
     onErrorConsumed: () -> Unit,
+    onPrintResultConsumed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -145,6 +146,7 @@ fun OrderDetailScreen(
     LaunchedEffect(uiState.printResultMessage) {
         uiState.printResultMessage?.let {
             snackbarHostState.showSnackbar(it)
+            onPrintResultConsumed()
         }
     }
 
@@ -438,11 +440,11 @@ private fun OrderDetailContent(
                     if (uiState.isPrinting) {
                         CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Printing…")
+                        Text(stringResource(R.string.order_printing))
                     } else {
                         Icon(Icons.Default.Print, null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Print Receipt", fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.order_print_button_label), fontWeight = FontWeight.SemiBold)
                     }
                 }
             }

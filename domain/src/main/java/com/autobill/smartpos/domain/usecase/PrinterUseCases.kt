@@ -38,7 +38,7 @@ class ObserveSelectedPrinterUseCase @Inject constructor(
     operator fun invoke(): Flow<PrinterDevice?> = repository.observeSelectedPrinter()
 }
 
-/** Persists the cashier's printer choice to [AppPrefsDataStore]. */
+/** Persists the cashier's printer choice via [PrinterRepository]. */
 class SaveSelectedPrinterUseCase @Inject constructor(
     private val repository: PrinterRepository,
 ) {

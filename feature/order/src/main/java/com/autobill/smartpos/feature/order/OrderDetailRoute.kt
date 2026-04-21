@@ -31,11 +31,6 @@ fun OrderDetailRoute(
         }
     }
 
-    LaunchedEffect(uiState.printResultMessage) {
-        uiState.printResultMessage?.let {
-            viewModel.onPrintResultConsumed()
-        }
-    }
 
     // One-shot: no printer configured → take user to Settings
     LaunchedEffect(uiState.navigateToPrinterSettings) {
@@ -80,6 +75,7 @@ fun OrderDetailRoute(
         onSuccessMessageConsumed        = viewModel::onSuccessMessageConsumed,
         onConflictMessageConsumed       = viewModel::onConflictMessageConsumed,
         onErrorConsumed                 = viewModel::onErrorConsumed,
+        onPrintResultConsumed           = viewModel::onPrintResultConsumed,
     )
 }
 

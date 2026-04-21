@@ -30,7 +30,7 @@ class FakePrinterImpl @Inject constructor() : BillPrinter {
             if (job.restaurantAddress.isNotBlank()) center(job.restaurantAddress)
             divH()
 
-            val tableLabel = if (job.tableNumber != null) "Table: ${job.tableNumber}" else "Takeaway"
+            val tableLabel = if (job.tableNumber != null) "Table: ${job.tableNumber}" else job.orderType.trim()
             appendLine("  ${job.orderType.padEnd(20)}$tableLabel")
             appendLine("  ${job.timestamp}")
             appendLine("  Order: #${job.orderNumber}")
