@@ -230,17 +230,19 @@ class BillingViewModel @Inject constructor(
             val job = printJobFactory.fromBillAndOrder(bill, order)
             when (val result = printBillUseCase(job)) {
                 is Result.Success ->
-                    _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.billing_print_success)) }
+                    _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.billing_print_success), printResultSuccess = true) }
                 is Result.Failure -> {
                     when (val err = result.exception.toPrintError()) {
                         PrintError.NoPrinterConfigured ->
                             _uiState.update { it.copy(isPrinting = false, navigateToPrinterSettings = true) }
                         PrintError.BluetoothDisabled ->
-                            _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.billing_print_error_bluetooth_disabled)) }
+                            _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.billing_print_error_bluetooth_disabled), printResultSuccess = false) }
                         PrintError.ConnectionFailed ->
-                            _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.billing_print_error_connection_failed)) }
+                            _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.billing_print_error_connection_failed), printResultSuccess = false) }
+                        PrintError.PermissionDenied ->
+                            _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.billing_print_error_permission_denied), printResultSuccess = false) }
                         is PrintError.Unknown ->
-                            _uiState.update { it.copy(isPrinting = false, printResultMessage = err.message) }
+                            _uiState.update { it.copy(isPrinting = false, printResultMessage = err.message, printResultSuccess = false) }
                     }
                 }
                 else -> Unit

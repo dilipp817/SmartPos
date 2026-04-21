@@ -41,6 +41,7 @@ data class BillingUiState(
     val isPrinting: Boolean = false,
     /** One-shot: non-null after a print attempt (success message or error). */
     val printResultMessage: String? = null,
+    val printResultSuccess: Boolean = true,
     /** One-shot: true when print fails because no printer is configured → Route navigates to Settings. */
     val navigateToPrinterSettings: Boolean = false,
     // One-shot events

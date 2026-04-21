@@ -14,6 +14,12 @@ sealed class PrintError {
     /** The socket connection attempt failed (printer off, out of range, etc.). */
     data object ConnectionFailed : PrintError()
 
+    /**
+     * Bluetooth connect permission was denied (Android 12+ BLUETOOTH_CONNECT).
+     * UI should direct the user to grant the permission or open Settings.
+     */
+    data object PermissionDenied : PrintError()
+
     /** Any other unexpected error. */
     data class Unknown(val message: String) : PrintError()
 }
@@ -28,6 +34,7 @@ fun Throwable.toPrintError(): PrintError = when (this) {
     is NoPrinterSelectedException -> PrintError.NoPrinterConfigured
     is BluetoothDisabledException  -> PrintError.BluetoothDisabled
     is PrinterConnectionException  -> PrintError.ConnectionFailed
+    is SecurityException           -> PrintError.PermissionDenied
     else                           -> PrintError.Unknown(message ?: "Unknown print error")
 }
 

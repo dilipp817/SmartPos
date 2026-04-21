@@ -184,6 +184,7 @@ class SettingsViewModel @Inject constructor(
                         PrintError.NoPrinterConfigured -> context.getString(R.string.print_error_no_printer)
                         PrintError.BluetoothDisabled   -> context.getString(R.string.print_error_bluetooth_disabled)
                         PrintError.ConnectionFailed    -> context.getString(R.string.print_error_connection_failed)
+                        PrintError.PermissionDenied    -> context.getString(R.string.print_error_permission_denied)
                         is PrintError.Unknown          -> err.message
                     }
                     _uiState.update { it.copy(isTestPrinting = false, testPrintResult = msg) }

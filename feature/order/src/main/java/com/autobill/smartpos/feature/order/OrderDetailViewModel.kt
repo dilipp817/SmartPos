@@ -529,6 +529,8 @@ class OrderDetailViewModel @Inject constructor(
                             _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.order_print_error_bluetooth_disabled)) }
                         PrintError.ConnectionFailed ->
                             _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.order_print_error_connection_failed)) }
+                        PrintError.PermissionDenied ->
+                            _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.order_print_error_permission_denied)) }
                         is PrintError.Unknown ->
                             _uiState.update { it.copy(isPrinting = false, printResultMessage = err.message) }
                     }

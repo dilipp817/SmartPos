@@ -131,6 +131,8 @@ class PlaceOrderViewModel @Inject constructor(
                             _state.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.food_print_error_bluetooth_disabled), printResultSuccess = false) }
                         PrintError.ConnectionFailed ->
                             _state.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.food_print_error_connection_failed), printResultSuccess = false) }
+                        PrintError.PermissionDenied ->
+                            _state.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.food_print_error_permission_denied), printResultSuccess = false) }
                         is PrintError.Unknown ->
                             _state.update { it.copy(isPrinting = false, printResultMessage = err.message, printResultSuccess = false) }
                     }

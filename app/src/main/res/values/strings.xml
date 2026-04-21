@@ -6,5 +6,6 @@
     <string name="print_error_no_printer">No printer selected. Tap \"Select\" to choose one.</string>
     <string name="print_error_bluetooth_disabled">Please enable Bluetooth to print.</string>
     <string name="print_error_connection_failed">Could not connect to printer. Check it is switched on and nearby.</string>
+    <string name="print_error_permission_denied">Bluetooth permission is required to print. Please grant it in Settings.</string>
     <string name="bt_permission_denied">Bluetooth permission is required to find paired printers.</string>
 </resources>
