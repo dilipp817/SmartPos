@@ -31,7 +31,7 @@ import javax.inject.Singleton
  *  | Restaurant name | [ObserveRestaurantUseCase] |
  *  | Address         | [ObserveRestaurantUseCase] |
  *  | Cashier name    | [ObserveSessionUseCase]    |
-   Timestamp        Device clock (IST / Asia/Kolkata, always)
+ * Timestamp        Device clock (IST / Asia/Kolkata, always)
  *  | Items / totals  | Passed-in [Order] / [Bill] |
  */
 @Singleton

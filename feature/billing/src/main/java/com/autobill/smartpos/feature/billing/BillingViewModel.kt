@@ -222,11 +222,18 @@ class BillingViewModel @Inject constructor(
                 return@launch
             }
             val orderResult = getOrderByIdUseCase(rid, orderId)
-            if (orderResult is Result.Failure) {
-                _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.billing_print_error_load_order)) }
-                return@launch
+            val order = when (orderResult) {
+                is Result.Success -> orderResult.data
+                is Result.Failure -> {
+                    _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.billing_print_error_load_order), printResultSuccess = false) }
+                    return@launch
+                }
+                Result.Loading -> {
+                    // Loading should not occur for a one-shot use-case fetch, but guard anyway.
+                    _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.billing_print_error_load_order), printResultSuccess = false) }
+                    return@launch
+                }
             }
-            val order = (orderResult as Result.Success).data
             val job = printJobFactory.fromBillAndOrder(bill, order)
             when (val result = printBillUseCase(job)) {
                 is Result.Success ->
