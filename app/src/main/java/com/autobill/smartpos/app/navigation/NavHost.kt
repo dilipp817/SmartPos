@@ -124,13 +124,13 @@ private fun AppNavGraph(
                     navController.navigate(Screen.FoodDetail.createRoute(foodId))
                 },
                 onCheckoutClick = { orderType ->
-                    // DINE_IN + TABLE_MANAGEMENT=true → go to table selection
                     navController.navigate(Screen.TableList.createRoute(orderType.value))
                 },
                 onLogout = onLogout,
                 onNavigateToMenuManagement = {
                     navController.navigate(Screen.MenuManagement.route)
                 },
+                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -229,6 +229,7 @@ private fun AppNavGraph(
                     // PaymentViewModel skips freeTable() when tableId == -1L.
                     navController.navigate(Screen.OrderBilling.createRoute(orderId, tableId ?: -1L))
                 },
+                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -267,6 +268,7 @@ private fun AppNavGraph(
                         Screen.Payment.createRoute(billId, orderId, tableId, totalAmount, remainingAmount)
                     )
                 },
+                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 modifier = Modifier.fillMaxSize(),
             )
         }

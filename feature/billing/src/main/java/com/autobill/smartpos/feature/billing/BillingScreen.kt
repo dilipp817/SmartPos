@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Print
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -66,11 +67,13 @@ fun BillingScreen(
     onDiscountChange: (String) -> Unit,
     onGenerateBill: () -> Unit,
     onProceedToPayment: () -> Unit,
+    onPrintBill: () -> Unit,
     onShowCancelDialog: () -> Unit,
     onDismissCancelDialog: () -> Unit,
     onConfirmCancelBill: () -> Unit,
     onSuccessMessageConsumed: () -> Unit,
     onErrorConsumed: () -> Unit,
+    onPrintResultConsumed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -85,6 +88,12 @@ fun BillingScreen(
         uiState.errorMessage?.let {
             snackbarHostState.showSnackbar(it)
             onErrorConsumed()
+        }
+    }
+    LaunchedEffect(uiState.printResultMessage) {
+        uiState.printResultMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            onPrintResultConsumed()
         }
     }
 
@@ -134,6 +143,33 @@ fun BillingScreen(
                     // Bill already generated — show summary
                     uiState.bill != null -> {
                         item { BillSummaryCard(bill = uiState.bill) }
+
+                        // Print receipt button — always shown when a bill exists
+                        item {
+                            OutlinedButton(
+                                onClick  = onPrintBill,
+                                enabled  = !uiState.isPrinting,
+                                shape    = RoundedCornerShape(10.dp),
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                if (uiState.isPrinting) {
+                                    CircularProgressIndicator(
+                                        modifier    = Modifier.size(16.dp),
+                                        strokeWidth = 2.dp,
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Printing…")
+                                } else {
+                                    Icon(
+                                        Icons.Default.Print,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Print Receipt", fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                        }
 
                         if (uiState.canPay) {
                             item {
@@ -336,4 +372,3 @@ private fun BillingLoadingState() {
         }
     }
 }
-

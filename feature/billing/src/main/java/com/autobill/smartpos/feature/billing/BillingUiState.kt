@@ -36,6 +36,13 @@ data class BillingUiState(
     // Cancel bill
     val showCancelDialog: Boolean = false,
     val isCancelling: Boolean = false,
+    // Print
+    /** True while the print coroutine is in-flight. */
+    val isPrinting: Boolean = false,
+    /** One-shot: non-null after a print attempt (success message or error). */
+    val printResultMessage: String? = null,
+    /** One-shot: true when print fails because no printer is configured → Route navigates to Settings. */
+    val navigateToPrinterSettings: Boolean = false,
     // One-shot events
     val billAlreadyExists: Boolean = false,   // 409 — route re-fetches and populates bill
     val successMessage: String? = null,

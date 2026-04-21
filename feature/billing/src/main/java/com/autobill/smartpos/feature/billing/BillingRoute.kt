@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 fun BillingRoute(
     onBack: () -> Unit,
     onNavigateToPayment: (billId: Long, orderId: Long, tableId: Long, totalAmount: Double, remainingAmount: Double) -> Unit,
+    onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val viewModel: BillingViewModel = hiltViewModel()
@@ -49,17 +50,34 @@ fun BillingRoute(
         }
     }
 
+    // One-shot: show print result snackbar
+    LaunchedEffect(uiState.printResultMessage) {
+        uiState.printResultMessage?.let {
+            viewModel.onPrintResultConsumed()
+        }
+    }
+
+    // One-shot: no printer configured → take user to Settings
+    LaunchedEffect(uiState.navigateToPrinterSettings) {
+        if (uiState.navigateToPrinterSettings) {
+            viewModel.onNavigateToPrinterSettingsConsumed()
+            onNavigateToSettings()
+        }
+    }
+
     BillingScreen(
         uiState                  = uiState,
         onBack                   = onBack,
         onDiscountChange         = viewModel::onDiscountInputChange,
         onGenerateBill           = viewModel::generateBill,
         onProceedToPayment       = viewModel::proceedToPayment,
+        onPrintBill              = viewModel::printBill,
         onShowCancelDialog       = viewModel::showCancelDialog,
         onDismissCancelDialog    = viewModel::dismissCancelDialog,
         onConfirmCancelBill      = viewModel::confirmCancelBill,
         onSuccessMessageConsumed = viewModel::onSuccessMessageConsumed,
         onErrorConsumed          = viewModel::onErrorConsumed,
+        onPrintResultConsumed    = viewModel::onPrintResultConsumed,
         modifier                 = modifier,
     )
 }

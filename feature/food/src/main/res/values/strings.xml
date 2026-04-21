@@ -117,5 +117,10 @@
     <string name="cd_selected">Selected</string>
     <string name="cd_spicy">Spicy</string>
 
+    <!-- ── Print ──────────────────────────────────────────────────────────── -->
+    <string name="print_success">Receipt printed successfully ✓</string>
+    <string name="print_error_bluetooth_disabled">Please enable Bluetooth to print.</string>
+    <string name="print_error_connection_failed">Could not connect to printer. Check it is switched on and nearby.</string>
+
 </resources>
 
