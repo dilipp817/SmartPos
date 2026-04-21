@@ -142,6 +142,10 @@ data class CartSummaryData(
     val isTableManagementEnabled: Boolean = true,
     val onPlaceOrder: () -> Unit = {},   // TAKEAWAY or TABLE_MANAGEMENT=false
     val onCheckout: () -> Unit = {},     // DINE_IN + TABLE_MANAGEMENT=true
+    /** True while a quick TAKEAWAY order is being submitted — disables the button and shows a spinner. */
+    val isPlacingOrder: Boolean = false,
+    /** Inline error from a failed quick order attempt — shown below the button. */
+    val placeOrderError: String? = null,
     val onClear: () -> Unit = {},
     val onReset: () -> Unit = {},
     val onPrint: () -> Unit = {},

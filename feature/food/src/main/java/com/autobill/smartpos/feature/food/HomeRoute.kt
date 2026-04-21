@@ -1,10 +1,16 @@
 package com.autobill.smartpos.feature.food
 
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -12,6 +18,7 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -38,13 +45,12 @@ fun HomeRoute(
     modifier: Modifier = Modifier,
     onFoodClick: (Long) -> Unit = {},
     onCheckoutClick: (OrderType) -> Unit = {},
-    onPlaceOrderClick: (OrderType) -> Unit = {},
     onLogout: () -> Unit = {},
     onNavigateToMenuManagement: () -> Unit = {},
 ) {
-    // Get ViewModel instances — FoodViewModel owns food/pagination, CartViewModel owns cart
     val viewModel: FoodViewModel = hiltViewModel()
     val cartViewModel: CartViewModel = hiltViewModel()
+    val placeOrderViewModel: PlaceOrderViewModel = hiltViewModel()
 
     // Refresh category list every time this screen becomes visible again (e.g. returning from
     // admin category management). This ensures newly created/deleted categories show immediately
@@ -85,9 +91,37 @@ fun HomeRoute(
     ) { mutableStateOf(OrderType.DINE_IN) }
 
     // Observe cart state — all sourced from CartViewModel
-    val cartItems by cartViewModel.cartItems.collectAsStateWithLifecycle()
-    val cartTotals by cartViewModel.cartTotals.collectAsStateWithLifecycle()
-    val heldCarts by cartViewModel.heldCarts.collectAsStateWithLifecycle()
+    val cartItems       by cartViewModel.cartItems.collectAsStateWithLifecycle()
+    val cartTotals      by cartViewModel.cartTotals.collectAsStateWithLifecycle()
+    val heldCarts       by cartViewModel.heldCarts.collectAsStateWithLifecycle()
+    val placeOrderState by placeOrderViewModel.state.collectAsStateWithLifecycle()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val strOrderPlaced    = stringResource(R.string.snack_order_placed)
+    val strOrderFailed    = stringResource(R.string.snack_order_failed)
+
+    // Non-blocking success snackbar — auto-dismisses, cashier can start next order immediately
+    LaunchedEffect(placeOrderState.orderPlaced) {
+        if (placeOrderState.orderPlaced) {
+            placeOrderViewModel.onOrderPlacedConsumed()
+            snackbarHostState.showSnackbar(
+                message  = strOrderPlaced,
+                duration = SnackbarDuration.Short,
+            )
+        }
+    }
+
+    // Error snackbar — slightly longer so cashier can read the reason
+    LaunchedEffect(placeOrderState.errorMessage) {
+        val error = placeOrderState.errorMessage
+        if (error != null) {
+            placeOrderViewModel.clearError()
+            snackbarHostState.showSnackbar(
+                message  = "$strOrderFailed: $error",
+                duration = SnackbarDuration.Long,
+            )
+        }
+    }
 
     // ── String resources ────────────────────────────────────────────────────
     val strNewSale          = stringResource(R.string.new_sale)
@@ -150,7 +184,7 @@ fun HomeRoute(
             isTableManagementEnabled = isTableManagementEnabled,
             // ── Primary action callbacks ──────────────────────────────────────
             // CartSummaryFooter decides which button to show; HomeRoute decides where to go.
-            onPlaceOrder = { onPlaceOrderClick(selectedOrderType) },
+            onPlaceOrder = { placeOrderViewModel.placeOrder(selectedOrderType) },
             onCheckout   = { onCheckoutClick(selectedOrderType) },
             onClear = { cartViewModel.clearCart() },
             onReset = { viewModel.resetFilters() },
@@ -159,6 +193,9 @@ fun HomeRoute(
             canApplyDiscount = false,
             onApplyDiscountClick = {},
             onShowHeldCarts = { showHeldCartsDialog = true },
+            // ── Quick order state ─────────────────────────────────────────────
+            isPlacingOrder  = placeOrderState.isSubmitting,
+            placeOrderError = null,   // errors shown via snackbar — not inline
         )
     }
 
@@ -313,9 +350,24 @@ fun HomeRoute(
         )
     }
 
-    // Render the new HomeScreen with all components
-    HomeScreen(
-        data = homeScreenData,
-        modifier = modifier,
-    )
+    // Render the new HomeScreen with all components inside a Scaffold that
+    // owns the SnackbarHost — snackbar sits above content, never blocks interaction.
+    Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                val isSuccess = data.visuals.message.startsWith("✓")
+                Snackbar(
+                    snackbarData    = data,
+                    containerColor  = if (isSuccess) Color(0xFF388E3C) else Color(0xFFC62828),
+                    contentColor    = Color.White,
+                )
+            }
+        },
+        containerColor = Color.Transparent,
+    ) { _ ->
+        HomeScreen(
+            data     = homeScreenData,
+            modifier = modifier,
+        )
+    }
 }

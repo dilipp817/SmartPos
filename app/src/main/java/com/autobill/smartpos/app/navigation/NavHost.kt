@@ -127,10 +127,6 @@ private fun AppNavGraph(
                     // DINE_IN + TABLE_MANAGEMENT=true → go to table selection
                     navController.navigate(Screen.TableList.createRoute(orderType.value))
                 },
-                onPlaceOrderClick = { orderType ->
-                    // TAKEAWAY or TABLE_MANAGEMENT=false → create order directly (no table)
-                    navController.navigate(Screen.CreateOrder.createRoute(0L, orderType.value))
-                },
                 onLogout = onLogout,
                 onNavigateToMenuManagement = {
                     navController.navigate(Screen.MenuManagement.route)
