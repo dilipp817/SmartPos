@@ -1,6 +1,8 @@
 package com.autobill.smartpos.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -410,12 +412,17 @@ fun SettingsScreen(
                             Row(
                                 modifier          = Modifier
                                     .fillMaxWidth()
+                                    .selectable(
+                                        selected = uiState.selectedPrinter?.macAddress == device.macAddress,
+                                        onClick  = { onPrinterSelected(device) },
+                                        role     = Role.RadioButton,
+                                    )
                                     .padding(vertical = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 RadioButton(
                                     selected  = uiState.selectedPrinter?.macAddress == device.macAddress,
-                                    onClick   = { onPrinterSelected(device) },
+                                    onClick   = null,
                                 )
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
