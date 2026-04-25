@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -99,38 +98,36 @@ fun TextInputField(
 }
 
 /**
- * Search Bar - Specialized input for search
- * Shows search icon and clear button
- * 
- * @param query Current search query
+ * Search Bar — Specialised input for search.
+ * Shows a leading search icon and a trailing clear button (when query is non-empty).
+ * Does not force any height, shape, or colour — uses Material3 OutlinedTextField defaults.
+ * Caller controls sizing via [modifier].
+ *
+ * @param query         Current search query
  * @param onQueryChange Callback when query changes
- * @param onSearch Callback when search is triggered
- * @param onClear Callback to clear search
- * @param modifier Modifier for styling
- * @param placeholder Placeholder text
+ * @param modifier      Modifier for sizing / padding
+ * @param placeholder   Placeholder text
+ * @param onSearch      Called when the IME Search action is triggered (optional)
+ * @param onClear       Called when the clear icon is tapped (default: clears query)
  */
 @Composable
 fun SearchBar(
     query: String,
     onQueryChange: (String) -> Unit,
-    onSearch: () -> Unit,
     modifier: Modifier = Modifier,
-    onClear: () -> Unit = { onQueryChange("") },
     placeholder: String = stringResource(R.string.input_search_placeholder),
+    onSearch: () -> Unit = {},
+    onClear: () -> Unit = { onQueryChange("") },
 ) {
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(56.dp),
+        modifier = modifier,
         placeholder = { Text(placeholder) },
         leadingIcon = {
             Icon(
                 imageVector = Icons.Filled.Search,
                 contentDescription = stringResource(R.string.input_cd_search),
-                modifier = Modifier.size(24.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         },
         trailingIcon = {
@@ -139,8 +136,6 @@ fun SearchBar(
                     Icon(
                         imageVector = Icons.Filled.Clear,
                         contentDescription = stringResource(R.string.input_cd_clear),
-                        modifier = Modifier.size(24.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -153,16 +148,6 @@ fun SearchBar(
             onSearch = { onSearch() },
         ),
         singleLine = true,
-        shape = RoundedCornerShape(8.dp),
-        colors = TextFieldDefaults.colors(
-            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-            focusedContainerColor = MaterialTheme.colorScheme.surface,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-            focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-            unfocusedIndicatorColor = MaterialTheme.colorScheme.outlineVariant,
-        ),
-        textStyle = MaterialTheme.typography.bodyMedium,
     )
 }
 

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -40,7 +41,7 @@ fun ConfirmDialog(
             ) {
                 Text(
                     confirmText,
-                    color = if (isDestructive) Color(0xFFB00020) else Color.Unspecified,
+                    color = if (isDestructive) MaterialTheme.colorScheme.error else Color.Unspecified,
                 )
             }
         },

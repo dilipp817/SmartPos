@@ -1,7 +1,6 @@
 package com.autobill.smartpos.feature.admin.settings
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,12 +27,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.autobill.smartpos.feature.admin.R
+import com.autobill.smartpos.ui.components.FullScreenLoading
 
 /**
  * Edit Outlet Info screen — contract §8.4.
@@ -82,9 +81,7 @@ fun AdminSettingsScreen(
         modifier = modifier,
     ) { padding ->
         if (uiState.isLoading) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
+            FullScreenLoading(modifier = Modifier.padding(padding))
         } else {
             Column(
                 modifier = Modifier

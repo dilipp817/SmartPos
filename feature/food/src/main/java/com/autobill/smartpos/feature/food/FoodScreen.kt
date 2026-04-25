@@ -27,6 +27,7 @@ import com.autobill.smartpos.domain.model.Food
 import com.autobill.smartpos.domain.common.Pagination
 import com.autobill.smartpos.domain.common.UiState
 import com.autobill.smartpos.feature.food.R
+import com.autobill.smartpos.ui.components.FullScreenLoading
 import com.autobill.smartpos.ui.components.InfiniteScrollHandler
 
 /**
@@ -90,19 +91,7 @@ fun FoodScreen(
             }
 
             UiState.Loading -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    CircularProgressIndicator()
-                    Text(
-                        text = stringResource(R.string.loading_foods),
-                        modifier = Modifier.padding(top = 16.dp),
-                    )
-                }
+                FullScreenLoading(message = stringResource(R.string.loading_foods))
             }
 
             is UiState.Success -> {

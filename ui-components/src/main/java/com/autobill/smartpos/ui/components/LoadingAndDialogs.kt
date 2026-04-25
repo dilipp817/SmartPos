@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -32,39 +33,32 @@ import com.autobill.smartpos.ui.R
 
 /**
  * Full Screen Loading Indicator
- * Shows centered spinner with message
- * 
- * @param modifier Modifier for styling
- * @param message Loading message
+ * Shows centred spinner with an optional message.
+ * The caller controls sizing via [modifier]; internally this fills all available space.
+ *
+ * @param modifier Modifier for sizing / padding — applied before fillMaxSize()
+ * @param message  Optional loading message. Pass null (default) to show spinner only.
  */
 @Composable
 fun FullScreenLoading(
     modifier: Modifier = Modifier,
-    message: String = stringResource(R.string.loading_default_message),
+    message: String? = null,
 ) {
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(400.dp)
-            .background(
-                color = MaterialTheme.colorScheme.background.copy(alpha = 0.95f),
-            ),
+        modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(64.dp),
-                color = MaterialTheme.colorScheme.primary,
-                strokeWidth = 4.dp,
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
+            CircularProgressIndicator()
+            if (message != null) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
         }
     }
 }

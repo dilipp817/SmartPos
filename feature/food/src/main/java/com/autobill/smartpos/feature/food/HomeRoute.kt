@@ -1,14 +1,11 @@
 package com.autobill.smartpos.feature.food
 
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -28,6 +25,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.autobill.smartpos.domain.common.UiState
 import com.autobill.smartpos.domain.model.OrderType
+import com.autobill.smartpos.ui.components.dialogs.ConfirmDialog
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -334,25 +332,16 @@ fun HomeRoute(
 
     // Logout confirmation dialog — shown when profile icon is tapped
     if (showLogoutDialog) {
-        AlertDialog(
-            onDismissRequest = { showLogoutDialog = false },
-            title = { Text(strLogoutTitle) },
-            text = { Text(strLogoutMessage) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showLogoutDialog = false
-                        onLogout()
-                    }
-                ) {
-                    Text(strLogoutConfirm)
-                }
+        ConfirmDialog(
+            title       = strLogoutTitle,
+            message     = strLogoutMessage,
+            confirmText = strLogoutConfirm,
+            dismissText = strCancel,
+            onConfirm   = {
+                showLogoutDialog = false
+                onLogout()
             },
-            dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) {
-                    Text(strCancel)
-                }
-            },
+            onDismiss   = { showLogoutDialog = false },
         )
     }
 
