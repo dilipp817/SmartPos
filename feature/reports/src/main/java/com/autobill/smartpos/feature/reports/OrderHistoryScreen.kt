@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -53,6 +52,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.autobill.smartpos.domain.model.Order
 import com.autobill.smartpos.domain.model.OrderStatus
+import com.autobill.smartpos.ui.components.FullScreenLoading
 
 /**
  * Order History Screen — Phase 8.2
@@ -227,10 +227,7 @@ fun OrderHistoryScreen(
                 modifier     = Modifier.fillMaxSize(),
             ) {
                 when {
-                    uiState.isLoading -> Box(
-                        Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) { CircularProgressIndicator() }
+                    uiState.isLoading -> FullScreenLoading()
 
                     uiState.orders.isEmpty() -> Box(
                         Modifier.fillMaxSize().padding(32.dp),

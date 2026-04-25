@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import com.autobill.smartpos.domain.model.Category
 import com.autobill.smartpos.domain.model.Food
 import com.autobill.smartpos.feature.admin.R
+import com.autobill.smartpos.ui.components.FullScreenLoading
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -102,10 +103,7 @@ fun InventoryScreen(
         modifier = modifier,
     ) { padding ->
         if (uiState.isLoading && uiState.foods.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center,
-            ) { CircularProgressIndicator() }
+            FullScreenLoading(modifier = Modifier.padding(padding))
         } else {
             LazyColumn(
                 contentPadding = PaddingValues(

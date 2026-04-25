@@ -19,7 +19,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Badge
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -42,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.autobill.smartpos.domain.model.Food
 import com.autobill.smartpos.feature.admin.R
+import com.autobill.smartpos.ui.components.FullScreenLoading
 import com.autobill.smartpos.ui.components.dialogs.ConfirmDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -154,9 +154,7 @@ fun MenuManagementScreen(
             )
 
             if (uiState.isLoading || uiState.isDeleting) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
+                FullScreenLoading()
             } else if (filteredFoods.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
