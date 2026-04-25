@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.autobill.smartpos.domain.printer.PrinterDevice
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStore
@@ -42,6 +43,12 @@ class AppPrefsDataStore @Inject constructor(
          * Cleared on terminal success or failure.
          */
         val CURRENT_PAYMENT_REF_NUMBER = stringPreferencesKey("current_payment_ref_number")
+
+        // ── Bluetooth printer selection ───────────────────────────────────────
+        /** MAC address of the selected ESC/POS Bluetooth printer. Internal detail — not shown in UI. */
+        val PRINTER_MAC  = stringPreferencesKey("printer_mac")
+        /** Human-readable name shown in Settings (e.g. "Xprinter XP-58"). */
+        val PRINTER_NAME = stringPreferencesKey("printer_name")
     }
 
     /** Observe the current theme preference. Emits `false` (light) until explicitly set. */
@@ -74,5 +81,41 @@ class AppPrefsDataStore @Inject constructor(
     suspend fun clearCurrentPaymentRefNumber() {
         dataStore.edit { prefs -> prefs.remove(Keys.CURRENT_PAYMENT_REF_NUMBER) }
     }
-}
 
+    // ── Bluetooth printer selection ───────────────────────────────────────────
+
+    /**
+     * Observe the selected printer as a [PrinterDevice].
+     * Emits null when no printer has been saved yet.
+     */
+    fun observeSelectedPrinter(): Flow<PrinterDevice?> = dataStore.data
+        .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
+        .map { prefs ->
+            val mac  = prefs[Keys.PRINTER_MAC]  ?: return@map null
+            val name = prefs[Keys.PRINTER_NAME] ?: return@map null
+            PrinterDevice(name = name, macAddress = mac)
+        }
+
+    /** Read the stored printer MAC synchronously (one-shot). Returns null if not set. */
+    suspend fun getSelectedPrinterMac(): String? =
+        dataStore.data
+            .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
+            .firstOrNull()
+            ?.get(Keys.PRINTER_MAC)
+
+    /** Persist the cashier's printer choice. */
+    suspend fun saveSelectedPrinter(device: PrinterDevice) {
+        dataStore.edit { prefs ->
+            prefs[Keys.PRINTER_MAC]  = device.macAddress
+            prefs[Keys.PRINTER_NAME] = device.name
+        }
+    }
+
+    /** Remove the stored printer selection (e.g. device was unpaired from OS). */
+    suspend fun clearSelectedPrinter() {
+        dataStore.edit { prefs ->
+            prefs.remove(Keys.PRINTER_MAC)
+            prefs.remove(Keys.PRINTER_NAME)
+        }
+    }
+}

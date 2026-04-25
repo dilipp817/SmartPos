@@ -50,6 +50,13 @@ data class OrderDetailUiState(
     val isCancelling: Boolean = false,
     // permissions
     val canCancelOrders: Boolean = false,
+    // ── Print ─────────────────────────────────────────────────────────────────
+    /** True while the print coroutine is in-flight. */
+    val isPrinting: Boolean = false,
+    /** One-shot: non-null after a print attempt. Consumed by Route → shown as snackbar. */
+    val printResultMessage: String? = null,
+    /** One-shot: true when print fails because no printer is configured → navigate to Settings. */
+    val navigateToPrinterSettings: Boolean = false,
     // one-shot events
     val orderCancelled: Boolean = false,
     val successMessage: String? = null,

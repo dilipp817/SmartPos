@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 fun OrderDetailRoute(
     onBack: () -> Unit,
     onBillingClick: (orderId: Long, tableId: Long?) -> Unit,
+    onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val viewModel: OrderDetailViewModel = hiltViewModel()
@@ -30,6 +31,15 @@ fun OrderDetailRoute(
         }
     }
 
+
+    // One-shot: no printer configured → take user to Settings
+    LaunchedEffect(uiState.navigateToPrinterSettings) {
+        if (uiState.navigateToPrinterSettings) {
+            viewModel.onNavigateToPrinterSettingsConsumed()
+            onNavigateToSettings()
+        }
+    }
+
     OrderDetailScreen(
         uiState                         = uiState,
         modifier                        = modifier,
@@ -40,6 +50,7 @@ fun OrderDetailRoute(
         onBillingClick                  = {
             uiState.order?.let { order -> onBillingClick(order.id, order.tableId) }
         },
+        onPrintClick                    = viewModel::printOrder,
         // Add Item
         onAddItemClick                  = viewModel::showAddItemDialog,
         onDismissAddItemDialog          = viewModel::dismissAddItemDialog,
@@ -64,6 +75,7 @@ fun OrderDetailRoute(
         onSuccessMessageConsumed        = viewModel::onSuccessMessageConsumed,
         onConflictMessageConsumed       = viewModel::onConflictMessageConsumed,
         onErrorConsumed                 = viewModel::onErrorConsumed,
+        onPrintResultConsumed           = viewModel::onPrintResultConsumed,
     )
 }
 

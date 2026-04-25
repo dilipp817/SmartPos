@@ -71,6 +71,17 @@ enum class OrderType(val value: String) {
     TAKEAWAY("TAKEAWAY"),
     DELIVERY("DELIVERY");
 
+    /**
+     * Non-localized English label for use in **receipt printing only**.
+     * Do NOT use this in UI chips or any user-visible text — use string resources instead.
+     */
+    val displayLabel: String
+        get() = when (this) {
+            DINE_IN  -> "Dine-In"
+            TAKEAWAY -> "Takeaway"
+            DELIVERY -> "Delivery"
+        }
+
     companion object {
         fun fromValue(value: String): OrderType {
             return entries.find { it.value.equals(value, ignoreCase = true) } ?: DINE_IN

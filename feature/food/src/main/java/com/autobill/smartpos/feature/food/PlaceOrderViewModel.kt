@@ -1,16 +1,23 @@
 package com.autobill.smartpos.feature.food
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.autobill.smartpos.domain.common.OfflineQueuedException
 import com.autobill.smartpos.domain.common.Result
 import com.autobill.smartpos.domain.model.OrderType
+import com.autobill.smartpos.domain.printer.PrintError
+import com.autobill.smartpos.domain.printer.PrintJobFactory
+import com.autobill.smartpos.domain.printer.toPrintError
 import com.autobill.smartpos.domain.repository.OrderLineItem
 import com.autobill.smartpos.domain.usecase.ClearCartUseCase
 import com.autobill.smartpos.domain.usecase.CreateOrderUseCase
 import com.autobill.smartpos.domain.usecase.GetCartUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
+import com.autobill.smartpos.domain.usecase.PrintBillUseCase
+import com.autobill.smartpos.feature.food.R
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,10 +43,13 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class PlaceOrderViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
     private val getCartUseCase: GetCartUseCase,
     private val createOrderUseCase: CreateOrderUseCase,
     private val clearCartUseCase: ClearCartUseCase,
+    private val printBillUseCase: PrintBillUseCase,
+    private val printJobFactory: PrintJobFactory,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(PlaceOrderState())
@@ -82,7 +92,7 @@ class PlaceOrderViewModel @Inject constructor(
             )) {
                 is Result.Success -> {
                     clearCartUseCase()
-                    _state.update { it.copy(isSubmitting = false, orderPlaced = true) }
+                    _state.update { it.copy(isSubmitting = false, orderPlaced = true, lastOrder = result.data) }
                 }
                 is Result.Failure -> {
                     if (result.exception is OfflineQueuedException) {
@@ -103,7 +113,38 @@ class PlaceOrderViewModel @Inject constructor(
         }
     }
 
+    /** Print a receipt for the most recently placed order. */
+    fun printLastOrder() {
+        val order = _state.value.lastOrder ?: return
+        if (_state.value.isPrinting) return
+        _state.update { it.copy(isPrinting = true) }
+        viewModelScope.launch {
+            val job = printJobFactory.fromOrder(order)
+            when (val result = printBillUseCase(job)) {
+                is Result.Success ->
+                    _state.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.food_print_success), printResultSuccess = true) }
+                is Result.Failure -> {
+                    when (val err = result.exception.toPrintError()) {
+                        PrintError.NoPrinterConfigured ->
+                            _state.update { it.copy(isPrinting = false, navigateToPrinterSettings = true) }
+                        PrintError.BluetoothDisabled ->
+                            _state.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.food_print_error_bluetooth_disabled), printResultSuccess = false) }
+                        PrintError.ConnectionFailed ->
+                            _state.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.food_print_error_connection_failed), printResultSuccess = false) }
+                        PrintError.PermissionDenied ->
+                            _state.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.food_print_error_permission_denied), printResultSuccess = false) }
+                        is PrintError.Unknown ->
+                            _state.update { it.copy(isPrinting = false, printResultMessage = err.message, printResultSuccess = false) }
+                    }
+                }
+                else -> Unit
+            }
+        }
+    }
+
     fun onOrderPlacedConsumed() = _state.update { it.copy(orderPlaced = false) }
+    fun onPrintResultConsumed() = _state.update { it.copy(printResultMessage = null) }
+    fun onNavigateToPrinterSettingsConsumed() = _state.update { it.copy(navigateToPrinterSettings = false) }
     fun clearError()            = _state.update { it.copy(errorMessage = null) }
 }
 
@@ -119,5 +160,15 @@ data class PlaceOrderState(
     val orderPlaced:  Boolean = false,
     /** Non-null when the order fails — shown as an error snackbar. */
     val errorMessage: String? = null,
+    /** The most recently placed order — kept for printing the receipt. */
+    val lastOrder: com.autobill.smartpos.domain.model.Order? = null,
+    /** True while print is in-flight. */
+    val isPrinting: Boolean = false,
+    /** One-shot: non-null after a print attempt. */
+    val printResultMessage: String? = null,
+    /** True when the last print attempt succeeded, false when it failed. */
+    val printResultSuccess: Boolean = true,
+    /** One-shot: true when print fails because no printer is configured → navigate to Settings. */
+    val navigateToPrinterSettings: Boolean = false,
 )
 

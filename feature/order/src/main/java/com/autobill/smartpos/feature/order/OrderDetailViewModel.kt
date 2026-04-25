@@ -15,6 +15,10 @@ import com.autobill.smartpos.domain.usecase.GetOrderByIdUseCase
 import com.autobill.smartpos.domain.usecase.GetRestaurantIdUseCase
 import com.autobill.smartpos.domain.usecase.ObserveOrderEventsUseCase
 import com.autobill.smartpos.domain.usecase.ObserveRolePermissionsUseCase
+import com.autobill.smartpos.domain.usecase.PrintBillUseCase
+import com.autobill.smartpos.domain.printer.PrintJobFactory
+import com.autobill.smartpos.domain.printer.PrintError
+import com.autobill.smartpos.domain.printer.toPrintError
 import com.autobill.smartpos.domain.usecase.RemoveItemFromOrderUseCase
 import com.autobill.smartpos.domain.usecase.SearchFoodsUseCase
 import com.autobill.smartpos.domain.usecase.UpdateOrderItemUseCase
@@ -58,6 +62,8 @@ class OrderDetailViewModel @Inject constructor(
     private val cancelOrderUseCase: CancelOrderUseCase,
     private val searchFoodsUseCase: SearchFoodsUseCase,
     private val getRestaurantIdUseCase: GetRestaurantIdUseCase,
+    private val printBillUseCase: PrintBillUseCase,
+    private val printJobFactory: PrintJobFactory,
     observeRolePermissionsUseCase: ObserveRolePermissionsUseCase,
     private val observeOrderEventsUseCase: ObserveOrderEventsUseCase,
 ) : ViewModel() {
@@ -502,5 +508,38 @@ class OrderDetailViewModel @Inject constructor(
         }
         return retryResult
     }
-}
 
+    // ── Print ─────────────────────────────────────────────────────────────────
+
+    /** Print a receipt for the current order using estimated CGST + SGST (no bill needed). */
+    fun printOrder() {
+        val order = _uiState.value.order ?: return
+        if (_uiState.value.isPrinting) return
+        _uiState.update { it.copy(isPrinting = true, printResultMessage = null) }
+        viewModelScope.launch {
+            val job = printJobFactory.fromOrder(order)
+            when (val result = printBillUseCase(job)) {
+                is Result.Success ->
+                    _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.order_print_success)) }
+                is Result.Failure -> {
+                    when (val err = result.exception.toPrintError()) {
+                        PrintError.NoPrinterConfigured ->
+                            _uiState.update { it.copy(isPrinting = false, navigateToPrinterSettings = true) }
+                        PrintError.BluetoothDisabled ->
+                            _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.order_print_error_bluetooth_disabled)) }
+                        PrintError.ConnectionFailed ->
+                            _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.order_print_error_connection_failed)) }
+                        PrintError.PermissionDenied ->
+                            _uiState.update { it.copy(isPrinting = false, printResultMessage = context.getString(R.string.order_print_error_permission_denied)) }
+                        is PrintError.Unknown ->
+                            _uiState.update { it.copy(isPrinting = false, printResultMessage = err.message) }
+                    }
+                }
+                else -> Unit
+            }
+        }
+    }
+
+    fun onPrintResultConsumed() = _uiState.update { it.copy(printResultMessage = null) }
+    fun onNavigateToPrinterSettingsConsumed() = _uiState.update { it.copy(navigateToPrinterSettings = false) }
+}

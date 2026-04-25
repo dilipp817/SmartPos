@@ -1,6 +1,8 @@
 package com.autobill.smartpos.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Print
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
@@ -35,6 +38,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -51,8 +55,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.autobill.smartpos.R
 import com.autobill.smartpos.ui.theme.PrimaryBrand
 
 /**
@@ -71,6 +77,10 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onToggleDarkTheme: () -> Unit,
     onLogout: () -> Unit,
+    onSelectPrinterClick: () -> Unit,
+    onPrinterSelected: (com.autobill.smartpos.domain.printer.PrinterDevice) -> Unit,
+    onDismissPrinterPicker: () -> Unit,
+    onTestPrint: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
@@ -81,14 +91,14 @@ fun SettingsScreen(
         TopAppBar(
             title = {
                 Text(
-                    text = "Settings",
+                    text = stringResource(R.string.settings_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold,
                 )
             },
             navigationIcon = {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.settings_title))
                 }
             },
             colors = TopAppBarDefaults.topAppBarColors(
@@ -109,7 +119,7 @@ fun SettingsScreen(
             item {
                 SettingsSectionCard(
                     icon  = Icons.Default.Person,
-                    title = "Profile",
+                    title = stringResource(R.string.settings_section_profile),
                 ) {
                     Row(
                         verticalAlignment     = Alignment.CenterVertically,
@@ -174,7 +184,7 @@ fun SettingsScreen(
                 item {
                     SettingsSectionCard(
                         icon  = Icons.Default.Restaurant,
-                        title = "Outlet",
+                        title = stringResource(R.string.settings_section_outlet),
                     ) {
                         Row(
                             modifier              = Modifier.fillMaxWidth(),
@@ -196,11 +206,74 @@ fun SettingsScreen(
                 }
             }
 
+            // ── Printer section ─────────────────────────────────────────────
+            item {
+                SettingsSectionCard(
+                    icon  = Icons.Default.Print,
+                    title = stringResource(R.string.settings_section_printer),
+                ) {
+                    Row(
+                        modifier             = Modifier.fillMaxWidth(),
+                        verticalAlignment    = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text  = uiState.selectedPrinter?.name ?: stringResource(R.string.settings_printer_no_selection),
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = if (uiState.selectedPrinter != null) FontWeight.Medium else FontWeight.Normal,
+                                color = if (uiState.selectedPrinter != null)
+                                    MaterialTheme.colorScheme.onSurface
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(
+                                text  = stringResource(R.string.settings_printer_subtitle),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        OutlinedButton(
+                            onClick = onSelectPrinterClick,
+                            shape   = RoundedCornerShape(8.dp),
+                        ) {
+                            Text(stringResource(if (uiState.selectedPrinter != null) R.string.settings_printer_change else R.string.settings_printer_select))
+                        }
+                    }
+                    // Test Print button — visible only when a printer is saved
+                    if (uiState.selectedPrinter != null) {
+                        OutlinedButton(
+                            onClick  = onTestPrint,
+                            enabled  = !uiState.isTestPrinting,
+                            shape    = RoundedCornerShape(8.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            if (uiState.isTestPrinting) {
+                                CircularProgressIndicator(
+                                    modifier    = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(stringResource(R.string.settings_printer_printing))
+                            } else {
+                                Icon(
+                                    Icons.Default.Print,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(stringResource(R.string.settings_printer_test_print))
+                            }
+                        }
+                    }
+                }
+            }
+
             // ── Appearance section ──────────────────────────────────────────
             item {
                 SettingsSectionCard(
                     icon  = if (uiState.isDarkTheme) Icons.Default.DarkMode else Icons.Default.LightMode,
-                    title = "Appearance",
+                    title = stringResource(R.string.settings_section_appearance),
                 ) {
                     Row(
                         modifier             = Modifier.fillMaxWidth(),
@@ -209,13 +282,15 @@ fun SettingsScreen(
                     ) {
                         Column {
                             Text(
-                                text  = "Dark Mode",
+                                text  = stringResource(R.string.settings_appearance_dark_mode),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
                             Text(
-                                text  = if (uiState.isDarkTheme) "Dark theme active"
-                                        else "Light theme active",
+                                text  = stringResource(
+                                    if (uiState.isDarkTheme) R.string.settings_appearance_dark_active
+                                    else R.string.settings_appearance_light_active
+                                ),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -236,19 +311,19 @@ fun SettingsScreen(
             item {
                 SettingsSectionCard(
                     icon  = null,
-                    title = "About",
+                    title = stringResource(R.string.settings_section_about),
                 ) {
                     Row(
                         modifier              = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
                         Text(
-                            text  = "SmartPos",
+                            text  = stringResource(R.string.app_name),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                         Text(
-                            text  = "v1.0.0",
+                            text  = stringResource(R.string.settings_about_version),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -275,7 +350,7 @@ fun SettingsScreen(
                             color = MaterialTheme.colorScheme.error,
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Logging out…")
+                        Text(stringResource(R.string.settings_logout_progress))
                     } else {
                         Icon(
                             Icons.AutoMirrored.Filled.Logout,
@@ -283,7 +358,7 @@ fun SettingsScreen(
                             modifier = Modifier.size(18.dp),
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Logout", fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.settings_logout_button), fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -294,8 +369,8 @@ fun SettingsScreen(
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
-            title   = { Text("Log out?") },
-            text    = { Text("You will need to enter your credentials again to access the app.") },
+            title   = { Text(stringResource(R.string.settings_logout_dialog_title)) },
+            text    = { Text(stringResource(R.string.settings_logout_dialog_message)) },
             confirmButton   = {
                 TextButton(
                     onClick = {
@@ -306,14 +381,71 @@ fun SettingsScreen(
                         contentColor = MaterialTheme.colorScheme.error,
                     ),
                 ) {
-                    Text("Log out", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.settings_logout_dialog_confirm), fontWeight = FontWeight.SemiBold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.settings_logout_dialog_cancel))
                 }
             },
+        )
+    }
+
+    // ── Printer Picker Dialog ──────────────────────────────────────────────────
+    if (uiState.showPrinterPickerDialog) {
+        AlertDialog(
+            onDismissRequest = onDismissPrinterPicker,
+            title = { Text(stringResource(R.string.printer_picker_title), fontWeight = FontWeight.Bold) },
+            text  = {
+                Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                    if (!uiState.isBluetoothEnabled) {
+                        Text(
+                            text  = stringResource(R.string.printer_picker_bluetooth_off),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    } else if (uiState.pairedDevices.isEmpty()) {
+                        Text(
+                            text  = stringResource(R.string.printer_picker_no_devices),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    } else {
+                        uiState.pairedDevices.forEach { device ->
+                            Row(
+                                modifier          = Modifier
+                                    .fillMaxWidth()
+                                    .selectable(
+                                        selected = uiState.selectedPrinter?.macAddress == device.macAddress,
+                                        onClick  = { onPrinterSelected(device) },
+                                        role     = Role.RadioButton,
+                                    )
+                                    .padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                RadioButton(
+                                    selected  = uiState.selectedPrinter?.macAddress == device.macAddress,
+                                    onClick   = null,
+                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text  = device.name,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = onDismissPrinterPicker) { Text(stringResource(R.string.printer_picker_close)) }
+            },
+            shape          = RoundedCornerShape(16.dp),
+            containerColor = MaterialTheme.colorScheme.surface,
         )
     }
 }

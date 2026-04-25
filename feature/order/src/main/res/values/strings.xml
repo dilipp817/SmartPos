@@ -152,6 +152,14 @@
     <string name="order_item_added_success">%1$s added to order</string>
     <string name="create_order_gst_hint">⚠ Actual GST calculated server-side when bill is generated</string>
 
+    <!-- ── Print ──────────────────────────────────────────────────────────── -->
+    <string name="order_print_button_label">Print Receipt</string>
+    <string name="order_printing">Printing…</string>
+    <string name="order_print_success">Receipt printed successfully ✓</string>
+    <string name="order_print_error_bluetooth_disabled">Please enable Bluetooth to print.</string>
+    <string name="order_print_error_connection_failed">Could not connect to printer. Check it is switched on and nearby.</string>
+    <string name="order_print_error_permission_denied">Bluetooth permission is required to print. Please grant it in Settings.</string>
+
 </resources>
 
 

@@ -1,5 +1,7 @@
 package com.autobill.smartpos.settings
 
+import com.autobill.smartpos.domain.printer.PrinterDevice
+
 /**
  * UI state for the Settings screen.
  *
@@ -18,6 +20,19 @@ data class SettingsUiState(
     val currency: String = "INR",
     // Appearance
     val isDarkTheme: Boolean = false,
+    // ── Printer ──────────────────────────────────────────────────────────────
+    /** Currently saved printer (name + MAC). Null if none selected yet. */
+    val selectedPrinter: PrinterDevice? = null,
+    /** Bonded BT devices loaded when the printer picker dialog opens. */
+    val pairedDevices: List<PrinterDevice> = emptyList(),
+    /** True while the printer picker dialog is visible. */
+    val showPrinterPickerDialog: Boolean = false,
+    /** True when Bluetooth is enabled on the device at the time the picker was opened. */
+    val isBluetoothEnabled: Boolean = true,
+    /** True while a test print is in-flight. */
+    val isTestPrinting: Boolean = false,
+    /** One-shot: non-null after a test print attempt — shown as snackbar. */
+    val testPrintResult: String? = null,
     // Actions
     val isLoggingOut: Boolean = false,
 ) {

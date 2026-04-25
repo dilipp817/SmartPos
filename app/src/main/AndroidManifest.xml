@@ -7,6 +7,15 @@
     <!-- Required for push notifications on Android 13+ (API 33+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- ── Bluetooth ESC/POS Thermal Printer ─────────────────────────────── -->
+    <!-- API 31+ (Android 12): runtime permission required to connect + list bonded devices -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <!-- API ≤ 30: legacy permissions (no runtime prompt needed) -->
+    <uses-permission android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"
+        android:maxSdkVersion="30" />
+
     <application
         android:name=".SmartPosApp"
         android:allowBackup="false"
