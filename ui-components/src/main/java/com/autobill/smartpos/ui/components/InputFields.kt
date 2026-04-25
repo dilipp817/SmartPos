@@ -122,7 +122,7 @@ fun SearchBar(
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier,
         placeholder = { Text(placeholder) },
         leadingIcon = {
             Icon(
