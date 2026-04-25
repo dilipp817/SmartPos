@@ -25,7 +25,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -42,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import com.autobill.smartpos.domain.model.Food
 import com.autobill.smartpos.feature.admin.R
 import com.autobill.smartpos.ui.components.FullScreenLoading
+import com.autobill.smartpos.ui.components.SearchBar
 import com.autobill.smartpos.ui.components.dialogs.ConfirmDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -143,11 +143,10 @@ fun MenuManagementScreen(
                 .fillMaxSize()
                 .padding(padding),
         ) {
-            OutlinedTextField(
-                value         = uiState.searchQuery,
-                onValueChange = onSearchQueryChange,
-                placeholder   = { Text(stringResource(R.string.menu_search_placeholder)) },
-                singleLine    = true,
+            SearchBar(
+                query         = uiState.searchQuery,
+                onQueryChange = onSearchQueryChange,
+                placeholder   = stringResource(R.string.menu_search_placeholder),
                 modifier      = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),

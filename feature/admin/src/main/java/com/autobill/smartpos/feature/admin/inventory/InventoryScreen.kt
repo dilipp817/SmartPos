@@ -21,7 +21,6 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -31,7 +30,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -51,6 +49,7 @@ import com.autobill.smartpos.domain.model.Category
 import com.autobill.smartpos.domain.model.Food
 import com.autobill.smartpos.feature.admin.R
 import com.autobill.smartpos.ui.components.FullScreenLoading
+import com.autobill.smartpos.ui.components.SearchBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -145,19 +144,11 @@ fun InventoryScreen(
 
                 // ── Search ─────────────────────────────────────────────────
                 item {
-                    OutlinedTextField(
-                        value           = uiState.searchQuery,
-                        onValueChange   = onSearchQueryChange,
-                        placeholder     = { Text(stringResource(R.string.inventory_search_placeholder)) },
-                        leadingIcon     = { Icon(Icons.Default.Search, contentDescription = null) },
-                        trailingIcon    = {
-                            if (uiState.searchQuery.isNotBlank())
-                                IconButton(onClick = { onSearchQueryChange("") }) {
-                                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_clear))
-                                }
-                        },
-                        singleLine      = true,
-                        modifier        = Modifier.fillMaxWidth(),
+                    SearchBar(
+                        query         = uiState.searchQuery,
+                        onQueryChange = onSearchQueryChange,
+                        placeholder   = stringResource(R.string.inventory_search_placeholder),
+                        modifier      = Modifier.fillMaxWidth(),
                     )
                 }
 
