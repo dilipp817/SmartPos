@@ -18,7 +18,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
@@ -32,7 +31,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -44,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.autobill.smartpos.domain.model.Food
 import com.autobill.smartpos.feature.admin.R
+import com.autobill.smartpos.ui.components.dialogs.ConfirmDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -109,18 +108,14 @@ fun MenuManagementScreen(
     }
 
     uiState.deletingFood?.let { food ->
-        AlertDialog(
-            onDismissRequest = onCancelDelete,
-            title     = { Text(stringResource(R.string.menu_delete_dialog_title, food.name)) },
-            text      = { Text(stringResource(R.string.menu_delete_dialog_message)) },
-            confirmButton = {
-                TextButton(onClick = onConfirmDelete) {
-                    Text(stringResource(R.string.menu_delete_confirm), color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = onCancelDelete) { Text(stringResource(R.string.cancel)) }
-            },
+        ConfirmDialog(
+            title         = stringResource(R.string.menu_delete_dialog_title, food.name),
+            message       = stringResource(R.string.menu_delete_dialog_message),
+            confirmText   = stringResource(R.string.menu_delete_confirm),
+            dismissText   = stringResource(R.string.cancel),
+            isDestructive = true,
+            onConfirm     = onConfirmDelete,
+            onDismiss     = onCancelDelete,
         )
     }
 
