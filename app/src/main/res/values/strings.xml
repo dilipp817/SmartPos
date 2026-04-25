@@ -8,4 +8,34 @@
     <string name="print_error_connection_failed">Could not connect to printer. Check it is switched on and nearby.</string>
     <string name="print_error_permission_denied">Bluetooth permission is required to print. Please grant it in Settings.</string>
     <string name="bt_permission_denied">Bluetooth permission is required to find paired printers.</string>
+
+    <!-- ── Printer Picker Dialog ─────────────────────────────────────────── -->
+    <string name="printer_picker_title">Select Printer</string>
+    <string name="printer_picker_bluetooth_off">Bluetooth is turned off.\n\nPlease enable Bluetooth in your device settings, then tap \"Select\" again.</string>
+    <string name="printer_picker_no_devices">No paired Bluetooth devices found.\n\nPair your thermal printer via Android Settings → Bluetooth, then return here.</string>
+    <string name="printer_picker_close">Close</string>
+
+    <!-- ── Settings Screen ───────────────────────────────────────────────── -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_profile">Profile</string>
+    <string name="settings_section_outlet">Outlet</string>
+    <string name="settings_section_printer">Printer</string>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_section_about">About</string>
+    <string name="settings_printer_subtitle">ESC/POS Bluetooth Thermal Printer</string>
+    <string name="settings_printer_no_selection">No printer selected</string>
+    <string name="settings_printer_change">Change</string>
+    <string name="settings_printer_select">Select</string>
+    <string name="settings_printer_test_print">Test Print</string>
+    <string name="settings_printer_printing">Printing…</string>
+    <string name="settings_appearance_dark_mode">Dark Mode</string>
+    <string name="settings_appearance_dark_active">Dark theme active</string>
+    <string name="settings_appearance_light_active">Light theme active</string>
+    <string name="settings_about_version">v1.0.0</string>
+    <string name="settings_logout_button">Logout</string>
+    <string name="settings_logout_progress">Logging out…</string>
+    <string name="settings_logout_dialog_title">Log out?</string>
+    <string name="settings_logout_dialog_message">You will need to enter your credentials again to access the app.</string>
+    <string name="settings_logout_dialog_confirm">Log out</string>
+    <string name="settings_logout_dialog_cancel">Cancel</string>
 </resources>
