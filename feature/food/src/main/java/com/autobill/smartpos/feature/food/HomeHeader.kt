@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import com.autobill.smartpos.ui.components.layout.LayoutTokens
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -72,7 +73,7 @@ fun HomeHeader(
             ) {
             TabRow(
                 selectedTabIndex = if (data.selectedTab == OrderTab.OFFLINE) 0 else 1,
-                modifier = Modifier.widthIn(max = 400.dp),
+                modifier = Modifier.widthIn(max = LayoutTokens.MAX_WIDTH_HEADER_WIDGET),
                 containerColor = Color.Transparent,
                 indicator = { tabPositions ->
                     TabRowDefaults.Indicator(

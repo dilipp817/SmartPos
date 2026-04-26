@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import com.autobill.smartpos.domain.model.Order
 import com.autobill.smartpos.domain.model.OrderStatus
 import com.autobill.smartpos.ui.components.FullScreenLoading
+import com.autobill.smartpos.ui.components.layout.LayoutTokens
 
 /**
  * Order History Screen — Phase 8.2
@@ -247,7 +248,7 @@ fun OrderHistoryScreen(
                         contentAlignment = Alignment.TopCenter,
                     ) {
                         LazyColumn(
-                            modifier            = Modifier.widthIn(max = 840.dp).fillMaxWidth(),
+                            modifier = Modifier.widthIn(max = LayoutTokens.MAX_WIDTH_CONTENT).fillMaxWidth(),
                             contentPadding      = PaddingValues(16.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp),
                         ) {

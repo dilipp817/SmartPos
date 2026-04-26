@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import com.autobill.smartpos.ui.components.layout.LayoutTokens
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -116,7 +117,7 @@ fun PaymentScreen(
                 contentPadding      = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier            = Modifier
-                    .widthIn(max = 640.dp)
+                    .widthIn(max = LayoutTokens.MAX_WIDTH_FOCUSED)
                     .fillMaxWidth(),
             ) {
                 // ── Amount Due Card ──────────────────────────────────────────

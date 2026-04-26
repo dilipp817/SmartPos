@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import com.autobill.smartpos.ui.components.layout.LayoutTokens
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -179,7 +180,7 @@ private fun CategoryManagementScreen(
             ) {
                 LazyColumn(
                     modifier = Modifier
-                        .widthIn(max = 840.dp)
+                        .widthIn(max = LayoutTokens.MAX_WIDTH_CONTENT)
                         .fillMaxWidth()
                         .padding(padding)
                         .padding(horizontal = 16.dp, vertical = 8.dp),

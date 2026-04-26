@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import com.autobill.smartpos.ui.components.layout.LayoutTokens
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -331,7 +332,7 @@ private fun OrderList(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
         modifier = Modifier
-            .widthIn(max = 840.dp)
+            .widthIn(max = LayoutTokens.MAX_WIDTH_CONTENT)
             .fillMaxWidth(),
     ) {
         items(orders, key = { it.id }) { order ->

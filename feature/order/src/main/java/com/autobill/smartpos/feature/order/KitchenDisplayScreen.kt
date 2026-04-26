@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
+import com.autobill.smartpos.ui.components.layout.LayoutTokens
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
@@ -306,7 +307,7 @@ private fun KitchenOrderGrid(
     onUpdateStatus: (orderId: Long, itemId: Long, newStatus: ItemStatus) -> Unit,
 ) {
     LazyVerticalGrid(
-        columns             = GridCells.Adaptive(minSize = 320.dp),
+        columns             = GridCells.Adaptive(minSize = LayoutTokens.GRID_CELL_KITCHEN),
         contentPadding      = PaddingValues(16.dp),
         verticalArrangement   = Arrangement.spacedBy(12.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
