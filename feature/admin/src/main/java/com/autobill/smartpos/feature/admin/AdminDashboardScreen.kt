@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import com.autobill.smartpos.ui.components.layout.LayoutTokens
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
@@ -52,6 +51,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.autobill.smartpos.feature.admin.R
+import com.autobill.smartpos.ui.components.layout.LayoutTokens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -222,14 +222,14 @@ fun AdminDashboardScreen(
                                 OutletInfoRow(stringResource(R.string.admin_outlet_display_label), r.displayName)
                                 OutletInfoRow(stringResource(R.string.admin_outlet_manager_label), r.outletManager)
                                 OutletInfoRow(stringResource(R.string.admin_outlet_address_label), r.address.formatted)
-                                // currency always INR; tax always 18%; tips always shown — contract §8.2
                             }
                         }
                     }
                 }
-            }
-        }
-    }
+                }   // end LazyColumn
+            }       // end Box
+        }           // end else
+    }               // end Scaffold
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
