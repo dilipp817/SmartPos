@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -48,12 +47,10 @@ fun FoodRoute(
     val viewModel: FoodViewModel = hiltViewModel()
     val paginatedState by viewModel.paginatedFoodsState.collectAsStateWithLifecycle()
     val isLoadingMore by viewModel.isLoadingMore.collectAsStateWithLifecycle()
-    val lazyListState = rememberLazyListState()
 
     FoodScreen(
         state = paginatedState,
         isLoadingMore = isLoadingMore,
-        lazyListState = lazyListState,
         onRetry = { viewModel.retryLoadPaginatedFoods() },
         onLoadMore = { viewModel.loadNextPage() },
         onFoodClick = onFoodClick,
@@ -77,7 +74,6 @@ fun FoodRoute(
 fun FoodScreen(
     state: UiState<Pagination<Food>>,
     isLoadingMore: Boolean,
-    lazyListState: androidx.compose.foundation.lazy.LazyListState,
     onRetry: () -> Unit,
     onLoadMore: () -> Unit,
     onFoodClick: (Long) -> Unit = {},
@@ -165,9 +161,9 @@ fun FoodScreen(
                             )
                         }
 
-                        // Infinite scroll — uses the original lazyListState for back-compat
+                        // Infinite scroll — observes gridState so grid scrolling triggers onLoadMore
                         InfiniteScrollHandler(
-                            listState = lazyListState,
+                            gridState = gridState,
                             threshold = 3,
                             onLoadMore = onLoadMore,
                         )
