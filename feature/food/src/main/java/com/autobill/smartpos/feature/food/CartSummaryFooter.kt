@@ -52,7 +52,6 @@ fun CartSummaryFooter(
 ) {
     Column(
         modifier = modifier
-            .width(360.dp)
             .fillMaxHeight()
             .background(Color(0xFFF8F9FA))
             .padding(16.dp),

@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import com.autobill.smartpos.ui.components.layout.LayoutTokens
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -64,46 +66,51 @@ fun HomeHeader(
                 color = Color(0xFF212121),
             )
 
-            // Center: Tab Switcher
-            TabRow(
-                selectedTabIndex = if (data.selectedTab == OrderTab.OFFLINE) 0 else 1,
+            // Center: Tab Switcher — capped at 400dp so it doesn't stretch on wide tablets
+            Box(
                 modifier = Modifier.weight(1f),
-                containerColor = Color.Transparent,
-                indicator = { tabPositions ->
-                    TabRowDefaults.Indicator(
-                        modifier = Modifier.tabIndicatorOffset(tabPositions[if (data.selectedTab == OrderTab.OFFLINE) 0 else 1]),
-                        color = Color(0xFFE33E3E),
-                        height = 3.dp,
-                    )
-                },
-                divider = {},
+                contentAlignment = Alignment.Center,
             ) {
-                Tab(
-                    selected = data.selectedTab == OrderTab.OFFLINE,
-                    onClick = { data.onTabChange(OrderTab.OFFLINE) },
-                    text = {
-                        Text(
-                            text = stringResource(R.string.offline_orders),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = if (data.selectedTab == OrderTab.OFFLINE) FontWeight.SemiBold else FontWeight.Normal,
+                TabRow(
+                    selectedTabIndex = if (data.selectedTab == OrderTab.OFFLINE) 0 else 1,
+                    modifier = Modifier.widthIn(max = LayoutTokens.MAX_WIDTH_HEADER_WIDGET),
+                    containerColor = Color.Transparent,
+                    indicator = { tabPositions ->
+                        TabRowDefaults.Indicator(
+                            modifier = Modifier.tabIndicatorOffset(tabPositions[if (data.selectedTab == OrderTab.OFFLINE) 0 else 1]),
+                            color = Color(0xFFE33E3E),
+                            height = 3.dp,
                         )
                     },
-                    selectedContentColor = Color(0xFFE33E3E),
-                    unselectedContentColor = Color(0xFF757575),
-                )
-                Tab(
-                    selected = data.selectedTab == OrderTab.ONLINE,
-                    onClick = { data.onTabChange(OrderTab.ONLINE) },
-                    text = {
-                        Text(
-                            text = stringResource(R.string.online_orders),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = if (data.selectedTab == OrderTab.ONLINE) FontWeight.SemiBold else FontWeight.Normal,
-                        )
-                    },
-                    selectedContentColor = Color(0xFFE33E3E),
-                    unselectedContentColor = Color(0xFF757575),
-                )
+                    divider = {},
+                ) {
+                    Tab(
+                        selected = data.selectedTab == OrderTab.OFFLINE,
+                        onClick = { data.onTabChange(OrderTab.OFFLINE) },
+                        text = {
+                            Text(
+                                text = stringResource(R.string.offline_orders),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = if (data.selectedTab == OrderTab.OFFLINE) FontWeight.SemiBold else FontWeight.Normal,
+                            )
+                        },
+                        selectedContentColor = Color(0xFFE33E3E),
+                        unselectedContentColor = Color(0xFF757575),
+                    )
+                    Tab(
+                        selected = data.selectedTab == OrderTab.ONLINE,
+                        onClick = { data.onTabChange(OrderTab.ONLINE) },
+                        text = {
+                            Text(
+                                text = stringResource(R.string.online_orders),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = if (data.selectedTab == OrderTab.ONLINE) FontWeight.SemiBold else FontWeight.Normal,
+                            )
+                        },
+                        selectedContentColor = Color(0xFFE33E3E),
+                        unselectedContentColor = Color(0xFF757575),
+                    )
+                }
             }
 
             // Right: Manage Menu chip (admin / super_admin only) + Business Profile

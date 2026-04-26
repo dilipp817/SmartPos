@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
+import com.autobill.smartpos.ui.components.layout.LayoutTokens
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -95,7 +96,7 @@ fun FoodGridSection(
             else -> {
                 // Grid with items
                 LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),  // 2 columns as per design
+                    columns = GridCells.Adaptive(minSize = LayoutTokens.GRID_CELL_FOOD), // adapts: 2 cols on small tablets, 3+ on large
                     state = lazyGridState,
                     modifier = Modifier
                         .fillMaxSize()

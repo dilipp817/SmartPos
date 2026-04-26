@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -53,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import com.autobill.smartpos.domain.model.Order
 import com.autobill.smartpos.domain.model.OrderStatus
 import com.autobill.smartpos.ui.components.FullScreenLoading
+import com.autobill.smartpos.ui.components.layout.LayoutTokens
 
 /**
  * Order History Screen — Phase 8.2
@@ -241,12 +243,18 @@ fun OrderHistoryScreen(
                         )
                     }
 
-                    else -> LazyColumn(
-                        contentPadding      = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    else -> Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.TopCenter,
                     ) {
-                        items(uiState.orders, key = { it.id }) { order ->
-                            OrderHistoryCard(order = order)
+                        LazyColumn(
+                            modifier = Modifier.widthIn(max = LayoutTokens.MAX_WIDTH_CONTENT).fillMaxWidth(),
+                            contentPadding      = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            items(uiState.orders, key = { it.id }) { order ->
+                                OrderHistoryCard(order = order)
+                            }
                         }
                     }
                 }

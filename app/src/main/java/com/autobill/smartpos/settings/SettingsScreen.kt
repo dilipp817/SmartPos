@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import com.autobill.smartpos.ui.components.layout.LayoutTokens
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -108,11 +109,17 @@ fun SettingsScreen(
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-        // ── Content ───────────────────────────────────────────────────────────
+        // ── Content — centred and capped to avoid over-stretch on large tablets ──
+        Box(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            contentAlignment = Alignment.TopCenter,
+        ) {
         LazyColumn(
             contentPadding      = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier            = Modifier.weight(1f).fillMaxWidth(),
+            modifier            = Modifier
+                .widthIn(max = LayoutTokens.MAX_WIDTH_CONTENT)
+                .fillMaxWidth(),
         ) {
 
             // ── Profile section ─────────────────────────────────────────────
@@ -363,6 +370,7 @@ fun SettingsScreen(
                 }
             }
         }
+        } // Box (widthIn wrapper)
     }
 
     // ── Logout confirmation dialog ─────────────────────────────────────────────

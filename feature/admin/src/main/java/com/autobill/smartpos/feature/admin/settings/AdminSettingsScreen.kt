@@ -1,12 +1,15 @@
 package com.autobill.smartpos.feature.admin.settings
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import com.autobill.smartpos.ui.components.layout.LayoutTokens
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -27,6 +30,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -83,14 +87,18 @@ fun AdminSettingsScreen(
         if (uiState.isLoading) {
             FullScreenLoading(modifier = Modifier.padding(padding))
         } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+            Box(
+                modifier = Modifier.fillMaxSize().padding(padding),
+                contentAlignment = Alignment.TopCenter,
             ) {
+                Column(
+                    modifier = Modifier
+                        .widthIn(max = LayoutTokens.MAX_WIDTH_CONTENT)
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
                 // ── Outlet Details ─────────────────────────────────────────
                 Text(stringResource(R.string.settings_section_outlet),
                      style = MaterialTheme.typography.titleMedium,
@@ -170,6 +178,7 @@ fun AdminSettingsScreen(
                     if (uiState.isSaving)
                         CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp))
                     Text(stringResource(R.string.settings_save_button))
+                }
                 }
             }
         }

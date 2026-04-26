@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import com.autobill.smartpos.ui.components.layout.LayoutTokens
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -172,19 +174,25 @@ private fun CategoryManagementScreen(
                 }
             }
         } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.TopCenter,
             ) {
-                items(uiState.categories, key = { it.id }) { category ->
-                    CategoryCard(
-                        category    = category,
-                        onEdit      = { onEditClick(category) },
-                        onDelete    = { onDeleteClick(category) },
-                    )
+                LazyColumn(
+                    modifier = Modifier
+                        .widthIn(max = LayoutTokens.MAX_WIDTH_CONTENT)
+                        .fillMaxWidth()
+                        .padding(padding)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    items(uiState.categories, key = { it.id }) { category ->
+                        CategoryCard(
+                            category    = category,
+                            onEdit      = { onEditClick(category) },
+                            onDelete    = { onDeleteClick(category) },
+                        )
+                    }
                 }
             }
         }
