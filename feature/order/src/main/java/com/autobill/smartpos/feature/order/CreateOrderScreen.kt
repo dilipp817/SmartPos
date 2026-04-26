@@ -177,121 +177,121 @@ private fun OrderBody(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.TopCenter,
     ) {
-    Row(
-        modifier = Modifier
-            .widthIn(max = LayoutTokens.MAX_WIDTH_WIDE)
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        // ── Left column — table info + order type ─────────────────────────
-        Column(
-            modifier = Modifier.widthIn(min = 220.dp, max = 320.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            uiState.table?.let { TableInfoCard(table = it) }
-            // Order type was chosen on the food screen and is always read-only here.
-            // - isNoTable=true  → TAKEAWAY / counter-service (no table)
-            // - isNoTable=false → DINE_IN with a selected table
-            // In both cases switching order type here would put the order in an
-            // inconsistent state (e.g. switching to DINE_IN without a table, or
-            // switching to TAKEAWAY after a table was reserved).
-            NoTableOrderTypeBadge(orderType = uiState.orderType)
-        }
-
-        // ── Right column — items + notes + totals + submit ────────────────
-        Column(
+        Row(
             modifier = Modifier
-                .weight(1f)
+                .widthIn(max = LayoutTokens.MAX_WIDTH_WIDE)
                 .fillMaxSize()
-                .clip(RoundedCornerShape(16.dp))
-                .background(Color.White)
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(
-                text = stringResource(R.string.create_order_items_section, uiState.cartItems.sumOf { it.quantity }),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF212121),
-            )
-
-            // Cart items list
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(bottom = 4.dp),
+            // ── Left column — table info + order type ─────────────────────────
+            Column(
+                modifier = Modifier.widthIn(min = 220.dp, max = 320.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                items(uiState.cartItems, key = { it.foodId }) { item ->
-                    CartItemRow(item = item)
-                }
+                uiState.table?.let { TableInfoCard(table = it) }
+                // Order type was chosen on the food screen and is always read-only here.
+                // - isNoTable=true  → TAKEAWAY / counter-service (no table)
+                // - isNoTable=false → DINE_IN with a selected table
+                // In both cases switching order type here would put the order in an
+                // inconsistent state (e.g. switching to DINE_IN without a table, or
+                // switching to TAKEAWAY after a table was reserved).
+                NoTableOrderTypeBadge(orderType = uiState.orderType)
             }
 
-            HorizontalDivider(color = Color(0xFFF0F0F0))
-
-            // Notes field
-            OutlinedTextField(
-                value = uiState.notes,
-                onValueChange = onNotesChange,
-                label = { Text(stringResource(R.string.create_order_table_notes_label)) },
-                placeholder = { Text(stringResource(R.string.create_order_table_notes_placeholder)) },
-                singleLine = false,
-                maxLines = 3,
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Sentences,
-                    imeAction = ImeAction.Done,
-                ),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFFE33E3E),
-                    focusedLabelColor = Color(0xFFE33E3E),
-                ),
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            // Error message
-            if (uiState.errorMessage != null) {
-                Text(
-                    text = "⚠️ ${uiState.errorMessage}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFFC62828),
-                )
-            }
-
-            HorizontalDivider(color = Color(0xFFF0F0F0))
-
-            // Bill preview
-            BillPreviewSection(uiState = uiState)
-
-            // Place Order button
-            Button(
-                onClick = onPlaceOrder,
-                enabled = uiState.canPlaceOrder,
+            // ── Right column — items + notes + totals + submit ────────────────
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFE33E3E),
-                    disabledContainerColor = Color(0xFFE0E0E0),
-                ),
-                shape = RoundedCornerShape(12.dp),
+                    .weight(1f)
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color.White)
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                if (uiState.isSubmitting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(22.dp),
-                        color = Color.White,
-                        strokeWidth = 2.dp,
-                    )
-                } else {
+                Text(
+                    text = stringResource(R.string.create_order_items_section, uiState.cartItems.sumOf { it.quantity }),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF212121),
+                )
+
+                // Cart items list
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(bottom = 4.dp),
+                ) {
+                    items(uiState.cartItems, key = { it.foodId }) { item ->
+                        CartItemRow(item = item)
+                    }
+                }
+
+                HorizontalDivider(color = Color(0xFFF0F0F0))
+
+                // Notes field
+                OutlinedTextField(
+                    value = uiState.notes,
+                    onValueChange = onNotesChange,
+                    label = { Text(stringResource(R.string.create_order_table_notes_label)) },
+                    placeholder = { Text(stringResource(R.string.create_order_table_notes_placeholder)) },
+                    singleLine = false,
+                    maxLines = 3,
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences,
+                        imeAction = ImeAction.Done,
+                    ),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFFE33E3E),
+                        focusedLabelColor = Color(0xFFE33E3E),
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                // Error message
+                if (uiState.errorMessage != null) {
                     Text(
-                        text = stringResource(R.string.create_order_place_button),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
+                        text = "⚠️ ${uiState.errorMessage}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFFC62828),
                     )
+                }
+
+                HorizontalDivider(color = Color(0xFFF0F0F0))
+
+                // Bill preview
+                BillPreviewSection(uiState = uiState)
+
+                // Place Order button
+                Button(
+                    onClick = onPlaceOrder,
+                    enabled = uiState.canPlaceOrder,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFE33E3E),
+                        disabledContainerColor = Color(0xFFE0E0E0),
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                ) {
+                    if (uiState.isSubmitting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(22.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp,
+                        )
+                    } else {
+                        Text(
+                            text = stringResource(R.string.create_order_place_button),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
                 }
             }
         }
     }
-    } // Box (max-width wrapper)
 }
 
 // ── Sub-composables ───────────────────────────────────────────────────────────

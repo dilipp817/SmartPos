@@ -85,14 +85,14 @@ fun StaffManagementScreen(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentAlignment = Alignment.TopCenter,
             ) {
-            Column(
-                modifier = Modifier
-                    .widthIn(max = LayoutTokens.MAX_WIDTH_CONTENT)
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
-            ) {
+                Column(
+                    modifier = Modifier
+                        .widthIn(max = LayoutTokens.MAX_WIDTH_CONTENT)
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp),
+                ) {
                 // ── Current Session User ───────────────────────────────────
                 uiState.currentUser?.let { user ->
                     Text(
@@ -158,8 +158,8 @@ fun StaffManagementScreen(
                 }
 
                 Spacer(Modifier.height(8.dp))
+                }
             }
-            } // Box
         }
     }
 }

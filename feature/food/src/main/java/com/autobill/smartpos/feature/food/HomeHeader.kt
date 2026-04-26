@@ -71,47 +71,47 @@ fun HomeHeader(
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.Center,
             ) {
-            TabRow(
-                selectedTabIndex = if (data.selectedTab == OrderTab.OFFLINE) 0 else 1,
-                modifier = Modifier.widthIn(max = LayoutTokens.MAX_WIDTH_HEADER_WIDGET),
-                containerColor = Color.Transparent,
-                indicator = { tabPositions ->
-                    TabRowDefaults.Indicator(
-                        modifier = Modifier.tabIndicatorOffset(tabPositions[if (data.selectedTab == OrderTab.OFFLINE) 0 else 1]),
-                        color = Color(0xFFE33E3E),
-                        height = 3.dp,
+                TabRow(
+                    selectedTabIndex = if (data.selectedTab == OrderTab.OFFLINE) 0 else 1,
+                    modifier = Modifier.widthIn(max = LayoutTokens.MAX_WIDTH_HEADER_WIDGET),
+                    containerColor = Color.Transparent,
+                    indicator = { tabPositions ->
+                        TabRowDefaults.Indicator(
+                            modifier = Modifier.tabIndicatorOffset(tabPositions[if (data.selectedTab == OrderTab.OFFLINE) 0 else 1]),
+                            color = Color(0xFFE33E3E),
+                            height = 3.dp,
+                        )
+                    },
+                    divider = {},
+                ) {
+                    Tab(
+                        selected = data.selectedTab == OrderTab.OFFLINE,
+                        onClick = { data.onTabChange(OrderTab.OFFLINE) },
+                        text = {
+                            Text(
+                                text = stringResource(R.string.offline_orders),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = if (data.selectedTab == OrderTab.OFFLINE) FontWeight.SemiBold else FontWeight.Normal,
+                            )
+                        },
+                        selectedContentColor = Color(0xFFE33E3E),
+                        unselectedContentColor = Color(0xFF757575),
                     )
-                },
-                divider = {},
-            ) {
-                Tab(
-                    selected = data.selectedTab == OrderTab.OFFLINE,
-                    onClick = { data.onTabChange(OrderTab.OFFLINE) },
-                    text = {
-                        Text(
-                            text = stringResource(R.string.offline_orders),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = if (data.selectedTab == OrderTab.OFFLINE) FontWeight.SemiBold else FontWeight.Normal,
-                        )
-                    },
-                    selectedContentColor = Color(0xFFE33E3E),
-                    unselectedContentColor = Color(0xFF757575),
-                )
-                Tab(
-                    selected = data.selectedTab == OrderTab.ONLINE,
-                    onClick = { data.onTabChange(OrderTab.ONLINE) },
-                    text = {
-                        Text(
-                            text = stringResource(R.string.online_orders),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = if (data.selectedTab == OrderTab.ONLINE) FontWeight.SemiBold else FontWeight.Normal,
-                        )
-                    },
-                    selectedContentColor = Color(0xFFE33E3E),
-                    unselectedContentColor = Color(0xFF757575),
-                )
+                    Tab(
+                        selected = data.selectedTab == OrderTab.ONLINE,
+                        onClick = { data.onTabChange(OrderTab.ONLINE) },
+                        text = {
+                            Text(
+                                text = stringResource(R.string.online_orders),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = if (data.selectedTab == OrderTab.ONLINE) FontWeight.SemiBold else FontWeight.Normal,
+                            )
+                        },
+                        selectedContentColor = Color(0xFFE33E3E),
+                        unselectedContentColor = Color(0xFF757575),
+                    )
+                }
             }
-            } // Box (TabRow max-width wrapper)
 
             // Right: Manage Menu chip (admin / super_admin only) + Business Profile
             Row(

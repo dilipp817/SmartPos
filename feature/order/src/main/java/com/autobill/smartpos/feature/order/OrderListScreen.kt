@@ -328,23 +328,23 @@ private fun OrderList(
     onOrderClick: (Long) -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-    LazyColumn(
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-        modifier = Modifier
-            .widthIn(max = LayoutTokens.MAX_WIDTH_CONTENT)
-            .fillMaxWidth(),
-    ) {
-        items(orders, key = { it.id }) { order ->
-            OrderItemCard(
-                order = order,
-                onClick = onOrderClick,
-            )
+        LazyColumn(
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier
+                .widthIn(max = LayoutTokens.MAX_WIDTH_CONTENT)
+                .fillMaxWidth(),
+        ) {
+            items(orders, key = { it.id }) { order ->
+                OrderItemCard(
+                    order = order,
+                    onClick = onOrderClick,
+                )
+            }
+            // Bottom spacing so last card isn't hidden behind nav bar
+            item { Spacer(modifier = Modifier.height(80.dp)) }
         }
-        // Bottom spacing so last card isn't hidden behind nav bar
-        item { Spacer(modifier = Modifier.height(80.dp)) }
     }
-    } // Box
 }
 
 @Composable

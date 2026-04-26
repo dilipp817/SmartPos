@@ -113,13 +113,13 @@ fun PaymentScreen(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
                 contentAlignment = Alignment.TopCenter,
             ) {
-            LazyColumn(
-                contentPadding      = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier            = Modifier
-                    .widthIn(max = LayoutTokens.MAX_WIDTH_FOCUSED)
-                    .fillMaxWidth(),
-            ) {
+                LazyColumn(
+                    contentPadding      = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier            = Modifier
+                        .widthIn(max = LayoutTokens.MAX_WIDTH_FOCUSED)
+                        .fillMaxWidth(),
+                ) {
                 // ── Amount Due Card ──────────────────────────────────────────
                 item {
                     Column(
@@ -285,8 +285,8 @@ fun PaymentScreen(
                 }
 
                 item { Spacer(Modifier.height(32.dp)) }
+                }
             }
-            } // Box (max-width wrapper)
         }
 
         SnackbarHost(

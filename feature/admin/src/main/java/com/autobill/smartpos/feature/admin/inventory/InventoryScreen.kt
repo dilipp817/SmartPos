@@ -110,17 +110,17 @@ fun InventoryScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.TopCenter,
             ) {
-            LazyColumn(
-                modifier = Modifier
-                    .widthIn(max = LayoutTokens.MAX_WIDTH_CONTENT)
-                    .fillMaxWidth(),
-                contentPadding = PaddingValues(
-                    start = 16.dp, end = 16.dp,
-                    top = padding.calculateTopPadding() + 8.dp,
-                    bottom = padding.calculateBottomPadding() + 16.dp,
-                ),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
+                LazyColumn(
+                    modifier = Modifier
+                        .widthIn(max = LayoutTokens.MAX_WIDTH_CONTENT)
+                        .fillMaxWidth(),
+                    contentPadding = PaddingValues(
+                        start = 16.dp, end = 16.dp,
+                        top = padding.calculateTopPadding() + 8.dp,
+                        bottom = padding.calculateBottomPadding() + 16.dp,
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
                 // ── Stats row ──────────────────────────────────────────────
                 item {
                     Row(
@@ -198,8 +198,8 @@ fun InventoryScreen(
                         )
                     }
                 }
+                }
             }
-            } // Box
         }
     }
 }

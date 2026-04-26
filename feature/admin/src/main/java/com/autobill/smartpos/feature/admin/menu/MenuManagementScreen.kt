@@ -145,12 +145,12 @@ fun MenuManagementScreen(
             modifier = Modifier.fillMaxSize().padding(padding),
             contentAlignment = Alignment.TopCenter,
         ) {
-        Column(
-            modifier = Modifier
-                .widthIn(max = LayoutTokens.MAX_WIDTH_CONTENT)
-                .fillMaxWidth()
-                .fillMaxHeight(),
-        ) {
+            Column(
+                modifier = Modifier
+                    .widthIn(max = LayoutTokens.MAX_WIDTH_CONTENT)
+                    .fillMaxWidth()
+                    .fillMaxHeight(),
+            ) {
             SearchBar(
                 query         = uiState.searchQuery,
                 onQueryChange = onSearchQueryChange,
@@ -183,8 +183,8 @@ fun MenuManagementScreen(
                     }
                 }
             }
+            }
         }
-        } // Box
     }
 }
 

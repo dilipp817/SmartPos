@@ -167,13 +167,13 @@ fun SalesReportScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.TopCenter,
             ) {
-            LazyColumn(
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier
-                    .widthIn(max = LayoutTokens.MAX_WIDTH_CONTENT)
-                    .fillMaxWidth(),
-            ) {
+                LazyColumn(
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier
+                        .widthIn(max = LayoutTokens.MAX_WIDTH_CONTENT)
+                        .fillMaxWidth(),
+                ) {
                 // ── Date range selector ───────────────────────────────────────
                 item {
                     DateRangeSelector(
@@ -250,8 +250,8 @@ fun SalesReportScreen(
                         TopSellingItemsSection(items = report.topSellingItems)
                     }
                 }
+                }
             }
-            } // Box (max-width wrapper)
         }
 
         SnackbarHost(

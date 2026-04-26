@@ -91,14 +91,14 @@ fun AdminSettingsScreen(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentAlignment = Alignment.TopCenter,
             ) {
-            Column(
-                modifier = Modifier
-                    .widthIn(max = LayoutTokens.MAX_WIDTH_CONTENT)
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
+                Column(
+                    modifier = Modifier
+                        .widthIn(max = LayoutTokens.MAX_WIDTH_CONTENT)
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
                 // ── Outlet Details ─────────────────────────────────────────
                 Text(stringResource(R.string.settings_section_outlet),
                      style = MaterialTheme.typography.titleMedium,
@@ -179,8 +179,8 @@ fun AdminSettingsScreen(
                         CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp))
                     Text(stringResource(R.string.settings_save_button))
                 }
+                }
             }
-            } // Box
         }
     }
 }

@@ -135,13 +135,13 @@ fun BillingScreen(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
                 contentAlignment = Alignment.TopCenter,
             ) {
-            LazyColumn(
-                contentPadding      = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier            = Modifier
-                    .widthIn(max = LayoutTokens.MAX_WIDTH_FOCUSED)
-                    .fillMaxWidth(),
-            ) {
+                LazyColumn(
+                    contentPadding      = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier            = Modifier
+                        .widthIn(max = LayoutTokens.MAX_WIDTH_FOCUSED)
+                        .fillMaxWidth(),
+                ) {
                 when {
                     // Loading existing bill
                     uiState.isLoadingExistingBill -> item {
@@ -233,9 +233,9 @@ fun BillingScreen(
                     }
                 }
 
-                item { Spacer(modifier = Modifier.height(32.dp)) }
+                    item { Spacer(modifier = Modifier.height(32.dp)) }
+                }
             }
-            } // Box (max-width wrapper)
         }
 
         SnackbarHost(

@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import com.autobill.smartpos.ui.components.layout.LayoutTokens
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -74,6 +73,7 @@ import com.autobill.smartpos.domain.model.OrderItem
 import com.autobill.smartpos.domain.model.OrderStatus
 import com.autobill.smartpos.feature.order.R
 import com.autobill.smartpos.ui.components.badges.OrderStatusBadge
+import com.autobill.smartpos.ui.components.layout.LayoutTokens
 
 /**
  * Order Detail Screen — Phase 5.3.
@@ -364,115 +364,115 @@ private fun OrderDetailContent(
 ) {
     val order = uiState.order ?: return
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-    LazyColumn(
-        contentPadding      = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-        modifier            = Modifier
-            .widthIn(max = LayoutTokens.MAX_WIDTH_CONTENT)
-            .fillMaxWidth(),
-    ) {
-        item { OrderSummaryCard(order = order) }
+        LazyColumn(
+            contentPadding      = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            modifier            = Modifier
+                .widthIn(max = LayoutTokens.MAX_WIDTH_CONTENT)
+                .fillMaxWidth(),
+        ) {
+            item { OrderSummaryCard(order = order) }
 
-        item {
-            Row(
-                modifier              = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment     = Alignment.CenterVertically,
-            ) {
-                Text(stringResource(R.string.order_detail_items_section, order.items.size), style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold, color = Color(0xFF212121))
-                if (uiState.canAddItems) {
-                    OutlinedButton(
-                        onClick        = onAddItem,
-                        shape          = RoundedCornerShape(8.dp),
-                        colors         = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFE33E3E)),
-                        border         = BorderStroke(1.dp, Color(0xFFE33E3E)),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+            item {
+                Row(
+                    modifier              = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment     = Alignment.CenterVertically,
+                ) {
+                    Text(stringResource(R.string.order_detail_items_section, order.items.size), style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold, color = Color(0xFF212121))
+                    if (uiState.canAddItems) {
+                        OutlinedButton(
+                            onClick        = onAddItem,
+                            shape          = RoundedCornerShape(8.dp),
+                            colors         = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFE33E3E)),
+                            border         = BorderStroke(1.dp, Color(0xFFE33E3E)),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                        ) {
+                            Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(stringResource(R.string.order_detail_add_item_button), style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                }
+            }
+
+            if (order.items.isEmpty()) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                        contentAlignment = Alignment.Center) {
+                        Text(stringResource(R.string.order_detail_no_items), style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFF9E9E9E))
+                    }
+                }
+            } else {
+                items(order.items, key = { it.id }) { item ->
+                    val locked   = item.itemStatus.isLocked()
+                    val removing = item.id in uiState.removingItemIds
+                    OrderDetailItemRow(
+                        item       = item,
+                        isLocked   = locked,
+                        isRemoving = removing,
+                        onEdit     = { if (!locked && !removing) onEditItem(item) },
+                        onRemove   = { if (!locked && !removing) onRemoveItem(item.id) },
+                    )
+                }
+            }
+
+            if (uiState.canBill) {
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick  = onBillingClick,
+                        shape    = RoundedCornerShape(8.dp),
+                        colors   = ButtonDefaults.buttonColors(containerColor = Color(0xFF1B5E20)),
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(R.string.order_detail_add_item_button), style = MaterialTheme.typography.labelMedium)
+                        Icon(Icons.Default.Receipt, null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.order_detail_generate_bill), fontWeight = FontWeight.SemiBold)
+                    }
+                }
+
+                // Print receipt button (available whenever there is an order)
+                item {
+                    OutlinedButton(
+                        onClick  = onPrintClick,
+                        enabled  = !uiState.isPrinting,
+                        shape    = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        if (uiState.isPrinting) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(stringResource(R.string.order_printing))
+                        } else {
+                            Icon(Icons.Default.Print, null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(stringResource(R.string.order_print_button_label), fontWeight = FontWeight.SemiBold)
+                        }
                     }
                 }
             }
-        }
 
-        if (order.items.isEmpty()) {
-            item {
-                Box(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-                    contentAlignment = Alignment.Center) {
-                    Text(stringResource(R.string.order_detail_no_items), style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xFF9E9E9E))
-                }
-            }
-        } else {
-            items(order.items, key = { it.id }) { item ->
-                val locked   = item.itemStatus.isLocked()
-                val removing = item.id in uiState.removingItemIds
-                OrderDetailItemRow(
-                    item       = item,
-                    isLocked   = locked,
-                    isRemoving = removing,
-                    onEdit     = { if (!locked && !removing) onEditItem(item) },
-                    onRemove   = { if (!locked && !removing) onRemoveItem(item.id) },
-                )
-            }
-        }
-
-        if (uiState.canBill) {
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick  = onBillingClick,
-                    shape    = RoundedCornerShape(8.dp),
-                    colors   = ButtonDefaults.buttonColors(containerColor = Color(0xFF1B5E20)),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Icon(Icons.Default.Receipt, null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.order_detail_generate_bill), fontWeight = FontWeight.SemiBold)
-                }
-            }
-
-            // Print receipt button (available whenever there is an order)
-            item {
-                OutlinedButton(
-                    onClick  = onPrintClick,
-                    enabled  = !uiState.isPrinting,
-                    shape    = RoundedCornerShape(8.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    if (uiState.isPrinting) {
-                        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(R.string.order_printing))
-                    } else {
-                        Icon(Icons.Default.Print, null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(R.string.order_print_button_label), fontWeight = FontWeight.SemiBold)
+            if (uiState.canCancelOrders && !uiState.isOrderFinal) {
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick  = onCancelOrder,
+                        shape    = RoundedCornerShape(8.dp),
+                        colors   = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFB00020)),
+                        border   = BorderStroke(1.dp, Color(0xFFB00020)),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.order_detail_cancel_order), fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
-        }
 
-        if (uiState.canCancelOrders && !uiState.isOrderFinal) {
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick  = onCancelOrder,
-                    shape    = RoundedCornerShape(8.dp),
-                    colors   = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFB00020)),
-                    border   = BorderStroke(1.dp, Color(0xFFB00020)),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(stringResource(R.string.order_detail_cancel_order), fontWeight = FontWeight.SemiBold)
-                }
-            }
+            item { Spacer(modifier = Modifier.height(80.dp)) }
         }
-
-        item { Spacer(modifier = Modifier.height(80.dp)) }
     }
-    } // Box (max-width wrapper)
 }
 
 // ── Order Summary Card ────────────────────────────────────────────────────────
