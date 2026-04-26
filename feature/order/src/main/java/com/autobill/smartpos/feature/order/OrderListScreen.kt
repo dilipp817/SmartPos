@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -325,10 +326,13 @@ private fun OrderList(
     orders: List<Order>,
     onOrderClick: (Long) -> Unit,
 ) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
     LazyColumn(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .widthIn(max = 840.dp)
+            .fillMaxWidth(),
     ) {
         items(orders, key = { it.id }) { order ->
             OrderItemCard(
@@ -339,6 +343,7 @@ private fun OrderList(
         // Bottom spacing so last card isn't hidden behind nav bar
         item { Spacer(modifier = Modifier.height(80.dp)) }
     }
+    } // Box
 }
 
 @Composable

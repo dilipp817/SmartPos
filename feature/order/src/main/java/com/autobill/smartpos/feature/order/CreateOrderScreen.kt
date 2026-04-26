@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -171,15 +172,20 @@ private fun OrderBody(
     onNotesChange: (String) -> Unit,
     onPlaceOrder: () -> Unit,
 ) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.TopCenter,
+    ) {
     Row(
         modifier = Modifier
+            .widthIn(max = 1000.dp)
             .fillMaxSize()
             .padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         // ── Left column — table info + order type ─────────────────────────
         Column(
-            modifier = Modifier.width(280.dp),
+            modifier = Modifier.widthIn(min = 220.dp, max = 320.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             uiState.table?.let { TableInfoCard(table = it) }
@@ -284,6 +290,7 @@ private fun OrderBody(
             }
         }
     }
+    } // Box (max-width wrapper)
 }
 
 // ── Sub-composables ───────────────────────────────────────────────────────────

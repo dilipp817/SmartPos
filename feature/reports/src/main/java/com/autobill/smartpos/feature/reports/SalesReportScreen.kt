@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -161,10 +162,16 @@ fun SalesReportScreen(
 
             HorizontalDivider()
 
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.TopCenter,
+            ) {
             LazyColumn(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .widthIn(max = 840.dp)
+                    .fillMaxWidth(),
             ) {
                 // ── Date range selector ───────────────────────────────────────
                 item {
@@ -243,6 +250,7 @@ fun SalesReportScreen(
                     }
                 }
             }
+            } // Box (max-width wrapper)
         }
 
         SnackbarHost(

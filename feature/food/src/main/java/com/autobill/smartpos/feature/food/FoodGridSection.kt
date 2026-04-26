@@ -95,7 +95,7 @@ fun FoodGridSection(
             else -> {
                 // Grid with items
                 LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),  // 2 columns as per design
+                    columns = GridCells.Adaptive(minSize = 260.dp), // adapts: 2 cols on small tablets, 3+ on large
                     state = lazyGridState,
                     modifier = Modifier
                         .fillMaxSize()

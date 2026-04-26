@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -361,10 +362,13 @@ private fun OrderDetailContent(
     onPrintClick: () -> Unit,
 ) {
     val order = uiState.order ?: return
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
     LazyColumn(
         contentPadding      = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
-        modifier            = Modifier.fillMaxSize(),
+        modifier            = Modifier
+            .widthIn(max = 840.dp)
+            .fillMaxWidth(),
     ) {
         item { OrderSummaryCard(order = order) }
 
@@ -467,6 +471,7 @@ private fun OrderDetailContent(
 
         item { Spacer(modifier = Modifier.height(80.dp)) }
     }
+    } // Box (max-width wrapper)
 }
 
 // ── Order Summary Card ────────────────────────────────────────────────────────

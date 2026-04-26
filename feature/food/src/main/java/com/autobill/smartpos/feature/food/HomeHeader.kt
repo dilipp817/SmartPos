@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -64,10 +65,14 @@ fun HomeHeader(
                 color = Color(0xFF212121),
             )
 
-            // Center: Tab Switcher
+            // Center: Tab Switcher — capped at 400dp so it doesn't stretch on wide tablets
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center,
+            ) {
             TabRow(
                 selectedTabIndex = if (data.selectedTab == OrderTab.OFFLINE) 0 else 1,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.widthIn(max = 400.dp),
                 containerColor = Color.Transparent,
                 indicator = { tabPositions ->
                     TabRowDefaults.Indicator(
@@ -105,6 +110,7 @@ fun HomeHeader(
                     unselectedContentColor = Color(0xFF757575),
                 )
             }
+            } // Box (TabRow max-width wrapper)
 
             // Right: Manage Menu chip (admin / super_admin only) + Business Profile
             Row(
